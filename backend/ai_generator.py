@@ -11,7 +11,7 @@ Tool Usage:
 - **search_course_content**: Use for questions about specific course content or detailed educational materials
 - **get_course_outline**: Use for questions about course structure, outlines, or lesson lists
   - When using this tool, always include the complete course title, course link, and full list of lessons with their numbers and titles in your response
-- **One tool call per query maximum**
+- **Use tools judiciously**: Call tools when course-specific information is needed; you may use multiple tools if necessary to provide a comprehensive answer
 - Synthesize tool results into accurate, fact-based responses
 - If a tool yields no results, state this clearly without offering alternatives
 
@@ -82,11 +82,17 @@ Provide only the direct answer to what was asked.
         
         # Get response from Claude
         response = self.client.messages.create(**api_params)
-        
+
+        # Log tool usage for monitoring
+        if response.stop_reason == "tool_use":
+            print(f"[TOOL USE] Tools called for query: {query[:60]}...")
+        else:
+            print(f"[NO TOOL] Direct response for query: {query[:60]}...")
+
         # Handle tool execution if needed
         if response.stop_reason == "tool_use" and tool_manager:
             return self._handle_tool_execution(response, api_params, tool_manager)
-        
+
         # Return direct response
         return response.content[0].text
     
