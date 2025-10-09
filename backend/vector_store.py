@@ -4,6 +4,10 @@ from typing import List, Dict, Any, Optional
 from dataclasses import dataclass
 from models import Course, CourseChunk
 from sentence_transformers import SentenceTransformer
+from logger import get_logger
+
+# Initialize logger
+logger = get_logger(__name__)
 
 @dataclass
 class SearchResults:
@@ -111,7 +115,7 @@ class VectorStore:
                 # Return the title (which is now the ID)
                 return results['metadatas'][0][0]['title']
         except Exception as e:
-            print(f"Error resolving course name: {e}")
+            logger.error(f"Error resolving course name: {e}", exc_info=True)
         
         return None
     
@@ -188,7 +192,7 @@ class VectorStore:
             self.course_catalog = self._create_collection("course_catalog")
             self.course_content = self._create_collection("course_content")
         except Exception as e:
-            print(f"Error clearing data: {e}")
+            logger.error(f"Error clearing data: {e}", exc_info=True)
     
     def get_existing_course_titles(self) -> List[str]:
         """Get all existing course titles from the vector store"""
@@ -199,7 +203,7 @@ class VectorStore:
                 return results['ids']
             return []
         except Exception as e:
-            print(f"Error getting existing course titles: {e}")
+            logger.error(f"Error getting existing course titles: {e}", exc_info=True)
             return []
     
     def get_course_count(self) -> int:
@@ -210,7 +214,7 @@ class VectorStore:
                 return len(results['ids'])
             return 0
         except Exception as e:
-            print(f"Error getting course count: {e}")
+            logger.error(f"Error getting course count: {e}", exc_info=True)
             return 0
     
     def get_all_courses_metadata(self) -> List[Dict[str, Any]]:
@@ -230,7 +234,7 @@ class VectorStore:
                 return parsed_metadata
             return []
         except Exception as e:
-            print(f"Error getting courses metadata: {e}")
+            logger.error(f"Error getting courses metadata: {e}", exc_info=True)
             return []
 
     def get_course_link(self, course_title: str) -> Optional[str]:
@@ -243,7 +247,7 @@ class VectorStore:
                 return metadata.get('course_link')
             return None
         except Exception as e:
-            print(f"Error getting course link: {e}")
+            logger.error(f"Error getting course link: {e}", exc_info=True)
             return None
     
     def get_lesson_link(self, course_title: str, lesson_number: int) -> Optional[str]:
@@ -263,5 +267,5 @@ class VectorStore:
                             return lesson.get('lesson_link')
             return None
         except Exception as e:
-            print(f"Error getting lesson link: {e}")
+            logger.error(f"Error getting lesson link: {e}", exc_info=True)
     

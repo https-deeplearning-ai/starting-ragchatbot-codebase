@@ -12,4 +12,45 @@ dependencies = [
     "uvicorn==0.35.0",
     "python-multipart==0.0.20",
     "python-dotenv==1.1.1",
+    "psutil==6.1.0",
+    "pytest>=8.4.2",
+    "httpx>=0.27.0",
 ]
+
+[tool.pytest.ini_options]
+# Test discovery
+testpaths = ["backend/tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+
+# Output and reporting
+addopts = [
+    "-v",                       # Verbose output
+    "--tb=short",               # Short traceback format
+    "--strict-markers",         # Strict marker validation
+    "-ra",                      # Show all test outcomes except passed
+    "--color=yes",              # Colored output
+    "--disable-warnings",       # Disable warnings in output
+]
+
+# Markers for test categorization
+markers = [
+    "unit: Unit tests for individual components",
+    "integration: Integration tests across components",
+    "api: API endpoint tests",
+    "slow: Tests that take longer to run",
+]
+
+# Coverage options (if using pytest-cov)
+# Uncomment and install pytest-cov to enable
+# addopts = ["-v", "--tb=short", "--cov=backend", "--cov-report=term-missing"]
+
+# Logging
+log_cli = false
+log_cli_level = "INFO"
+log_cli_format = "%(asctime)s [%(levelname)8s] %(message)s"
+log_cli_date_format = "%Y-%m-%d %H:%M:%S"
+
+# Timeout for tests (requires pytest-timeout)
+# timeout = 300

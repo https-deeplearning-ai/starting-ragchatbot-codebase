@@ -5,7 +5,7 @@ const API_URL = '/api';
 let currentSessionId = null;
 
 // DOM elements
-let chatMessages, chatInput, sendButton, totalCourses, courseTitles;
+let chatMessages, chatInput, sendButton, totalCourses, courseTitles, newChatButton;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -15,6 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
     sendButton = document.getElementById('sendButton');
     totalCourses = document.getElementById('totalCourses');
     courseTitles = document.getElementById('courseTitles');
+    newChatButton = document.getElementById('newChatButton');
     
     setupEventListeners();
     createNewSession();
@@ -28,8 +29,10 @@ function setupEventListeners() {
     chatInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') sendMessage();
     });
-    
-    
+
+    // New chat button
+    newChatButton.addEventListener('click', clearCurrentChat);
+
     // Suggested questions
     document.querySelectorAll('.suggested-item').forEach(button => {
         button.addEventListener('click', (e) => {
@@ -122,10 +125,27 @@ function addMessage(content, type, sources = null, isWelcome = false) {
     let html = `<div class="message-content">${displayContent}</div>`;
     
     if (sources && sources.length > 0) {
+        // Convert sources to clickable links
+        const sourceLinks = sources.map(source => {
+            // Handle both string and object sources for backward compatibility
+            if (typeof source === 'string') {
+                return escapeHtml(source);
+            } else if (source && typeof source === 'object' && source.text) {
+                // If source has a link, create clickable link that opens in new tab
+                if (source.link) {
+                    return `<a href="${escapeHtml(source.link)}" target="_blank" rel="noopener noreferrer">${escapeHtml(source.text)}</a>`;
+                } else {
+                    return escapeHtml(source.text);
+                }
+            }
+            // Fallback for unexpected source types
+            return escapeHtml(String(source));
+        });
+
         html += `
             <details class="sources-collapsible">
                 <summary class="sources-header">Sources</summary>
-                <div class="sources-content">${sources.join(', ')}</div>
+                <div class="sources-content">${sourceLinks.join('')}</div>
             </details>
         `;
     }
@@ -152,6 +172,95 @@ async function createNewSession() {
     addMessage('Welcome to the Course Materials Assistant! I can help you with questions about courses, lessons and specific content. What would you like to know?', 'assistant', null, true);
 }
 
+async function clearCurrentChat() {
+    // Clear session on backend if one exists
+    if (currentSessionId) {
+        try {
+            await fetch(`${API_URL}/clear_session`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    session_id: currentSessionId
+                })
+            });
+        } catch (error) {
+            console.error('Error clearing session:', error);
+            // Continue with frontend reset even if backend fails
+        }
+    }
+
+    // Reset frontend state
+    createNewSession();
+}
+
+// Setup click handlers for course titles
+function setupCourseClickHandlers() {
+    // Add a small delay to ensure DOM is updated
+    setTimeout(() => {
+        const courseElements = document.querySelectorAll('.clickable-course');
+        console.log('Setting up click handlers for', courseElements.length, 'course elements');
+
+        courseElements.forEach(courseElement => {
+            courseElement.addEventListener('click', (e) => {
+                const courseTitle = e.target.getAttribute('data-course-title');
+                console.log('Course clicked:', courseTitle);
+                if (courseTitle) {
+                    // Use the fast course outline endpoint instead of chat
+                    getCourseOutlineFast(courseTitle);
+                }
+            });
+        });
+    }, 100);
+}
+
+// Fast course outline retrieval
+async function getCourseOutlineFast(courseTitle) {
+    // Clear previous chat contents for course outline requests
+    chatMessages.innerHTML = '';
+
+    // Add user message showing what was clicked
+    addMessage(`Show outline for "${courseTitle}"`, 'user');
+
+    // Add loading message
+    const loadingMessage = createLoadingMessage();
+    chatMessages.appendChild(loadingMessage);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+
+    try {
+        const response = await fetch(`${API_URL}/course_outline`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                course_title: courseTitle
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`Course outline request failed: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        // Replace loading message with the formatted outline
+        loadingMessage.remove();
+        addMessage(data.formatted_outline, 'assistant');
+
+    } catch (error) {
+        console.error('Fast outline error:', error);
+        // Replace loading message with error, fallback to regular chat
+        loadingMessage.remove();
+        addMessage(`Error loading outline. Trying alternative method...`, 'assistant');
+
+        // Fallback to regular chat query
+        chatInput.value = `What is the outline of the "${courseTitle}" course?`;
+        sendMessage();
+    }
+}
+
 // Load course statistics
 async function loadCourseStats() {
     try {
@@ -167,12 +276,15 @@ async function loadCourseStats() {
             totalCourses.textContent = data.total_courses;
         }
         
-        // Update course titles
+        // Update course titles with clickable links
         if (courseTitles) {
             if (data.course_titles && data.course_titles.length > 0) {
                 courseTitles.innerHTML = data.course_titles
-                    .map(title => `<div class="course-title-item">${title}</div>`)
+                    .map(title => `<div class="course-title-item clickable-course" data-course-title="${escapeHtml(title)}">${escapeHtml(title)}</div>`)
                     .join('');
+
+                // Add click handlers to course titles
+                setupCourseClickHandlers();
             } else {
                 courseTitles.innerHTML = '<span class="no-courses">No courses available</span>';
             }

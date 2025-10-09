@@ -4,8 +4,12 @@ from document_processor import DocumentProcessor
 from vector_store import VectorStore
 from ai_generator import AIGenerator
 from session_manager import SessionManager
-from search_tools import ToolManager, CourseSearchTool
+from search_tools import ToolManager, CourseSearchTool, CourseOutlineTool
 from models import Course, Lesson, CourseChunk
+from logger import get_logger
+
+# Initialize logger
+logger = get_logger(__name__)
 
 class RAGSystem:
     """Main orchestrator for the Retrieval-Augmented Generation system"""
@@ -22,7 +26,9 @@ class RAGSystem:
         # Initialize search tools
         self.tool_manager = ToolManager()
         self.search_tool = CourseSearchTool(self.vector_store)
+        self.outline_tool = CourseOutlineTool(self.vector_store)
         self.tool_manager.register_tool(self.search_tool)
+        self.tool_manager.register_tool(self.outline_tool)
     
     def add_course_document(self, file_path: str) -> Tuple[Course, int]:
         """
@@ -46,7 +52,7 @@ class RAGSystem:
             
             return course, len(course_chunks)
         except Exception as e:
-            print(f"Error processing course document {file_path}: {e}")
+            logger.error(f"Error processing course document {file_path}: {e}", exc_info=True)
             return None, 0
     
     def add_course_folder(self, folder_path: str, clear_existing: bool = False) -> Tuple[int, int]:
@@ -65,11 +71,11 @@ class RAGSystem:
         
         # Clear existing data if requested
         if clear_existing:
-            print("Clearing existing data for fresh rebuild...")
+            logger.info("Clearing existing data for fresh rebuild...")
             self.vector_store.clear_all_data()
         
         if not os.path.exists(folder_path):
-            print(f"Folder {folder_path} does not exist")
+            logger.warning(f"Folder {folder_path} does not exist")
             return 0, 0
         
         # Get existing course titles to avoid re-processing
@@ -90,12 +96,12 @@ class RAGSystem:
                         self.vector_store.add_course_content(course_chunks)
                         total_courses += 1
                         total_chunks += len(course_chunks)
-                        print(f"Added new course: {course.title} ({len(course_chunks)} chunks)")
+                        logger.info(f"Added new course: {course.title} ({len(course_chunks)} chunks)")
                         existing_course_titles.add(course.title)
                     elif course:
-                        print(f"Course already exists: {course.title} - skipping")
+                        logger.debug(f"Course already exists: {course.title} - skipping")
                 except Exception as e:
-                    print(f"Error processing {file_name}: {e}")
+                    logger.error(f"Error processing {file_name}: {e}", exc_info=True)
         
         return total_courses, total_chunks
     

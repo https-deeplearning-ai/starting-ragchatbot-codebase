@@ -1,0 +1,22 @@
+2025-09-24 16:16:39,980 - session_manager - INFO - Started session cleanup thread
+2025-09-24 16:16:39,981 - session_manager - INFO - SessionManager initialized: max_history=2, session_timeout=60min, cleanup_interval=30min
+2025-09-24 16:16:39,989 - app - INFO - Starting up RAG System...
+2025-09-24 16:16:39,989 - app - INFO - Loading initial documents...
+2025-09-24 16:16:40,046 - app - INFO - Loaded 0 courses with 0 chunks
+2025-09-24 16:16:43,398 - app - INFO - Incoming GET request to http://127.0.0.1:8000/
+2025-09-24 16:16:43,404 - error_handlers - INFO - Request completed successfully
+2025-09-24 16:16:43,414 - app - INFO - Incoming GET request to http://127.0.0.1:8000/style.css?v=16
+2025-09-24 16:16:43,416 - error_handlers - INFO - Request completed successfully
+2025-09-24 16:16:43,419 - app - INFO - Incoming GET request to http://127.0.0.1:8000/script.js?v=14
+2025-09-24 16:16:43,420 - error_handlers - INFO - Request completed successfully
+2025-09-24 16:16:43,502 - app - INFO - Incoming GET request to http://127.0.0.1:8000/favicon.ico
+2025-09-24 16:16:43,504 - error_handlers - WARNING - Request completed with error
+2025-09-24 16:16:43,505 - app - INFO - Incoming GET request to http://127.0.0.1:8000/api/courses
+2025-09-24 16:16:43,510 - error_handlers - INFO - Request completed successfully
+2025-09-24 16:17:04,404 - app - INFO - Incoming POST request to http://127.0.0.1:8000/api/query
+2025-09-24 16:17:04,413 - session_manager - INFO - Created new session: session_1
+2025-09-24 16:17:13,661 - error_handlers - INFO - Request completed successfully
+2025-09-24 16:17:32,860 - app - INFO - Shutting down RAG System...
+2025-09-24 16:17:32,862 - session_manager - INFO - Shutting down session manager...
+2025-09-24 16:17:32,863 - session_manager - INFO - Session manager shut down
+2025-09-24 16:17:32,863 - app - INFO - RAG System shut down complete
