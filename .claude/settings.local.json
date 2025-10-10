@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(pip --version)"
+      "Bash(pip --version)",
+      "Bash(python -m pip install:*)"
     ],
     "deny": [],
     "ask": []
