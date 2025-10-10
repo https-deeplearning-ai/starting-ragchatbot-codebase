@@ -2,7 +2,11 @@
   "permissions": {
     "allow": [
       "Bash(pip --version)",
-      "Bash(python -m pip install:*)"
+      "Bash(python -m pip install:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Read(//c/workspace/claudecode/starting-ragchatbot-codebase/frontend/**)",
+      "Read(//c/workspace/claudecode/starting-ragchatbot-codebase/**)"
     ],
     "deny": [],
     "ask": []
