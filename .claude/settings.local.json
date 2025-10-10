@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pip --version)",
+      "Bash(python -m pip install:*)",
+      "Bash(uv run:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Read(//c/workspace/claudecode/starting-ragchatbot-codebase/frontend/**)",
+      "Read(//c/workspace/claudecode/starting-ragchatbot-codebase/**)",
+      "Bash(PRE_COMMIT_ALLOW_NO_CONFIG=1 git commit -m \"$(cat <<''EOF''\nAdd Claude Code configuration updates\n\n- Added git and file read permissions to settings.local.json\n- Added implement-feature slash command\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(PRE_COMMIT_ALLOW_NO_CONFIG=1 git commit -m \"Update Claude Code settings with commit permission\")"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
