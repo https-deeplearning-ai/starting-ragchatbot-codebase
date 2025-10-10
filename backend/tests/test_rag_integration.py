@@ -1,9 +1,11 @@
 """Integration tests for RAG system end-to-end functionality"""
-import pytest
+
 import os
 from unittest.mock import Mock, patch
-from rag_system import RAGSystem
+
+import pytest
 from config import Config
+from rag_system import RAGSystem
 
 
 class TestRAGSystemIntegration:
@@ -53,13 +55,12 @@ class TestRAGSystemIntegration:
 
     @pytest.mark.skipif(
         os.getenv("ANTHROPIC_API_KEY") is None or os.getenv("ANTHROPIC_API_KEY") == "",
-        reason="Requires valid ANTHROPIC_API_KEY"
+        reason="Requires valid ANTHROPIC_API_KEY",
     )
     def test_query_content_question(self, rag_system_with_data):
         """Test querying for course content (requires API key)"""
         response, sources = rag_system_with_data.query(
-            query="What is supervised learning?",
-            session_id=None
+            query="What is supervised learning?", session_id=None
         )
 
         assert isinstance(response, str)
@@ -69,13 +70,13 @@ class TestRAGSystemIntegration:
 
     @pytest.mark.skipif(
         os.getenv("ANTHROPIC_API_KEY") is None or os.getenv("ANTHROPIC_API_KEY") == "",
-        reason="Requires valid ANTHROPIC_API_KEY"
+        reason="Requires valid ANTHROPIC_API_KEY",
     )
     def test_query_with_course_filter(self, rag_system_with_data):
         """Test querying with implicit course context (requires API key)"""
         response, sources = rag_system_with_data.query(
             query="Tell me about neural networks in the Machine Learning course",
-            session_id=None
+            session_id=None,
         )
 
         assert isinstance(response, str)
@@ -83,13 +84,12 @@ class TestRAGSystemIntegration:
 
     @pytest.mark.skipif(
         os.getenv("ANTHROPIC_API_KEY") is None or os.getenv("ANTHROPIC_API_KEY") == "",
-        reason="Requires valid ANTHROPIC_API_KEY"
+        reason="Requires valid ANTHROPIC_API_KEY",
     )
     def test_query_sources_collected(self, rag_system_with_data):
         """Test that sources are collected from queries (requires API key)"""
         response, sources = rag_system_with_data.query(
-            query="What topics are covered in supervised learning?",
-            session_id=None
+            query="What topics are covered in supervised learning?", session_id=None
         )
 
         # Sources should be a list
@@ -103,7 +103,7 @@ class TestRAGSystemIntegration:
 
     @pytest.mark.skipif(
         os.getenv("ANTHROPIC_API_KEY") is None or os.getenv("ANTHROPIC_API_KEY") == "",
-        reason="Requires valid ANTHROPIC_API_KEY"
+        reason="Requires valid ANTHROPIC_API_KEY",
     )
     def test_session_management(self, rag_system_with_data):
         """Test conversation continuity across queries (requires API key)"""
@@ -111,14 +111,12 @@ class TestRAGSystemIntegration:
 
         # First query
         response1, _ = rag_system_with_data.query(
-            query="What is machine learning?",
-            session_id=session_id
+            query="What is machine learning?", session_id=session_id
         )
 
         # Follow-up query that relies on context
         response2, _ = rag_system_with_data.query(
-            query="Can you give me an example?",
-            session_id=session_id
+            query="Can you give me an example?", session_id=session_id
         )
 
         assert isinstance(response1, str)
@@ -128,12 +126,13 @@ class TestRAGSystemIntegration:
 
     def test_query_without_session(self, rag_system_with_data):
         """Test querying without session ID"""
-        with patch.object(rag_system_with_data.ai_generator, 'generate_response') as mock_gen:
+        with patch.object(
+            rag_system_with_data.ai_generator, "generate_response"
+        ) as mock_gen:
             mock_gen.return_value = "Mocked response"
 
             response, sources = rag_system_with_data.query(
-                query="Test query",
-                session_id=None
+                query="Test query", session_id=None
             )
 
             # Should work without session
@@ -150,14 +149,13 @@ class TestRAGSystemMocked:
         system = RAGSystem(test_config)
 
         # Mock the AI generator's response
-        def mock_generate_response(query, conversation_history=None, tools=None, tool_manager=None):
+        def mock_generate_response(
+            query, conversation_history=None, tools=None, tool_manager=None
+        ):
             # Simulate tool use
             if tools and tool_manager and "course" in query.lower():
                 # Execute search tool
-                result = tool_manager.execute_tool(
-                    "search_course_content",
-                    query=query
-                )
+                result = tool_manager.execute_tool("search_course_content", query=query)
                 return f"Based on the search results: {result[:100]}..."
             return "This is a mocked response for general questions."
 
@@ -171,8 +169,7 @@ class TestRAGSystemMocked:
 
         # Query that should trigger tool use
         response, sources = rag_system_mocked.query(
-            query="What is covered in the Machine Learning course?",
-            session_id=None
+            query="What is covered in the Machine Learning course?", session_id=None
         )
 
         # Response should indicate tool use
@@ -181,8 +178,7 @@ class TestRAGSystemMocked:
     def test_general_query_no_tool_use(self, rag_system_mocked):
         """Test that general queries don't trigger tool usage"""
         response, sources = rag_system_mocked.query(
-            query="What is the capital of France?",
-            session_id=None
+            query="What is the capital of France?", session_id=None
         )
 
         # Should get general response without tool use
@@ -194,8 +190,7 @@ class TestRAGSystemMocked:
 
         # First query
         response1, sources1 = rag_system_mocked.query(
-            query="What is machine learning course about?",
-            session_id=None
+            query="What is machine learning course about?", session_id=None
         )
 
         # Sources should be reset in tool manager after retrieval
@@ -210,33 +205,36 @@ class TestVectorSearchQuality:
         """Test that partial course names match correctly"""
         # Test partial match
         results = vector_store.search(
-            query="test query",
-            course_name="Machine Learning"
+            query="test query", course_name="Machine Learning"
         )
 
         # Should resolve to full course title
         if not results.is_empty():
-            assert any("Introduction to Machine Learning" in str(meta)
-                      for meta in results.metadata)
+            assert any(
+                "Introduction to Machine Learning" in str(meta)
+                for meta in results.metadata
+            )
 
     def test_semantic_search_relevance(self, vector_store):
         """Test that search returns semantically relevant results"""
-        results = vector_store.search(
-            query="What are neural networks?"
-        )
+        results = vector_store.search(query="What are neural networks?")
 
         # Should return results about neural networks
         if not results.is_empty():
             # Check if results contain relevant terms
             combined_text = " ".join(results.documents).lower()
-            assert "neural" in combined_text or "network" in combined_text or "learning" in combined_text
+            assert (
+                "neural" in combined_text
+                or "network" in combined_text
+                or "learning" in combined_text
+            )
 
     def test_lesson_filter_accuracy(self, vector_store):
         """Test that lesson filtering works correctly"""
         results = vector_store.search(
             query="learning",
             course_name="Introduction to Machine Learning",
-            lesson_number=1
+            lesson_number=1,
         )
 
         # All results should be from lesson 1
@@ -247,8 +245,7 @@ class TestVectorSearchQuality:
     def test_course_filter_accuracy(self, vector_store):
         """Test that course filtering works correctly"""
         results = vector_store.search(
-            query="API",
-            course_name="Building Towards Computer Use with Anthropic"
+            query="API", course_name="Building Towards Computer Use with Anthropic"
         )
 
         # All results should be from the specified course
@@ -261,7 +258,7 @@ class TestVectorSearchQuality:
         results = vector_store.search(
             query="content",
             course_name="Introduction to Machine Learning",
-            lesson_number=2
+            lesson_number=2,
         )
 
         # Results should match both filters
@@ -302,7 +299,9 @@ class TestDocumentProcessing:
         course, chunks = document_processor.process_course_document(temp_course_file)
 
         # Chunks should have lesson numbers
-        lesson_numbers = [chunk.lesson_number for chunk in chunks if chunk.lesson_number is not None]
+        lesson_numbers = [
+            chunk.lesson_number for chunk in chunks if chunk.lesson_number is not None
+        ]
         assert len(lesson_numbers) > 0
 
         # Lesson numbers should be valid
@@ -349,9 +348,7 @@ class TestSessionManager:
         session_id = session_manager.create_session()
 
         session_manager.add_exchange(
-            session_id,
-            "What is ML?",
-            "Machine learning is..."
+            session_id, "What is ML?", "Machine learning is..."
         )
 
         history = session_manager.get_conversation_history(session_id)
@@ -365,11 +362,7 @@ class TestSessionManager:
 
         # Add more exchanges than the limit
         for i in range(5):
-            session_manager.add_exchange(
-                session_id,
-                f"Question {i}",
-                f"Answer {i}"
-            )
+            session_manager.add_exchange(session_id, f"Question {i}", f"Answer {i}")
 
         messages = session_manager.sessions[session_id]
 
@@ -380,11 +373,7 @@ class TestSessionManager:
         """Test conversation history formatting"""
         session_id = session_manager.create_session()
 
-        session_manager.add_exchange(
-            session_id,
-            "Test question",
-            "Test answer"
-        )
+        session_manager.add_exchange(session_id, "Test question", "Test answer")
 
         history = session_manager.get_conversation_history(session_id)
 

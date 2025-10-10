@@ -1,6 +1,7 @@
 """Tests for CourseSearchTool.execute() method and search functionality"""
+
 import pytest
-from search_tools import CourseSearchTool, CourseOutlineTool, ToolManager
+from search_tools import CourseOutlineTool, CourseSearchTool, ToolManager
 from vector_store import SearchResults
 
 
@@ -14,13 +15,14 @@ class TestCourseSearchToolExecute:
         assert isinstance(result, str)
         assert len(result) > 0
         # Should contain course context in results
-        assert "Introduction to Machine Learning" in result or "Machine Learning" in result
+        assert (
+            "Introduction to Machine Learning" in result or "Machine Learning" in result
+        )
 
     def test_execute_query_with_course_filter(self, course_search_tool):
         """Test query with course_name filter (exact match)"""
         result = course_search_tool.execute(
-            query="neural networks",
-            course_name="Introduction to Machine Learning"
+            query="neural networks", course_name="Introduction to Machine Learning"
         )
 
         assert isinstance(result, str)
@@ -33,20 +35,23 @@ class TestCourseSearchToolExecute:
         """Test query with partial course name (semantic matching)"""
         result = course_search_tool.execute(
             query="API",
-            course_name="Anthropic"  # Partial match for "Building Towards Computer Use with Anthropic"
+            course_name="Anthropic",  # Partial match for "Building Towards Computer Use with Anthropic"
         )
 
         assert isinstance(result, str)
         assert len(result) > 0
         # Should resolve to the full course name
-        assert "Building Towards Computer Use with Anthropic" in result or "Anthropic" in result
+        assert (
+            "Building Towards Computer Use with Anthropic" in result
+            or "Anthropic" in result
+        )
 
     def test_execute_query_with_lesson_filter(self, course_search_tool):
         """Test query with lesson_number filter"""
         result = course_search_tool.execute(
             query="learning",
             course_name="Introduction to Machine Learning",
-            lesson_number=1
+            lesson_number=1,
         )
 
         assert isinstance(result, str)
@@ -60,7 +65,7 @@ class TestCourseSearchToolExecute:
         result = course_search_tool.execute(
             query="neural",
             course_name="Introduction to Machine Learning",
-            lesson_number=2
+            lesson_number=2,
         )
 
         assert isinstance(result, str)
@@ -71,8 +76,7 @@ class TestCourseSearchToolExecute:
     def test_execute_invalid_course_name(self, course_search_tool):
         """Test query with non-existent course name"""
         result = course_search_tool.execute(
-            query="test query",
-            course_name="Non-Existent Course 12345"
+            query="test query", course_name="Non-Existent Course 12345"
         )
 
         assert isinstance(result, str)
@@ -83,7 +87,7 @@ class TestCourseSearchToolExecute:
         """Test query that returns no results"""
         result = course_search_tool.execute(
             query="quantum physics relativistic mechanics",
-            course_name="Introduction to Machine Learning"
+            course_name="Introduction to Machine Learning",
         )
 
         assert isinstance(result, str)
@@ -103,12 +107,11 @@ class TestCourseSearchToolExecute:
         course_search_tool.last_sources = []
 
         result = course_search_tool.execute(
-            query="machine learning",
-            course_name="Introduction to Machine Learning"
+            query="machine learning", course_name="Introduction to Machine Learning"
         )
 
         # Check that sources were tracked
-        assert hasattr(course_search_tool, 'last_sources')
+        assert hasattr(course_search_tool, "last_sources")
         sources = course_search_tool.last_sources
 
         if "No relevant content found" not in result:
@@ -116,14 +119,13 @@ class TestCourseSearchToolExecute:
             # Each source should have label and link
             for source in sources:
                 assert isinstance(source, dict)
-                assert 'label' in source
-                assert 'link' in source
+                assert "label" in source
+                assert "link" in source
 
     def test_result_formatting(self, course_search_tool):
         """Test that results are properly formatted with context"""
         result = course_search_tool.execute(
-            query="supervised learning",
-            course_name="Introduction to Machine Learning"
+            query="supervised learning", course_name="Introduction to Machine Learning"
         )
 
         if "No relevant content found" not in result:
@@ -139,14 +141,14 @@ class TestCourseSearchToolExecute:
         result = course_search_tool.execute(
             query="neural networks",
             course_name="Introduction to Machine Learning",
-            lesson_number=2
+            lesson_number=2,
         )
 
         sources = course_search_tool.last_sources
 
         if "No relevant content found" not in result and len(sources) > 0:
             # At least one source should have a link
-            has_link = any(source.get('link') is not None for source in sources)
+            has_link = any(source.get("link") is not None for source in sources)
             assert has_link, "Sources should include lesson links"
 
     def test_multiple_results_formatting(self, course_search_tool):
@@ -159,9 +161,7 @@ class TestCourseSearchToolExecute:
 
     def test_special_characters_in_query(self, course_search_tool):
         """Test handling of special characters in query"""
-        result = course_search_tool.execute(
-            query="AI & ML: what's the difference?"
-        )
+        result = course_search_tool.execute(query="AI & ML: what's the difference?")
 
         assert isinstance(result, str)
         # Should handle special characters without crashing
@@ -184,18 +184,16 @@ class TestCourseOutlineTool:
 
     def test_get_outline_partial_match(self, course_outline_tool):
         """Test getting course outline with partial course name"""
-        result = course_outline_tool.execute(
-            course_name="Machine Learning"
-        )
+        result = course_outline_tool.execute(course_name="Machine Learning")
 
         assert isinstance(result, str)
-        assert "Introduction to Machine Learning" in result or "Machine Learning" in result
+        assert (
+            "Introduction to Machine Learning" in result or "Machine Learning" in result
+        )
 
     def test_get_outline_invalid_course(self, course_outline_tool):
         """Test outline retrieval for non-existent course"""
-        result = course_outline_tool.execute(
-            course_name="Non-Existent Course XYZ"
-        )
+        result = course_outline_tool.execute(course_name="Non-Existent Course XYZ")
 
         assert isinstance(result, str)
         assert "No course found" in result
@@ -248,8 +246,7 @@ class TestToolManager:
     def test_execute_tool_search(self, tool_manager):
         """Test executing search tool through manager"""
         result = tool_manager.execute_tool(
-            tool_name="search_course_content",
-            query="machine learning"
+            tool_name="search_course_content", query="machine learning"
         )
 
         assert isinstance(result, str)
@@ -259,7 +256,7 @@ class TestToolManager:
         """Test executing outline tool through manager"""
         result = tool_manager.execute_tool(
             tool_name="get_course_outline",
-            course_name="Introduction to Machine Learning"
+            course_name="Introduction to Machine Learning",
         )
 
         assert isinstance(result, str)
@@ -267,10 +264,7 @@ class TestToolManager:
 
     def test_execute_invalid_tool(self, tool_manager):
         """Test executing non-existent tool"""
-        result = tool_manager.execute_tool(
-            tool_name="non_existent_tool",
-            query="test"
-        )
+        result = tool_manager.execute_tool(tool_name="non_existent_tool", query="test")
 
         assert isinstance(result, str)
         assert "not found" in result.lower()
@@ -281,7 +275,7 @@ class TestToolManager:
         tool_manager.execute_tool(
             tool_name="search_course_content",
             query="machine learning",
-            course_name="Introduction to Machine Learning"
+            course_name="Introduction to Machine Learning",
         )
 
         sources = tool_manager.get_last_sources()
@@ -293,8 +287,7 @@ class TestToolManager:
         """Test resetting sources"""
         # Execute a search
         tool_manager.execute_tool(
-            tool_name="search_course_content",
-            query="machine learning"
+            tool_name="search_course_content", query="machine learning"
         )
 
         # Reset sources
@@ -307,16 +300,13 @@ class TestToolManager:
         """Test that sources are updated with each search"""
         # First search
         tool_manager.execute_tool(
-            tool_name="search_course_content",
-            query="machine learning"
+            tool_name="search_course_content", query="machine learning"
         )
         sources1 = tool_manager.get_last_sources()
 
         # Second search
         tool_manager.execute_tool(
-            tool_name="search_course_content",
-            query="API",
-            course_name="Anthropic"
+            tool_name="search_course_content", query="API", course_name="Anthropic"
         )
         sources2 = tool_manager.get_last_sources()
 
