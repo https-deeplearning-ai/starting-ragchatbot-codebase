@@ -1,22 +1,24 @@
 """Pytest configuration and shared fixtures for RAG system tests"""
-import pytest
+
 import os
+import shutil
 import sys
 import tempfile
-import shutil
 from typing import List
 
-# Add parent directory to path to import backend modules
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+import pytest
 
-from models import Course, Lesson, CourseChunk
-from vector_store import VectorStore, SearchResults
-from search_tools import CourseSearchTool, CourseOutlineTool, ToolManager
+# Add parent directory to path to import backend modules
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 from ai_generator import AIGenerator
-from document_processor import DocumentProcessor
-from session_manager import SessionManager
-from rag_system import RAGSystem
 from config import Config
+from document_processor import DocumentProcessor
+from models import Course, CourseChunk, Lesson
+from rag_system import RAGSystem
+from search_tools import CourseOutlineTool, CourseSearchTool, ToolManager
+from session_manager import SessionManager
+from vector_store import SearchResults, VectorStore
 
 
 @pytest.fixture
@@ -51,19 +53,19 @@ def sample_course():
             Lesson(
                 lesson_number=0,
                 title="Course Overview",
-                lesson_link="https://example.com/ml-course/lesson0"
+                lesson_link="https://example.com/ml-course/lesson0",
             ),
             Lesson(
                 lesson_number=1,
                 title="Supervised Learning Basics",
-                lesson_link="https://example.com/ml-course/lesson1"
+                lesson_link="https://example.com/ml-course/lesson1",
             ),
             Lesson(
                 lesson_number=2,
                 title="Neural Networks",
-                lesson_link="https://example.com/ml-course/lesson2"
-            )
-        ]
+                lesson_link="https://example.com/ml-course/lesson2",
+            ),
+        ],
     )
 
 
@@ -78,14 +80,14 @@ def sample_course_2():
             Lesson(
                 lesson_number=0,
                 title="Introduction",
-                lesson_link="https://learn.deeplearning.ai/courses/building-toward-computer-use-with-anthropic/lesson/a6k0z/introduction"
+                lesson_link="https://learn.deeplearning.ai/courses/building-toward-computer-use-with-anthropic/lesson/a6k0z/introduction",
             ),
             Lesson(
                 lesson_number=1,
                 title="API Basics",
-                lesson_link="https://learn.deeplearning.ai/courses/building-toward-computer-use-with-anthropic/lesson/xyz/api-basics"
-            )
-        ]
+                lesson_link="https://learn.deeplearning.ai/courses/building-toward-computer-use-with-anthropic/lesson/xyz/api-basics",
+            ),
+        ],
     )
 
 
@@ -97,32 +99,32 @@ def sample_chunks():
             content="Machine learning is a subset of artificial intelligence that enables systems to learn from data. It involves training algorithms to recognize patterns and make predictions.",
             course_title="Introduction to Machine Learning",
             lesson_number=0,
-            chunk_index=0
+            chunk_index=0,
         ),
         CourseChunk(
             content="Supervised learning uses labeled training data to learn the relationship between inputs and outputs. Common algorithms include linear regression, decision trees, and neural networks.",
             course_title="Introduction to Machine Learning",
             lesson_number=1,
-            chunk_index=1
+            chunk_index=1,
         ),
         CourseChunk(
             content="Neural networks are computing systems inspired by biological neural networks. They consist of layers of interconnected nodes that process and transform input data to produce outputs.",
             course_title="Introduction to Machine Learning",
             lesson_number=2,
-            chunk_index=2
+            chunk_index=2,
         ),
         CourseChunk(
             content="Anthropic's Claude is a large language model designed with safety and reliability in mind. It uses constitutional AI principles to ensure helpful, harmless, and honest behavior.",
             course_title="Building Towards Computer Use with Anthropic",
             lesson_number=0,
-            chunk_index=3
+            chunk_index=3,
         ),
         CourseChunk(
             content="The Anthropic API allows developers to integrate Claude into their applications. You can make requests using HTTP POST with JSON payloads containing your prompts and parameters.",
             course_title="Building Towards Computer Use with Anthropic",
             lesson_number=1,
-            chunk_index=4
-        )
+            chunk_index=4,
+        ),
     ]
 
 
@@ -132,7 +134,7 @@ def vector_store(test_config, sample_course, sample_course_2, sample_chunks):
     store = VectorStore(
         chroma_path=test_config.CHROMA_PATH,
         embedding_model=test_config.EMBEDDING_MODEL,
-        max_results=test_config.MAX_RESULTS
+        max_results=test_config.MAX_RESULTS,
     )
 
     # Add course metadata
@@ -176,8 +178,7 @@ def mock_api_key():
 def document_processor(test_config):
     """Create a DocumentProcessor instance"""
     return DocumentProcessor(
-        chunk_size=test_config.CHUNK_SIZE,
-        chunk_overlap=test_config.CHUNK_OVERLAP
+        chunk_size=test_config.CHUNK_SIZE, chunk_overlap=test_config.CHUNK_OVERLAP
     )
 
 
@@ -211,7 +212,9 @@ Neural networks are computing systems inspired by biological neural networks. Th
 @pytest.fixture
 def temp_course_file(sample_course_document):
     """Create a temporary course file for testing document processing"""
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False, encoding='utf-8') as f:
+    with tempfile.NamedTemporaryFile(
+        mode="w", suffix=".txt", delete=False, encoding="utf-8"
+    ) as f:
         f.write(sample_course_document)
         temp_path = f.name
 

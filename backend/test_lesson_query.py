@@ -1,6 +1,8 @@
 """Test script to diagnose lesson 5 query issue"""
+
 import sys
-sys.path.insert(0, '.')
+
+sys.path.insert(0, ".")
 
 from config import config
 from rag_system import RAGSystem
@@ -23,9 +25,9 @@ test_queries = [
     "lesson 5",
 ]
 
-print("="*60)
+print("=" * 60)
 print("Testing queries related to Lesson 5")
-print("="*60)
+print("=" * 60)
 
 for query in test_queries:
     print(f"\nQuery: '{query}'")
@@ -36,10 +38,7 @@ for query in test_queries:
         session_id = rag_system.session_manager.create_session()
 
         # Directly test the search tool
-        result = rag_system.search_tool.execute(
-            query=query,
-            lesson_number=5
-        )
+        result = rag_system.search_tool.execute(query=query, lesson_number=5)
 
         print(f"Search Result:")
         print(result[:200] if len(result) > 200 else result)
@@ -48,19 +47,20 @@ for query in test_queries:
     except Exception as e:
         print(f"ERROR: {e}")
         import traceback
+
         traceback.print_exc()
     print()
 
 # Also test searching with course name
-print("\n" + "="*60)
+print("\n" + "=" * 60)
 print("Testing with course name filter")
-print("="*60)
+print("=" * 60)
 
 try:
     result = rag_system.search_tool.execute(
         query="content",
         course_name="Building Towards Computer Use with Anthropic",
-        lesson_number=5
+        lesson_number=5,
     )
     print(f"Result with full course name:")
     print(result[:300] if len(result) > 300 else result)
@@ -68,19 +68,18 @@ try:
 except Exception as e:
     print(f"ERROR: {e}")
     import traceback
+
     traceback.print_exc()
 
 # Check what's actually in the database for lesson 5
-print("\n" + "="*60)
+print("\n" + "=" * 60)
 print("Checking database for lesson 5 content")
-print("="*60)
+print("=" * 60)
 
 try:
     # Search for any content with lesson 5
     results = rag_system.vector_store.search(
-        query="lesson content",
-        lesson_number=5,
-        limit=3
+        query="lesson content", lesson_number=5, limit=3
     )
 
     print(f"Found {len(results.documents)} results")
@@ -95,4 +94,5 @@ try:
 except Exception as e:
     print(f"ERROR: {e}")
     import traceback
+
     traceback.print_exc()

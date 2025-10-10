@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(pip --version)",
-      "Bash(python -m pip install:*)"
+      "Bash(python -m pip install:*)",
+      "Bash(uv run:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []

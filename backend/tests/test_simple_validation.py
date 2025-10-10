@@ -1,16 +1,18 @@
 """Simple validation tests that don't require heavy dependencies"""
-import sys
+
 import os
+import sys
 
 # Add parent directory to path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 
 def test_imports():
     """Test that basic imports work"""
     try:
-        from models import Course, Lesson, CourseChunk
         from config import Config
+        from models import Course, CourseChunk, Lesson
+
         assert True
     except ImportError as e:
         assert False, f"Import failed: {e}"
@@ -25,9 +27,15 @@ def test_course_model():
         course_link="https://example.com",
         instructor="Test Instructor",
         lessons=[
-            Lesson(lesson_number=0, title="Intro", lesson_link="https://example.com/lesson0"),
-            Lesson(lesson_number=1, title="Main", lesson_link="https://example.com/lesson1")
-        ]
+            Lesson(
+                lesson_number=0,
+                title="Intro",
+                lesson_link="https://example.com/lesson0",
+            ),
+            Lesson(
+                lesson_number=1, title="Main", lesson_link="https://example.com/lesson1"
+            ),
+        ],
     )
 
     assert course.title == "Test Course"
@@ -44,7 +52,7 @@ def test_course_chunk_model():
         content="Course Test Lesson 1 content: This is test content.",
         course_title="Test Course",
         lesson_number=1,
-        chunk_index=0
+        chunk_index=0,
     )
 
     assert chunk.course_title == "Test Course"
@@ -70,6 +78,7 @@ def test_document_processor_imports():
     """Test document processor can be imported"""
     try:
         from document_processor import DocumentProcessor
+
         processor = DocumentProcessor(chunk_size=800, chunk_overlap=100)
         assert processor.chunk_size == 800
         assert processor.chunk_overlap == 100
@@ -93,6 +102,7 @@ def test_chunk_text_basic():
 def test_chunk_context_format():
     """Test that chunk context follows the fixed format"""
     import re
+
     from document_processor import DocumentProcessor
     from models import Course
 
@@ -114,7 +124,10 @@ This is the main lesson content with more details. It should also be chunked pro
 
     # Write to temp file
     import tempfile
-    with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.txt', encoding='utf-8') as f:
+
+    with tempfile.NamedTemporaryFile(
+        mode="w", delete=False, suffix=".txt", encoding="utf-8"
+    ) as f:
         f.write(test_content)
         temp_path = f.name
 
@@ -124,13 +137,21 @@ This is the main lesson content with more details. It should also be chunked pro
         # Verify all chunks have consistent format
         for chunk in chunks:
             # All chunks should start with "Course {title} Lesson {number} content:"
-            assert "Course" in chunk.content, f"Missing 'Course' in chunk: {chunk.content[:100]}"
-            assert "Lesson" in chunk.content, f"Missing 'Lesson' in chunk: {chunk.content[:100]}"
-            assert "content:" in chunk.content, f"Missing 'content:' in chunk: {chunk.content[:100]}"
+            assert (
+                "Course" in chunk.content
+            ), f"Missing 'Course' in chunk: {chunk.content[:100]}"
+            assert (
+                "Lesson" in chunk.content
+            ), f"Missing 'Lesson' in chunk: {chunk.content[:100]}"
+            assert (
+                "content:" in chunk.content
+            ), f"Missing 'content:' in chunk: {chunk.content[:100]}"
 
             # Should match the pattern: "Course {title} Lesson {n} content: ..."
             pattern = r"Course .+ Lesson \d+ content:"
-            assert re.match(pattern, chunk.content), f"Chunk doesn't match expected format: {chunk.content[:100]}"
+            assert re.match(
+                pattern, chunk.content
+            ), f"Chunk doesn't match expected format: {chunk.content[:100]}"
 
         # Verify consistency: all chunks should have the same prefix pattern
         prefixes = []
@@ -138,12 +159,16 @@ This is the main lesson content with more details. It should also be chunked pro
             match = re.match(r"(Course .+ Lesson \d+ content:)", chunk.content)
             if match:
                 # Extract just the pattern, not the specific values
-                prefix_template = re.sub(r'Lesson \d+', 'Lesson N', match.group(1))
-                prefix_template = re.sub(r'Course .+ Lesson', 'Course X Lesson', prefix_template)
+                prefix_template = re.sub(r"Lesson \d+", "Lesson N", match.group(1))
+                prefix_template = re.sub(
+                    r"Course .+ Lesson", "Course X Lesson", prefix_template
+                )
                 prefixes.append(prefix_template)
 
         # All should follow the same template
-        assert len(set(prefixes)) == 1, f"Inconsistent prefix formats found: {set(prefixes)}"
+        assert (
+            len(set(prefixes)) == 1
+        ), f"Inconsistent prefix formats found: {set(prefixes)}"
 
     finally:
         # Cleanup
@@ -158,12 +183,14 @@ def test_ai_generator_system_prompt():
     prompt = AIGenerator.SYSTEM_PROMPT
 
     # Should NOT have the old limitation
-    assert "One tool call per query maximum" not in prompt, \
-        "System prompt still contains 'One tool call per query maximum' limitation!"
+    assert (
+        "One tool call per query maximum" not in prompt
+    ), "System prompt still contains 'One tool call per query maximum' limitation!"
 
     # Should have the new flexible guidance
-    assert "Use tools judiciously" in prompt or "multiple tools" in prompt, \
-        "System prompt missing flexible tool usage guidance"
+    assert (
+        "Use tools judiciously" in prompt or "multiple tools" in prompt
+    ), "System prompt missing flexible tool usage guidance"
 
 
 def test_ai_generator_creation():

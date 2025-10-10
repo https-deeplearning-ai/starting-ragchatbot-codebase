@@ -42,6 +42,50 @@ uv run <command>
 # DO NOT use pip install - always use uv
 ```
 
+### Code Quality Tools
+
+This project uses several tools to maintain code quality:
+
+**Formatting:**
+```bash
+# Format code with Black and isort
+./scripts/format.sh
+
+# Or manually
+uv run black backend/ main.py
+uv run isort backend/ main.py
+```
+
+**Linting and Type Checking:**
+```bash
+# Run linters
+./scripts/lint.sh
+
+# Or manually
+uv run flake8 backend/ main.py
+uv run mypy backend/ main.py
+```
+
+**All Quality Checks:**
+```bash
+# Run all checks (formatting, linting, type checking)
+./scripts/quality-check.sh
+```
+
+**Pre-commit Hooks:**
+```bash
+# Install hooks (runs checks automatically before commits)
+uv run pre-commit install
+
+# Run manually on all files
+uv run pre-commit run --all-files
+```
+
+**Configuration Files:**
+- `pyproject.toml`: Black, isort, and mypy settings
+- `.flake8`: Flake8 configuration
+- `.pre-commit-config.yaml`: Pre-commit hooks setup
+
 ## Core Architecture
 
 ### Request Flow: Frontend → Backend
