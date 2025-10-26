@@ -7,6 +7,8 @@ import tempfile
 from unittest.mock import Mock, MagicMock, patch
 from dataclasses import dataclass
 from typing import List, Dict, Any
+from fastapi.testclient import TestClient
+import json
 
 # Add parent directory to path for imports
 import sys
@@ -327,3 +329,164 @@ def disable_network_calls(monkeypatch):
     # Mock any potential network calls
     monkeypatch.setattr("requests.get", Mock(side_effect=Exception("Network calls disabled in tests")))
     monkeypatch.setattr("requests.post", Mock(side_effect=Exception("Network calls disabled in tests")))
+
+
+# API Testing Fixtures
+
+@pytest.fixture
+def test_app():
+    """Create a test FastAPI app without static file mounting to avoid import issues"""
+    from fastapi import FastAPI, HTTPException
+    from fastapi.middleware.cors import CORSMiddleware
+    from fastapi.middleware.trustedhost import TrustedHostMiddleware
+    from pydantic import BaseModel
+    from typing import List, Optional
+
+    # Create test app (minimal version without static files)
+    app = FastAPI(title="Course Materials RAG System - Test", root_path="")
+
+    # Add middleware for consistency with main app
+    app.add_middleware(
+        TrustedHostMiddleware,
+        allowed_hosts=["*"]
+    )
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+        expose_headers=["*"],
+    )
+
+    # Pydantic models (same as main app)
+    class QueryRequest(BaseModel):
+        query: str
+        session_id: Optional[str] = None
+
+    class QueryResponse(BaseModel):
+        answer: str
+        sources: List[str]
+        session_id: str
+
+    class CourseStats(BaseModel):
+        total_courses: int
+        course_titles: List[str]
+
+    # Mock RAG system
+    mock_rag = Mock()
+
+    # Configure mock responses
+    mock_rag.query.return_value = (
+        "This is a test response about machine learning fundamentals.",
+        ["Machine Learning Fundamentals - Lesson 1"]
+    )
+    mock_rag.get_course_analytics.return_value = {
+        "total_courses": 1,
+        "course_titles": ["Machine Learning Fundamentals"]
+    }
+    mock_rag.session_manager = Mock()
+    mock_rag.session_manager.create_session.return_value = "test-session-123"
+
+    # Store the mock for tests to access
+    app.state.mock_rag = mock_rag
+
+    # API endpoints (same logic as main app but using mock)
+    @app.post("/api/query", response_model=QueryResponse)
+    async def query_documents(request: QueryRequest):
+        try:
+            session_id = request.session_id
+            if not session_id:
+                session_id = mock_rag.session_manager.create_session()
+
+            answer, sources = mock_rag.query(request.query, session_id)
+
+            return QueryResponse(
+                answer=answer,
+                sources=sources,
+                session_id=session_id
+            )
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get("/api/courses", response_model=CourseStats)
+    async def get_course_stats():
+        try:
+            analytics = mock_rag.get_course_analytics()
+            return CourseStats(
+                total_courses=analytics["total_courses"],
+                course_titles=analytics["course_titles"]
+            )
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get("/")
+    async def root():
+        return {"message": "Course Materials RAG System API"}
+
+    return app
+
+
+@pytest.fixture
+def client(test_app):
+    """Create a test client for the FastAPI app"""
+    return TestClient(test_app)
+
+
+@pytest.fixture
+def mock_rag_system(test_app):
+    """Access the mock RAG system from the test app"""
+    return test_app.state.mock_rag
+
+
+@pytest.fixture
+def sample_query_requests():
+    """Sample query requests for API testing"""
+    return {
+        "valid_query": {
+            "query": "What is machine learning?",
+            "session_id": None
+        },
+        "query_with_session": {
+            "query": "Tell me about linear regression",
+            "session_id": "existing-session-456"
+        },
+        "empty_query": {
+            "query": "",
+            "session_id": None
+        },
+        "malformed_query_content": "invalid json content",
+        "missing_query_field": {
+            "session_id": "test-session"
+        }
+    }
+
+
+@pytest.fixture
+def sample_api_responses():
+    """Expected API response structures"""
+    return {
+        "query_response": {
+            "answer": "This is a test response about machine learning fundamentals.",
+            "sources": ["Machine Learning Fundamentals - Lesson 1"],
+            "session_id": "test-session-123"
+        },
+        "courses_response": {
+            "total_courses": 1,
+            "course_titles": ["Machine Learning Fundamentals"]
+        },
+        "root_response": {
+            "message": "Course Materials RAG System API"
+        }
+    }
+
+
+@pytest.fixture
+def error_scenarios():
+    """Error scenarios for API testing"""
+    return {
+        "rag_query_error": Exception("RAG system query failed"),
+        "rag_analytics_error": Exception("Failed to get course analytics"),
+        "missing_session_error": Exception("Session not found"),
+        "invalid_query_error": Exception("Invalid query format")
+    }
