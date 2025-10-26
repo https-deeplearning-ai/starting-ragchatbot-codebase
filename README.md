@@ -54,3 +54,46 @@ The application will be available at:
 - Web Interface: `http://localhost:8000`
 - API Documentation: `http://localhost:8000/docs`
 
+## Code Quality
+
+This project includes comprehensive code quality tools to maintain clean, consistent code:
+
+### Available Scripts
+
+```bash
+# Format all Python code (black + isort)
+./scripts/format.sh
+
+# Run all quality checks (black, isort, flake8, mypy, tests)
+./scripts/check-quality.sh
+
+# Set up git pre-commit hooks (one-time setup)
+./scripts/setup-hooks.sh
+```
+
+### Tools Included
+
+- **Black**: Python code formatter (88-character line length)
+- **isort**: Import statement organizer
+- **flake8**: Linter for code style and error checking
+- **mypy**: Optional static type checking
+
+### Development Workflow
+
+1. Make code changes
+2. Run `./scripts/format.sh` to fix formatting
+3. Run `./scripts/check-quality.sh` to verify quality
+4. Commit changes (pre-commit hooks will run automatically)
+
+### Pre-commit Hooks
+
+Set up automatic quality checks before each commit:
+```bash
+./scripts/setup-hooks.sh
+```
+
+After setup, git will automatically run quality checks before allowing commits. To bypass temporarily:
+```bash
+git commit --no-verify -m "Your commit message"
+```
+

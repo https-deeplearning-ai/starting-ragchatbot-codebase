@@ -2,11 +2,12 @@
 """
 Test RAG system initialization step by step to identify the bottleneck
 """
-import sys
 import os
+import sys
 
 # Add parent directory to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 
 def test_component_initialization():
     """Test each component initialization separately"""
@@ -18,6 +19,7 @@ def test_component_initialization():
     print("1. Testing config...")
     try:
         from config import config
+
         print(f"   ✅ Config loaded")
         print(f"   ANTHROPIC_API_KEY exists: {bool(config.ANTHROPIC_API_KEY)}")
         print(f"   ANTHROPIC_MODEL: {config.ANTHROPIC_MODEL}")
@@ -31,11 +33,13 @@ def test_component_initialization():
     print("\n2. Testing DocumentProcessor...")
     try:
         from document_processor import DocumentProcessor
+
         processor = DocumentProcessor(config.CHUNK_SIZE, config.CHUNK_OVERLAP)
         print(f"   ✅ DocumentProcessor initialized")
     except Exception as e:
         print(f"   ❌ DocumentProcessor failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -43,12 +47,16 @@ def test_component_initialization():
     print("\n3. Testing VectorStore...")
     try:
         from vector_store import VectorStore
+
         print(f"   Creating VectorStore with path: {config.CHROMA_PATH}")
-        store = VectorStore(config.CHROMA_PATH, config.EMBEDDING_MODEL, config.MAX_RESULTS)
+        store = VectorStore(
+            config.CHROMA_PATH, config.EMBEDDING_MODEL, config.MAX_RESULTS
+        )
         print(f"   ✅ VectorStore initialized")
     except Exception as e:
         print(f"   ❌ VectorStore failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -56,12 +64,14 @@ def test_component_initialization():
     print("\n4. Testing AIGenerator...")
     try:
         from ai_generator import AIGenerator
+
         print(f"   Creating AIGenerator with model: {config.ANTHROPIC_MODEL}")
         generator = AIGenerator(config.ANTHROPIC_API_KEY, config.ANTHROPIC_MODEL)
         print(f"   ✅ AIGenerator initialized")
     except Exception as e:
         print(f"   ❌ AIGenerator failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -69,6 +79,7 @@ def test_component_initialization():
     print("\n5. Testing SessionManager...")
     try:
         from session_manager import SessionManager
+
         session = SessionManager(config.MAX_HISTORY)
         print(f"   ✅ SessionManager initialized")
     except Exception as e:
@@ -78,7 +89,7 @@ def test_component_initialization():
     # Test ToolManager and tools
     print("\n6. Testing ToolManager and tools...")
     try:
-        from search_tools import ToolManager, CourseSearchTool, CourseOutlineTool
+        from search_tools import CourseOutlineTool, CourseSearchTool, ToolManager
 
         tool_manager = ToolManager()
         print(f"   ✅ ToolManager initialized")
@@ -95,6 +106,7 @@ def test_component_initialization():
     except Exception as e:
         print(f"   ❌ ToolManager failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -102,15 +114,18 @@ def test_component_initialization():
     print("\n7. Testing full RAGSystem...")
     try:
         from rag_system import RAGSystem
+
         rag = RAGSystem(config)
         print(f"   ✅ RAGSystem initialized")
     except Exception as e:
         print(f"   ❌ RAGSystem failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
     return True
+
 
 def test_vector_store_detailed():
     """Test vector store with more detail"""
@@ -118,8 +133,8 @@ def test_vector_store_detailed():
     print("=" * 30)
 
     try:
-        from vector_store import VectorStore
         from config import config
+        from vector_store import VectorStore
 
         print(f"Initializing VectorStore...")
         print(f"  Path: {config.CHROMA_PATH}")
@@ -136,7 +151,9 @@ def test_vector_store_detailed():
         signal.alarm(10)  # 10 second timeout
 
         try:
-            store = VectorStore(config.CHROMA_PATH, config.EMBEDDING_MODEL, config.MAX_RESULTS)
+            store = VectorStore(
+                config.CHROMA_PATH, config.EMBEDDING_MODEL, config.MAX_RESULTS
+            )
             signal.alarm(0)  # Cancel timeout
             print("  ✅ VectorStore created successfully")
 
@@ -153,8 +170,10 @@ def test_vector_store_detailed():
     except Exception as e:
         print(f"  ❌ VectorStore error: {e}")
         import traceback
+
         traceback.print_exc()
         return None
+
 
 def main():
     """Run initialization tests"""
@@ -178,6 +197,7 @@ def main():
     print("The issue might be in the integration or during query processing.")
 
     return True
+
 
 if __name__ == "__main__":
     success = main()

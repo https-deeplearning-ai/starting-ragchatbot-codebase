@@ -1,9 +1,11 @@
+from typing import Any, Dict, List, Optional
+
 import anthropic
-from typing import List, Optional, Dict, Any
+
 
 class AIGenerator:
     """Handles interactions with Anthropic's Claude API for generating responses"""
-    
+
     # Static system prompt to avoid rebuilding on each call
     SYSTEM_PROMPT = """ You are an AI assistant specialized in course materials and educational content with access to comprehensive search tools for course information.
 
@@ -39,23 +41,22 @@ All responses must be:
 4. **Example-supported** - Include relevant examples when they aid understanding
 Provide only the direct answer to what was asked.
 """
-    
+
     def __init__(self, api_key: str, model: str):
         self.client = anthropic.Anthropic(api_key=api_key)
         self.model = model
-        
+
         # Pre-build base API parameters
-        self.base_params = {
-            "model": self.model,
-            "temperature": 0,
-            "max_tokens": 800
-        }
-    
-    def generate_response(self, query: str,
-                         conversation_history: Optional[str] = None,
-                         tools: Optional[List] = None,
-                         tool_manager=None,
-                         max_tool_rounds: int = 2) -> str:
+        self.base_params = {"model": self.model, "temperature": 0, "max_tokens": 800}
+
+    def generate_response(
+        self,
+        query: str,
+        conversation_history: Optional[str] = None,
+        tools: Optional[List] = None,
+        tool_manager=None,
+        max_tool_rounds: int = 2,
+    ) -> str:
         """
         Generate AI response with optional tool usage and conversation context.
 
@@ -69,37 +70,45 @@ Provide only the direct answer to what was asked.
         Returns:
             Generated response as string
         """
-        
+
         # Build system content efficiently - avoid string ops when possible
         system_content = (
             f"{self.SYSTEM_PROMPT}\n\nPrevious conversation:\n{conversation_history}"
-            if conversation_history 
+            if conversation_history
             else self.SYSTEM_PROMPT
         )
-        
+
         # Prepare API call parameters efficiently
         api_params = {
             **self.base_params,
             "messages": [{"role": "user", "content": query}],
-            "system": system_content
+            "system": system_content,
         }
-        
+
         # Add tools if available
         if tools:
             api_params["tools"] = tools
             api_params["tool_choice"] = {"type": "auto"}
-        
+
         # Get response from Claude
         response = self.client.messages.create(**api_params)
-        
+
         # Handle tool execution if needed
         if response.stop_reason == "tool_use" and tool_manager:
-            return self._handle_tool_execution(response, api_params, tool_manager, max_tool_rounds)
-        
+            return self._handle_tool_execution(
+                response, api_params, tool_manager, max_tool_rounds
+            )
+
         # Return direct response
         return response.content[0].text
-    
-    def _handle_tool_execution(self, initial_response, base_params: Dict[str, Any], tool_manager, max_tool_rounds: int):
+
+    def _handle_tool_execution(
+        self,
+        initial_response,
+        base_params: Dict[str, Any],
+        tool_manager,
+        max_tool_rounds: int,
+    ):
         """
         Handle sequential execution of tool calls and get follow-up response.
 
@@ -133,7 +142,7 @@ Provide only the direct answer to what was asked.
                 "messages": messages,
                 "system": base_params["system"],
                 "tools": base_params.get("tools", []),
-                "tool_choice": {"type": "auto"}
+                "tool_choice": {"type": "auto"},
             }
 
             # Get response from Claude
@@ -157,7 +166,7 @@ Provide only the direct answer to what was asked.
         final_params = {
             **self.base_params,
             "messages": messages,
-            "system": base_params["system"]
+            "system": base_params["system"],
         }
 
         # Get final response
@@ -181,21 +190,24 @@ Provide only the direct answer to what was asked.
             for content_block in response.content:
                 if content_block.type == "tool_use":
                     tool_result = tool_manager.execute_tool(
-                        content_block.name,
-                        **content_block.input
+                        content_block.name, **content_block.input
                     )
 
-                    tool_results.append({
-                        "type": "tool_result",
-                        "tool_use_id": content_block.id,
-                        "content": tool_result
-                    })
+                    tool_results.append(
+                        {
+                            "type": "tool_result",
+                            "tool_use_id": content_block.id,
+                            "content": tool_result,
+                        }
+                    )
         except Exception as e:
             # If tool execution fails, add error result
-            tool_results.append({
-                "type": "tool_result",
-                "tool_use_id": getattr(content_block, 'id', 'unknown'),
-                "content": f"Error executing tool: {str(e)}"
-            })
+            tool_results.append(
+                {
+                    "type": "tool_result",
+                    "tool_use_id": getattr(content_block, "id", "unknown"),
+                    "content": f"Error executing tool: {str(e)}",
+                }
+            )
 
         return tool_results
