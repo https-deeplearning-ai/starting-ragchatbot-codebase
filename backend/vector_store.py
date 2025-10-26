@@ -2,6 +2,9 @@ import chromadb
 from chromadb.config import Settings
 from typing import List, Dict, Any, Optional
 from dataclasses import dataclass
+import signal
+import time
+import sys
 from models import Course, CourseChunk
 from sentence_transformers import SentenceTransformer
 
@@ -33,23 +36,115 @@ class SearchResults:
 
 class VectorStore:
     """Vector storage using ChromaDB for course content and metadata"""
-    
+
     def __init__(self, chroma_path: str, embedding_model: str, max_results: int = 5):
         self.max_results = max_results
+        self.embedding_model_name = embedding_model
+        self.chroma_path = chroma_path
+
+        print(f"🔧 Initializing VectorStore...")
+        print(f"   Path: {chroma_path}")
+        print(f"   Model: {embedding_model}")
+
         # Initialize ChromaDB client
-        self.client = chromadb.PersistentClient(
-            path=chroma_path,
-            settings=Settings(anonymized_telemetry=False)
-        )
-        
-        # Set up sentence transformer embedding function
-        self.embedding_function = chromadb.utils.embedding_functions.SentenceTransformerEmbeddingFunction(
-            model_name=embedding_model
-        )
-        
+        try:
+            print("   📦 Initializing ChromaDB client...")
+            self.client = chromadb.PersistentClient(
+                path=chroma_path,
+                settings=Settings(anonymized_telemetry=False)
+            )
+            print("   ✅ ChromaDB client initialized")
+        except Exception as e:
+            print(f"   ❌ Failed to initialize ChromaDB client: {e}")
+            raise RuntimeError(f"ChromaDB initialization failed: {str(e)}")
+
+        # Set up sentence transformer embedding function with timeout
+        try:
+            print("   🧠 Loading embedding model (this may take a moment)...")
+            self.embedding_function = self._create_embedding_function_with_timeout(embedding_model, timeout=60)
+            print("   ✅ Embedding function initialized")
+        except Exception as e:
+            print(f"   ❌ Failed to initialize embedding function: {e}")
+            raise RuntimeError(f"Embedding function initialization failed: {str(e)}")
+
         # Create collections for different types of data
-        self.course_catalog = self._create_collection("course_catalog")  # Course titles/instructors
-        self.course_content = self._create_collection("course_content")  # Actual course material
+        try:
+            print("   📚 Creating collections...")
+            self.course_catalog = self._create_collection("course_catalog")  # Course titles/instructors
+            self.course_content = self._create_collection("course_content")  # Actual course material
+            print("   ✅ Collections created")
+        except Exception as e:
+            print(f"   ❌ Failed to create collections: {e}")
+            raise RuntimeError(f"Collection creation failed: {str(e)}")
+
+        print("   ✅ VectorStore initialization complete")
+
+    def _create_embedding_function_with_timeout(self, model_name: str, timeout: int = 60):
+        """Create embedding function with timeout to prevent hanging"""
+
+        def timeout_handler(signum, frame):
+            raise TimeoutError(f"Embedding model loading timed out after {timeout} seconds")
+
+        # Set up timeout
+        old_handler = signal.signal(signal.SIGALRM, timeout_handler)
+        signal.alarm(timeout)
+
+        try:
+            print(f"      Loading model: {model_name}")
+            start_time = time.time()
+
+            # Try primary method
+            embedding_function = chromadb.utils.embedding_functions.SentenceTransformerEmbeddingFunction(
+                model_name=model_name
+            )
+
+            load_time = time.time() - start_time
+            print(f"      ✅ Model loaded in {load_time:.1f} seconds")
+
+            signal.alarm(0)  # Cancel timeout
+            return embedding_function
+
+        except TimeoutError:
+            print(f"      ❌ Model loading timed out after {timeout} seconds")
+            print(f"      This might be due to:")
+            print(f"         - Slow network connection")
+            print(f"         - Insufficient system resources")
+            print(f"         - Large model size")
+            raise RuntimeError(f"Failed to load embedding model '{model_name}' within {timeout} seconds. "
+                             "Consider using a lighter model or checking system resources.")
+
+        except Exception as e:
+            print(f"      ❌ Primary embedding function failed: {e}")
+
+            # Try fallback method
+            try:
+                print("      🔄 Trying fallback embedding method...")
+                start_time = time.time()
+
+                # Pre-load the model directly
+                model = SentenceTransformer(model_name)
+                print(f"      ✅ Direct model loading successful in {time.time() - start_time:.1f} seconds")
+
+                # Create custom embedding function
+                class CustomEmbeddingFunction:
+                    def __init__(self, model):
+                        self.model = model
+
+                    def __call__(self, texts):
+                        return self.model.encode(texts).tolist()
+
+                signal.alarm(0)  # Cancel timeout
+                return CustomEmbeddingFunction(model)
+
+            except Exception as fallback_error:
+                print(f"      ❌ Fallback embedding method also failed: {fallback_error}")
+                raise RuntimeError(f"Failed to initialize embedding function using both primary and fallback methods. "
+                                 f"Primary error: {str(e)}, Fallback error: {str(fallback_error)}")
+
+        finally:
+            # Restore original signal handler
+            signal.alarm(0)
+            signal.signal(signal.SIGALRM, old_handler)
     
     def _create_collection(self, name: str):
         """Create or get a ChromaDB collection"""
