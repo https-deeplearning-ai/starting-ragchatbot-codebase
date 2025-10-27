@@ -10,29 +10,78 @@ from vector_store import VectorStore
 
 
 class RAGSystem:
-    """Main orchestrator for the Retrieval-Augmented Generation system"""
+    """Main orchestrator for the Retrieval-Augmented Generation system with lazy loading"""
 
     def __init__(self, config):
         self.config = config
+        self._document_processor = None
+        self._vector_store = None
+        self._ai_generator = None
+        self._session_manager = None
+        self._tool_manager = None
+        self._search_tool = None
+        self._outline_tool = None
+        self._initialized = False
 
-        # Initialize core components
-        self.document_processor = DocumentProcessor(
-            config.CHUNK_SIZE, config.CHUNK_OVERLAP
-        )
-        self.vector_store = VectorStore(
-            config.CHROMA_PATH, config.EMBEDDING_MODEL, config.MAX_RESULTS
-        )
-        self.ai_generator = AIGenerator(
-            config.ANTHROPIC_API_KEY, config.ANTHROPIC_MODEL
-        )
-        self.session_manager = SessionManager(config.MAX_HISTORY)
+    @property
+    def document_processor(self):
+        """Lazy load document processor"""
+        if self._document_processor is None:
+            self._document_processor = DocumentProcessor(
+                self.config.CHUNK_SIZE, self.config.CHUNK_OVERLAP
+            )
+        return self._document_processor
 
-        # Initialize search tools
-        self.tool_manager = ToolManager()
-        self.search_tool = CourseSearchTool(self.vector_store)
-        self.outline_tool = CourseOutlineTool(self.vector_store)
-        self.tool_manager.register_tool(self.search_tool)
-        self.tool_manager.register_tool(self.outline_tool)
+    @property
+    def vector_store(self):
+        """Lazy load vector store (most expensive component)"""
+        if self._vector_store is None:
+            print("🔧 Initializing VectorStore (lazy loading)...")
+            self._vector_store = VectorStore(
+                self.config.CHROMA_PATH, self.config.EMBEDDING_MODEL, self.config.MAX_RESULTS
+            )
+            print("✅ VectorStore initialized")
+        return self._vector_store
+
+    @property
+    def ai_generator(self):
+        """Lazy load AI generator"""
+        if self._ai_generator is None:
+            self._ai_generator = AIGenerator(
+                self.config.ANTHROPIC_API_KEY, self.config.ANTHROPIC_MODEL
+            )
+        return self._ai_generator
+
+    @property
+    def session_manager(self):
+        """Lazy load session manager"""
+        if self._session_manager is None:
+            self._session_manager = SessionManager(self.config.MAX_HISTORY)
+        return self._session_manager
+
+    @property
+    def tool_manager(self):
+        """Lazy load tool manager"""
+        if self._tool_manager is None:
+            self._tool_manager = ToolManager()
+            self._search_tool = CourseSearchTool(self.vector_store)
+            self._outline_tool = CourseOutlineTool(self.vector_store)
+            self._tool_manager.register_tool(self._search_tool)
+            self._tool_manager.register_tool(self._outline_tool)
+        return self._tool_manager
+
+    def initialize_components(self):
+        """Pre-initialize all components (optional for faster startup)"""
+        if not self._initialized:
+            print("🚀 Pre-initializing all components...")
+            # Access all properties to trigger lazy loading
+            _ = self.document_processor
+            _ = self.vector_store
+            _ = self.ai_generator
+            _ = self.session_manager
+            _ = self.tool_manager
+            self._initialized = True
+            print("✅ All components initialized")
 
     def add_course_document(self, file_path: str) -> Tuple[Course, int]:
         """

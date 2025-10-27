@@ -16,7 +16,7 @@ class Config:
     ANTHROPIC_MODEL: str = "claude-3-5-haiku-20241022"
 
     # Embedding model settings
-    EMBEDDING_MODEL: str = "all-MiniLM-L6-v2"
+    EMBEDDING_MODEL: str = os.getenv("EMBEDDING_MODEL", "all-MiniLM-L6-v2")
 
     # Document processing settings
     CHUNK_SIZE: int = 800  # Size of text chunks for vector storage
@@ -26,6 +26,12 @@ class Config:
 
     # Database paths
     CHROMA_PATH: str = "./chroma_db"  # ChromaDB storage location
+
+    # Startup performance settings
+    LAZY_LOADING: bool = os.getenv("LAZY_LOADING", "true").lower() == "true"  # Enable lazy loading
+    BACKGROUND_DOCUMENT_PROCESSING: bool = os.getenv("BACKGROUND_DOCUMENT_PROCESSING", "true").lower() == "true"
+    PRELOAD_COMPONENTS: bool = os.getenv("PRELOAD_COMPONENTS", "false").lower() == "true"  # Pre-load all components
+    QUICK_START: bool = os.getenv("QUICK_START", "false").lower() == "true"  # Skip document processing entirely
 
 
 config = Config()

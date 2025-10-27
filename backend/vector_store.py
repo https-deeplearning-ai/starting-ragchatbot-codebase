@@ -70,10 +70,12 @@ class VectorStore:
         # Set up sentence transformer embedding function with timeout
         try:
             print("   🧠 Loading embedding model (this may take a moment)...")
+            start_time = time.time()
             self.embedding_function = self._create_embedding_function_with_timeout(
-                embedding_model, timeout=60
+                embedding_model, timeout=120  # Increased timeout for better reliability
             )
-            print("   ✅ Embedding function initialized")
+            load_time = time.time() - start_time
+            print(f"   ✅ Embedding function initialized in {load_time:.1f} seconds")
         except Exception as e:
             print(f"   ❌ Failed to initialize embedding function: {e}")
             raise RuntimeError(f"Embedding function initialization failed: {str(e)}")
