@@ -7,6 +7,13 @@ let currentSessionId = null;
 // DOM elements
 let chatMessages, chatInput, sendButton, totalCourses, courseTitles, newChatButton, themeToggle;
 
+// Theme management
+const THEME_STORAGE_KEY = 'course-assistant-theme';
+const THEMES = {
+    DARK: 'dark',
+    LIGHT: 'light'
+};
+
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     // Get DOM elements after page loads
@@ -34,6 +41,19 @@ function setupEventListeners() {
 
     // New chat button
     newChatButton.addEventListener('click', handleNewChat);
+
+    // Theme toggle button
+    if (themeToggle) {
+        themeToggle.addEventListener('click', handleThemeToggle);
+
+        // Keyboard accessibility
+        themeToggle.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                handleThemeToggle();
+            }
+        });
+    }
 
     // Suggested questions
     document.querySelectorAll('.suggested-item').forEach(button => {
@@ -217,26 +237,63 @@ async function loadCourseStats() {
     }
 }
 
-// Theme Functions
+// Theme Management Functions
 function initializeTheme() {
-    // Check for saved theme preference or default to dark theme
-    const savedTheme = localStorage.getItem('theme') || 'dark';
-    setTheme(savedTheme);
+    // Get saved theme or detect system preference
+    const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+    const systemPrefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
+
+    const initialTheme = savedTheme || (systemPrefersLight ? THEMES.LIGHT : THEMES.DARK);
+    applyTheme(initialTheme);
 }
 
-function toggleTheme() {
-    const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
-    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-    setTheme(newTheme);
-    localStorage.setItem('theme', newTheme);
+function handleThemeToggle() {
+    const currentTheme = document.documentElement.getAttribute('data-theme') || THEMES.DARK;
+    const newTheme = currentTheme === THEMES.DARK ? THEMES.LIGHT : THEMES.DARK;
+
+    applyTheme(newTheme);
+    saveThemePreference(newTheme);
+
+    // Announce theme change for screen readers
+    announceThemeChange(newTheme);
 }
 
-function setTheme(theme) {
-    document.documentElement.setAttribute('data-theme', theme);
+function applyTheme(theme) {
+    const isLight = theme === THEMES.LIGHT;
 
-    // Update ARIA label for screen readers
+    // Set data attribute on html element
+    document.documentElement.setAttribute('data-theme', isLight ? 'light' : '');
+
+    // Update toggle button state
     if (themeToggle) {
-        const isLight = theme === 'light';
-        themeToggle.setAttribute('aria-label', `Switch to ${isLight ? 'dark' : 'light'} theme`);
+        themeToggle.setAttribute('aria-checked', isLight);
+        themeToggle.setAttribute('title', `Switch to ${isLight ? 'dark' : 'light'} mode`);
+        themeToggle.setAttribute('aria-label', `Switch to ${isLight ? 'dark' : 'light'} mode`);
     }
+}
+
+function saveThemePreference(theme) {
+    localStorage.setItem(THEME_STORAGE_KEY, theme);
+}
+
+function announceThemeChange(theme) {
+    // Create announcement for screen readers
+    const announcement = document.createElement('div');
+    announcement.setAttribute('aria-live', 'polite');
+    announcement.setAttribute('aria-atomic', 'true');
+    announcement.style.position = 'absolute';
+    announcement.style.left = '-10000px';
+    announcement.style.width = '1px';
+    announcement.style.height = '1px';
+    announcement.style.overflow = 'hidden';
+    announcement.textContent = `Switched to ${theme} mode`;
+
+    document.body.appendChild(announcement);
+
+    // Remove after announcement
+    setTimeout(() => {
+        if (announcement.parentNode) {
+            announcement.parentNode.removeChild(announcement);
+        }
+    }, 1000);
 }

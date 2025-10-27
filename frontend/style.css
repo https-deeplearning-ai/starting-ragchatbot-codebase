@@ -5,7 +5,7 @@
     padding: 0;
 }
 
-/* CSS Variables - Dark Theme (Default) */
+/* CSS Variables - Dark Mode (Default) */
 :root {
     --primary-color: #2563eb;
     --primary-hover: #1d4ed8;
@@ -22,6 +22,51 @@
     --focus-ring: rgba(37, 99, 235, 0.2);
     --welcome-bg: #1e3a5f;
     --welcome-border: #2563eb;
+
+    /* Enhanced dark theme colors for consistency */
+    --sidebar-bg: #1e293b;
+    --sidebar-border: #334155;
+    --input-bg: #1e293b;
+    --input-border: #475569;
+    --input-focus-border: #3b82f6;
+    --button-text: #ffffff;
+    --hover-bg: #334155;
+    --code-bg: #1e293b;
+    --code-text: #e2e8f0;
+    --blockquote-border: #475569;
+    --loading-color: #94a3b8;
+}
+
+/* Light Mode Variables */
+[data-theme="light"] {
+    --primary-color: #2563eb;
+    --primary-hover: #1d4ed8;
+    --background: #ffffff;
+    --surface: #f8fafc;
+    --surface-hover: #f1f5f9;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --border-color: #e2e8f0;
+    --user-message: #2563eb;
+    --assistant-message: #f1f5f9;
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --radius: 12px;
+    --focus-ring: rgba(37, 99, 235, 0.2);
+    --welcome-bg: #f8fafc;
+    --welcome-border: #2563eb;
+
+    /* Enhanced light theme colors for better contrast */
+    --sidebar-bg: #ffffff;
+    --sidebar-border: #e2e8f0;
+    --input-bg: #ffffff;
+    --input-border: #d1d5db;
+    --input-focus-border: #3b82f6;
+    --button-text: #ffffff;
+    --hover-bg: #f3f4f6;
+    --code-bg: #f3f4f6;
+    --code-text: #1f2937;
+    --blockquote-border: #d1d5db;
+    --loading-color: #6b7280;
 }
 
 /* Light Theme Variables */
@@ -157,8 +202,8 @@ header h1 {
 /* Left Sidebar */
 .sidebar {
     width: 320px;
-    background: var(--surface);
-    border-right: 1px solid var(--border-color);
+    background: var(--sidebar-bg, var(--surface));
+    border-right: 1px solid var(--sidebar-border, var(--border-color));
     padding: 1.5rem;
     overflow-y: auto;
     flex-shrink: 0;
@@ -359,7 +404,8 @@ header h1 {
 }
 
 .message-content code {
-    background-color: rgba(0, 0, 0, 0.2);
+    background-color: var(--code-bg, rgba(0, 0, 0, 0.2));
+    color: var(--code-text, var(--text-primary));
     padding: 0.125rem 0.25rem;
     border-radius: 3px;
     font-family: 'Fira Code', 'Consolas', monospace;
@@ -390,7 +436,7 @@ header h1 {
 }
 
 .message-content blockquote {
-    border-left: 3px solid var(--primary);
+    border-left: 3px solid var(--blockquote-border, var(--primary));
     padding-left: 1rem;
     margin: 0.5rem 0;
     color: var(--text-secondary);
@@ -432,8 +478,8 @@ header h1 {
 #chatInput {
     flex: 1;
     padding: 0.875rem 1.25rem;
-    background: var(--surface);
-    border: 1px solid var(--border-color);
+    background: var(--input-bg, var(--surface));
+    border: 1px solid var(--input-border, var(--border-color));
     border-radius: 24px;
     color: var(--text-primary);
     font-size: 0.95rem;
@@ -442,7 +488,7 @@ header h1 {
 
 #chatInput:focus {
     outline: none;
-    border-color: var(--primary-color);
+    border-color: var(--input-focus-border, var(--primary-color));
     box-shadow: 0 0 0 3px var(--focus-ring);
 }
 
@@ -485,6 +531,105 @@ header h1 {
     cursor: not-allowed;
 }
 
+/* Theme Toggle Button */
+.theme-toggle {
+    position: fixed;
+    top: 1.5rem;
+    right: 1.5rem;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    background: var(--surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    color: var(--text-primary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1000;
+    box-shadow: var(--shadow);
+}
+
+.theme-toggle:hover {
+    background: var(--surface-hover);
+    border-color: var(--primary-color);
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(37, 99, 235, 0.15);
+}
+
+.theme-toggle:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px var(--focus-ring), var(--shadow);
+}
+
+.theme-toggle:active {
+    transform: scale(0.95);
+}
+
+/* Theme Toggle Icon Container */
+.theme-toggle-icon {
+    position: relative;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Theme Toggle Icons */
+.theme-toggle .sun-icon,
+.theme-toggle .moon-icon {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.theme-toggle .sun-icon {
+    opacity: 1;
+    transform: rotate(0deg) scale(1);
+}
+
+.theme-toggle .moon-icon {
+    opacity: 0;
+    transform: rotate(-180deg) scale(0.7);
+}
+
+/* Light mode state */
+.theme-toggle[aria-checked="true"] .sun-icon {
+    opacity: 0;
+    transform: rotate(180deg) scale(0.7);
+}
+
+.theme-toggle[aria-checked="true"] .moon-icon {
+    opacity: 1;
+    transform: rotate(0deg) scale(1);
+}
+
+/* Theme transition for smooth mode switching */
+body {
+    transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.theme-toggle,
+.message-content,
+.chat-input-container,
+.sidebar,
+.chat-messages,
+.suggested-item,
+.new-chat-button,
+.stats-header,
+.course-stats,
+.stat-item {
+    transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 /* Loading Animation */
 .loading {
     display: inline-flex;
@@ -495,7 +640,7 @@ header h1 {
 .loading span {
     width: 8px;
     height: 8px;
-    background: var(--text-secondary);
+    background: var(--loading-color, var(--text-secondary));
     border-radius: 50%;
     animation: bounce 1.4s infinite ease-in-out both;
 }
