@@ -31,6 +31,18 @@ uv add package_name
 uv run script.py
 ```
 
+### Code Quality Tools
+```bash
+# Format all code (black + isort)
+./scripts/format.sh
+
+# Run all quality checks
+./scripts/check-quality.sh
+
+# Set up git pre-commit hooks
+./scripts/setup-hooks.sh
+```
+
 ### Environment Setup
 ```bash
 # Create .env file with:
@@ -102,6 +114,38 @@ Configuration is managed through `backend/config.py`:
 - `GET /docs` - FastAPI auto-generated documentation
 - `GET /` - Frontend web interface
 
+## Code Quality Workflow
+
+This project includes comprehensive code quality tools to maintain consistent, clean code:
+
+### Tools Included
+- **Black**: Python code formatter (88-character line length)
+- **isort**: Import statement organizer
+- **flake8**: Linter for code style and error checking
+- **mypy**: Optional static type checking
+
+### Configuration
+- `pyproject.toml`: Black, isort, and MyPy settings
+- `.flake8`: Linting rules and exclusions
+
+### Daily Development Workflow
+1. **Before committing**: Run `./scripts/check-quality.sh` to ensure code passes all checks
+2. **Fix formatting**: Run `./scripts/format.sh` to automatically fix formatting issues
+3. **Pre-commit hooks**: Run `./scripts/setup-hooks.sh` to set up automatic quality checks
+
+### Git Integration
+The project supports automatic pre-commit hooks that run quality checks before allowing commits:
+```bash
+# Set up hooks (one-time setup)
+./scripts/setup-hooks.sh
+
+# Commit normally (hooks run automatically)
+git commit -m "Your changes"
+
+# Skip hooks if needed (not recommended)
+git commit --no-verify -m "Your changes"
+```
+
 ## Development Notes
 
 - The application automatically loads documents from `../docs` on startup
@@ -109,3 +153,5 @@ Configuration is managed through `backend/config.py`:
 - The system uses sentence-based chunking with overlap for better context
 - Tool-based search ensures accurate, course-specific responses
 - Session management maintains conversation context for follow-up questions
+- All code is automatically formatted with Black and imports sorted with isort
+- Pre-commit hooks ensure code quality before changes are committed

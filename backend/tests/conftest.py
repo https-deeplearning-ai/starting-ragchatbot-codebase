@@ -1,7 +1,7 @@
 """
 Test configuration and shared fixtures for RAG system tests
 """
-import pytest
+
 import os
 import tempfile
 from unittest.mock import Mock, MagicMock, patch
@@ -12,16 +12,23 @@ import json
 
 # Add parent directory to path for imports
 import sys
+from dataclasses import dataclass
+from typing import Any, Dict, List
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from config import Config
-from models import Course, Lesson, CourseChunk
+from models import Course, CourseChunk, Lesson
 from vector_store import SearchResults
 
 
 @dataclass
 class TestConfig:
     """Test configuration that mirrors the real config but with safe defaults"""
+
     ANTHROPIC_API_KEY: str = "test-api-key"
     ANTHROPIC_MODEL: str = "claude-3-5-haiku-202410224"
     EMBEDDING_MODEL: str = "all-MiniLM-L6-v2"
@@ -52,25 +59,25 @@ def sample_course():
         Lesson(
             lesson_number=1,
             title="Introduction to Machine Learning",
-            lesson_link="https://example.com/lesson1"
+            lesson_link="https://example.com/lesson1",
         ),
         Lesson(
             lesson_number=2,
             title="Linear Regression Basics",
-            lesson_link="https://example.com/lesson2"
+            lesson_link="https://example.com/lesson2",
         ),
         Lesson(
             lesson_number=3,
             title="Advanced Neural Networks",
-            lesson_link="https://example.com/lesson3"
-        )
+            lesson_link="https://example.com/lesson3",
+        ),
     ]
 
     return Course(
         title="Machine Learning Fundamentals",
         instructor="Dr. Test Instructor",
         course_link="https://example.com/ml-course",
-        lessons=lessons
+        lessons=lessons,
     )
 
 
@@ -82,26 +89,26 @@ def sample_course_chunks():
             course_title="Machine Learning Fundamentals",
             lesson_number=1,
             chunk_index=0,
-            content="Machine learning is a subset of artificial intelligence that focuses on algorithms that can learn from data."
+            content="Machine learning is a subset of artificial intelligence that focuses on algorithms that can learn from data.",
         ),
         CourseChunk(
             course_title="Machine Learning Fundamentals",
             lesson_number=1,
             chunk_index=1,
-            content="Supervised learning uses labeled training data to learn mapping functions from input to output."
+            content="Supervised learning uses labeled training data to learn mapping functions from input to output.",
         ),
         CourseChunk(
             course_title="Machine Learning Fundamentals",
             lesson_number=2,
             chunk_index=0,
-            content="Linear regression is a fundamental statistical technique for modeling the relationship between variables."
+            content="Linear regression is a fundamental statistical technique for modeling the relationship between variables.",
         ),
         CourseChunk(
             course_title="Machine Learning Fundamentals",
             lesson_number=3,
             chunk_index=0,
-            content="Neural networks are computing systems inspired by biological neural networks in animal brains."
-        )
+            content="Neural networks are computing systems inspired by biological neural networks in animal brains.",
+        ),
     ]
 
 
@@ -113,32 +120,32 @@ def mock_vector_store():
     # Configure mock search results
     successful_results = SearchResults(
         documents=["Test content about machine learning"],
-        metadata=[{
-            "course_title": "Machine Learning Fundamentals",
-            "lesson_number": 1,
-            "chunk_index": 0
-        }],
-        distances=[0.1]
+        metadata=[
+            {
+                "course_title": "Machine Learning Fundamentals",
+                "lesson_number": 1,
+                "chunk_index": 0,
+            }
+        ],
+        distances=[0.1],
     )
 
-    empty_results = SearchResults(
-        documents=[],
-        metadata=[],
-        distances=[]
-    )
+    empty_results = SearchResults(documents=[], metadata=[], distances=[])
 
     error_results = SearchResults(
         documents=[],
         metadata=[],
         distances=[],
-        error="Search failed: Database connection error"
+        error="Search failed: Database connection error",
     )
 
     # Configure mock methods
     mock_store.search.return_value = successful_results
     mock_store._resolve_course_name.return_value = "Machine Learning Fundamentals"
     mock_store.get_course_count.return_value = 1
-    mock_store.get_existing_course_titles.return_value = ["Machine Learning Fundamentals"]
+    mock_store.get_existing_course_titles.return_value = [
+        "Machine Learning Fundamentals"
+    ]
 
     return mock_store
 
@@ -150,7 +157,9 @@ def mock_anthropic_client():
 
     # Mock successful response
     mock_response = Mock()
-    mock_response.content = [Mock(text="This is a test response about machine learning.")]
+    mock_response.content = [
+        Mock(text="This is a test response about machine learning.")
+    ]
     mock_response.stop_reason = "stop_sequence"
 
     # Mock tool use response
@@ -161,22 +170,24 @@ def mock_anthropic_client():
             type="tool_use",
             id="tool_123",
             name="search_course_content",
-            input={"query": "machine learning basics"}
+            input={"query": "machine learning basics"},
         )
     ]
 
     # Mock final response after tool execution
     mock_final_response = Mock()
-    mock_final_response.content = [Mock(text="Based on the course materials, machine learning is...")]
+    mock_final_response.content = [
+        Mock(text="Based on the course materials, machine learning is...")
+    ]
 
     # Configure the client
     mock_client.messages.create.return_value = mock_response
 
     return {
-        'client': mock_client,
-        'response': mock_response,
-        'tool_response': mock_tool_response,
-        'final_response': mock_final_response
+        "client": mock_client,
+        "response": mock_response,
+        "tool_response": mock_tool_response,
+        "final_response": mock_final_response,
     }
 
 
@@ -192,11 +203,13 @@ def mock_search_tools():
             "properties": {
                 "query": {"type": "string"},
                 "course_name": {"type": "string"},
-                "lesson_number": {"type": "integer"}
-            }
-        }
+                "lesson_number": {"type": "integer"},
+            },
+        },
     }
-    mock_search_tool.execute.return_value = "Found relevant content about machine learning"
+    mock_search_tool.execute.return_value = (
+        "Found relevant content about machine learning"
+    )
     mock_search_tool.last_sources = ["Machine Learning Fundamentals - Lesson 1"]
 
     mock_outline_tool = Mock()
@@ -205,18 +218,13 @@ def mock_search_tools():
         "description": "Get course outline",
         "input_schema": {
             "type": "object",
-            "properties": {
-                "course_title": {"type": "string"}
-            }
-        }
+            "properties": {"course_title": {"type": "string"}},
+        },
     }
     mock_outline_tool.execute.return_value = "Course: Machine Learning Fundamentals\nLessons:\n1. Introduction\n2. Linear Regression"
     mock_outline_tool.last_sources = ["Machine Learning Fundamentals"]
 
-    return {
-        'search_tool': mock_search_tool,
-        'outline_tool': mock_outline_tool
-    }
+    return {"search_tool": mock_search_tool, "outline_tool": mock_outline_tool}
 
 
 @pytest.fixture
@@ -229,7 +237,7 @@ def sample_queries():
         "invalid_course_query": "Tell me about quantum computing in Advanced Physics",
         "general_knowledge_query": "What is the capital of France?",
         "empty_query": "",
-        "malformed_query": "!!@@##$$"
+        "malformed_query": "!!@@##$$",
     }
 
 
@@ -243,12 +251,21 @@ def expected_tool_definitions():
             "input_schema": {
                 "type": "object",
                 "properties": {
-                    "query": {"type": "string", "description": "What to search for in the course content"},
-                    "course_name": {"type": "string", "description": "Course title (partial matches work, e.g. 'MCP', 'Introduction')"},
-                    "lesson_number": {"type": "integer", "description": "Specific lesson number to search within (e.g. 1, 2, 3)"}
+                    "query": {
+                        "type": "string",
+                        "description": "What to search for in the course content",
+                    },
+                    "course_name": {
+                        "type": "string",
+                        "description": "Course title (partial matches work, e.g. 'MCP', 'Introduction')",
+                    },
+                    "lesson_number": {
+                        "type": "integer",
+                        "description": "Specific lesson number to search within (e.g. 1, 2, 3)",
+                    },
                 },
-                "required": ["query"]
-            }
+                "required": ["query"],
+            },
         },
         {
             "name": "get_course_outline",
@@ -256,11 +273,14 @@ def expected_tool_definitions():
             "input_schema": {
                 "type": "object",
                 "properties": {
-                    "course_title": {"type": "string", "description": "Course title (partial matches work, e.g. 'MCP', 'Introduction')"}
+                    "course_title": {
+                        "type": "string",
+                        "description": "Course title (partial matches work, e.g. 'MCP', 'Introduction')",
+                    }
                 },
-                "required": ["course_title"]
-            }
-        }
+                "required": ["course_title"],
+            },
+        },
     ]
 
 
@@ -275,7 +295,7 @@ def search_test_cases():
             "course_name": None,
             "lesson_number": None,
             "expected_results": "found content",
-            "should_succeed": True
+            "should_succeed": True,
         },
         {
             "name": "course_specific_search",
@@ -283,7 +303,7 @@ def search_test_cases():
             "course_name": "Machine Learning Fundamentals",
             "lesson_number": None,
             "expected_results": "found specific content",
-            "should_succeed": True
+            "should_succeed": True,
         },
         {
             "name": "lesson_specific_search",
@@ -291,7 +311,7 @@ def search_test_cases():
             "course_name": "Machine Learning Fundamentals",
             "lesson_number": 3,
             "expected_results": "found lesson content",
-            "should_succeed": True
+            "should_succeed": True,
         },
         {
             "name": "invalid_course_search",
@@ -299,7 +319,7 @@ def search_test_cases():
             "course_name": "Nonexistent Course",
             "lesson_number": None,
             "expected_results": "No course found matching",
-            "should_succeed": False
+            "should_succeed": False,
         },
         {
             "name": "empty_results_search",
@@ -307,8 +327,8 @@ def search_test_cases():
             "course_name": None,
             "lesson_number": None,
             "expected_results": "No relevant content found",
-            "should_succeed": True
-        }
+            "should_succeed": True,
+        },
     ]
 
 
@@ -323,6 +343,7 @@ def mock_env_vars(monkeypatch):
 @pytest.fixture(autouse=True)
 def disable_network_calls(monkeypatch):
     """Prevent actual network calls during testing"""
+
     def mock_no_op(*args, **kwargs):
         pass
 
