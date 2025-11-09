@@ -20,6 +20,9 @@ backend/chroma_db/
 # Uploads
 uploads/
 
+# Git worktrees
+.trees/
+
 # IDE
 .vscode/
 .idea/
