@@ -119,15 +119,8 @@ class RAGSystem:
                     print(f"Error processing {file_name}: {e}")
 
         return total_courses, total_chunks
-<<<<<<< HEAD
-    
-    def query(self, query: str, session_id: Optional[str] = None) -> Tuple[str, List[str], List[str]]:
-=======
 
-    def query(
-        self, query: str, session_id: Optional[str] = None
-    ) -> Tuple[str, List[str]]:
->>>>>>> quality_feature
+    def query(self, query: str, session_id: Optional[str] = None) -> Tuple[str, List[str], List[str]]:
         """
         Process a user query using the RAG system with tool-based search.
 
@@ -154,11 +147,7 @@ class RAGSystem:
             tool_manager=self.tool_manager,
         )
 
-<<<<<<< HEAD
         # Get sources and links from the search tool
-=======
-        # Get sources from the search tool
->>>>>>> quality_feature
         sources = self.tool_manager.get_last_sources()
         source_links = self.tool_manager.get_last_source_links()
 
@@ -169,15 +158,10 @@ class RAGSystem:
         if session_id:
             self.session_manager.add_exchange(session_id, query, response)
 
-<<<<<<< HEAD
         # Return response with sources and links from tool searches
         return response, sources, source_links
-    
-=======
-        # Return response with sources from tool searches
-        return response, sources
 
->>>>>>> quality_feature
+
     def get_course_analytics(self) -> Dict:
         """Get analytics about the course catalog"""
         return {
