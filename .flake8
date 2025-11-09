@@ -1,0 +1,14 @@
+[flake8]
+max-line-length = 88
+extend-ignore = E203, E266, E501, W503
+exclude =
+    .git,
+    __pycache__,
+    .venv,
+    .eggs,
+    *.egg,
+    build,
+    dist,
+    chroma_db
+per-file-ignores =
+    __init__.py:F401
