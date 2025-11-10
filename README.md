@@ -108,3 +108,17 @@ Key settings:
 - Python version: 3.13
 - Excludes: `.venv`, `chroma_db`, build directories
 
+## Testing
+
+The project includes automated testing infrastructure for API endpoints and functionality.
+
+### Running Tests
+
+```bash
+# Run all tests
+uv run pytest
+
+# Run with coverage
+uv run pytest --cov=backend
+```
+
