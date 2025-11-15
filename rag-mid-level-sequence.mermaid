@@ -1,0 +1,49 @@
+sequenceDiagram
+    autonumber
+    participant User
+    participant Frontend as 🎨 Frontend
+    participant API as 🔌 FastAPI
+    participant RAG as 🤖 RAG System
+    participant AI as 🧠 Claude AI
+    participant Vector as 💾 Vector Store
+
+    Note over User,Vector: Mid-Level RAG Processing Flow
+
+    %% Request phase
+    User->>Frontend: Submit question
+    Frontend->>API: POST /api/query {session_id, message}
+
+    %% Context gathering
+    API->>RAG: Process query
+    RAG->>RAG: Load last 2 conversation exchanges
+
+    %% AI decision making
+    RAG->>AI: Send message + tool definitions
+    AI->>AI: Analyze: Does this need search?
+
+    alt Query needs search
+        AI->>RAG: Tool call: search(query, course, lesson)
+
+        %% Search execution
+        RAG->>Vector: Resolve course name (if provided)
+        Vector-->>RAG: Matched course_id
+
+        RAG->>Vector: Semantic search with filters
+        Vector->>Vector: Generate embeddings + similarity search
+        Vector-->>RAG: Top relevant chunks + metadata
+
+        %% Final generation with context
+        RAG->>AI: Generate answer with search results
+        AI-->>RAG: Response with sources
+    else No search needed
+        AI-->>RAG: Direct response
+    end
+
+    %% Save and return
+    RAG->>RAG: Save exchange to session (keep last 2)
+    RAG-->>API: Answer + sources
+    API-->>Frontend: JSON response
+    Frontend->>Frontend: Render markdown + sources
+    Frontend-->>User: Display AI answer
+
+    Note over User,Vector: Complete response with context

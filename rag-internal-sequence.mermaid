@@ -1,0 +1,75 @@
+sequenceDiagram
+    autonumber
+    participant API as API Layer
+    participant RAG as RAG System
+    participant Session as Session Manager
+    participant AI as AI Generator
+    participant ToolMgr as Tool Manager
+    participant Search as Course Search Tool
+    participant Vector as Vector Store
+    participant Chroma as ChromaDB
+
+    Note over API,Chroma: Internal RAG Processing Flow
+
+    %% Query arrives
+    API->>+RAG: query(session_id, message)
+
+    %% Session retrieval
+    RAG->>+Session: get_history(session_id)
+    Session->>Session: Retrieve last 2 exchanges
+    Session-->>-RAG: conversation_history[]
+
+    %% Message formatting
+    RAG->>RAG: Format user message<br/>with conversation context
+
+    %% Tool definitions preparation
+    RAG->>+ToolMgr: get_tool_definitions()
+    ToolMgr->>ToolMgr: Build Anthropic tool schema
+    ToolMgr-->>-RAG: tool_definitions[]
+
+    %% AI invocation
+    RAG->>+AI: generate(messages, tools)
+    AI->>AI: messages.create()<br/>model: claude-sonnet-4<br/>temperature: 0
+    AI->>AI: Analyze query<br/>Determine if search needed
+    AI-->>-RAG: tool_call_request
+
+    %% Tool execution
+    RAG->>+ToolMgr: execute_tool(tool_name, params)
+    ToolMgr->>+Search: execute(query, course, lesson)
+
+    %% Course name resolution
+    Search->>+Vector: resolve_course_name(course)
+    Vector->>+Chroma: query(course_catalog, course_name)
+    Chroma->>Chroma: Semantic similarity search
+    Chroma-->>-Vector: best_match
+    Vector-->>-Search: resolved_course_id
+
+    %% Content search
+    Search->>+Vector: search(query, course_filter)
+    Vector->>Vector: Build metadata filter<br/>{course_id, lesson_id}
+    Vector->>+Chroma: query(course_content,<br/>query_text, filter)
+    Chroma->>Chroma: Generate embeddings<br/>all-MiniLM-L6-v2
+    Chroma->>Chroma: Semantic vector search
+    Chroma->>Chroma: Apply metadata filters
+    Chroma-->>-Vector: chunks + distances + metadata
+    Vector-->>-Search: SearchResults object
+
+    %% Format results
+    Search->>Search: Format results with sources
+    Search-->>-ToolMgr: formatted_results
+    ToolMgr-->>-RAG: tool_output
+
+    %% Final AI generation
+    RAG->>+AI: generate(messages + tool_results)
+    AI->>AI: Generate answer based on<br/>retrieved context
+    AI-->>-RAG: final_response
+
+    %% Save to session
+    RAG->>+Session: add_exchange(session_id,<br/>user_msg, ai_response)
+    Session->>Session: Limit to 2 exchanges<br/>(FIFO eviction)
+    Session-->>-RAG: saved
+
+    %% Return response
+    RAG-->>-API: response + sources
+
+    Note over API,Chroma: Response includes answer and source citations

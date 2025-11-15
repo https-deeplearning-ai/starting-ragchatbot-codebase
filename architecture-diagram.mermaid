@@ -1,0 +1,55 @@
+graph TB
+    User([👤 User])
+
+    subgraph Layer1["🎨 FRONTEND LAYER - Vanilla HTML/CSS/JavaScript"]
+        direction LR
+        FE1["📄 Static Pages<br/>• index.html<br/>• Chat Interface<br/>• Statistics Panel"]
+        FE2["🧩 UI Components<br/>• Message Renderer<br/>• Loading States<br/>• Event Handlers"]
+        FE3["⚡ Utilities<br/>• Marked.js<br/>• Fetch Client<br/>• Session Mgmt"]
+
+        FE1 -.-> FE2 -.-> FE3
+    end
+
+    subgraph Layer2["🔌 API LAYER - FastAPI + Uvicorn"]
+        direction LR
+        API1["📡 FastAPI Endpoints<br/>• POST /api/query<br/>• GET /api/courses<br/>• Static serving<br/>• CORS enabled"]
+        API2["📝 Session Manager<br/>• In-memory sessions<br/>• 2 exchange limit<br/>• Context formatting"]
+
+        API1 -.-> API2
+    end
+
+    subgraph Layer3["🤖 RAG/AI LAYER - Anthropic Claude + Tools"]
+        direction LR
+        RAG1["🔄 RAG System<br/>• Query orchestration<br/>• Doc ingestion<br/>• Analytics"]
+        RAG2["🧠 AI Generator<br/>• Claude Sonnet 4<br/>• Tool calling<br/>• Temp: 0"]
+        RAG3["🔧 Tools<br/>• CourseSearchTool<br/>• ToolManager<br/>• Source tracking"]
+
+        RAG1 -.-> RAG2 -.-> RAG3
+    end
+
+    subgraph Layer4["💾 DATABASE/STORAGE LAYER - ChromaDB + File System"]
+        direction LR
+        DB1["📊 Vector Store<br/>• ChromaDB<br/>• course_catalog<br/>• course_content"]
+        DB2["📥 Doc Processor<br/>• 800 char chunks<br/>• 100 char overlap<br/>• Metadata extract"]
+        DB3["📁 File Storage<br/>• /docs folder<br/>• .txt files<br/>• UTF-8"]
+
+        DB2 -.-> DB3
+        DB2 -.-> DB1
+    end
+
+    %% Force vertical layout by creating explicit path
+    User --> Layer1
+    Layer1 --> Layer2
+    Layer2 --> Layer3
+    Layer3 --> Layer4
+
+    %% Styling
+    classDef frontendStyle fill:#e3f2fd,stroke:#1976d2,stroke-width:4px,color:#000
+    classDef apiStyle fill:#fff3e0,stroke:#f57c00,stroke-width:4px,color:#000
+    classDef ragStyle fill:#e8f5e9,stroke:#388e3c,stroke-width:4px,color:#000
+    classDef databaseStyle fill:#f3e5f5,stroke:#7b1fa2,stroke-width:4px,color:#000
+
+    class Layer1 frontendStyle
+    class Layer2 apiStyle
+    class Layer3 ragStyle
+    class Layer4 databaseStyle

@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAG Components - RAG Chatbot</title>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true });
+    </script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #ffffff;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem 3rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.95;
+        }
+
+        .metadata {
+            background: #f8f9fa;
+            padding: 1.5rem 3rem;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+        }
+
+        .metadata-item {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .metadata-item strong {
+            color: #1976d2;
+            font-weight: 600;
+        }
+
+        .diagram-container {
+            padding: 3rem;
+            background: white;
+            overflow-x: auto;
+        }
+
+        .mermaid {
+            display: block;
+            text-align: center;
+            min-height: 600px;
+        }
+
+        .legend {
+            background: #f8f9fa;
+            padding: 2rem 3rem;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .legend h2 {
+            color: #1976d2;
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .legend-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 1.5rem;
+        }
+
+        .legend-section {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            border-left: 4px solid;
+        }
+
+        .legend-section.frontend {
+            border-left-color: #1976d2;
+        }
+
+        .legend-section.api {
+            border-left-color: #f57c00;
+        }
+
+        .legend-section.rag {
+            border-left-color: #388e3c;
+        }
+
+        .legend-section.database {
+            border-left-color: #7b1fa2;
+        }
+
+        .legend-section h3 {
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+
+        .legend-section ul {
+            list-style: none;
+        }
+
+        .legend-section li {
+            margin-bottom: 0.5rem;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .legend-section li:before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+            color: inherit;
+        }
+
+        footer {
+            background: #2c3e50;
+            color: white;
+            padding: 1.5rem 3rem;
+            text-align: center;
+        }
+
+        footer a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin: 2rem 3rem;
+            padding: 0.75rem 1.5rem;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background 0.3s ease;
+        }
+
+        .back-link:hover {
+            background: #764ba2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🤖 RAG Components</h1>
+            <p class="subtitle">RAG Chatbot - Internal Architecture Deep Dive</p>
+        </header>
+
+        <div class="metadata">
+            <div class="metadata-item">
+                <strong>Architecture:</strong>
+                <span>Monolithic Full-Stack RAG</span>
+            </div>
+            <div class="metadata-item">
+                <strong>Backend:</strong>
+                <span>FastAPI + Python 3.13</span>
+            </div>
+            <div class="metadata-item">
+                <strong>AI:</strong>
+                <span>Anthropic Claude Sonnet 4</span>
+            </div>
+            <div class="metadata-item">
+                <strong>Vector DB:</strong>
+                <span>ChromaDB</span>
+            </div>
+            <div class="metadata-item">
+                <strong>Frontend:</strong>
+                <span>Vanilla HTML/CSS/JS</span>
+            </div>
+        </div>
+
+        <a href="architecture-diagram.html" class="back-link">← Back to All Diagrams</a>
+
+        <div class="legend">
+            <h2>🤖 RAG & Storage Components Overview</h2>
+            <div class="legend-grid">
+                <div class="legend-section rag">
+                    <h3>🤖 RAG/AI Layer</h3>
+                    <ul>
+                        <li><strong>RAG System:</strong> Main orchestrator coordinating AI, tools, and sessions</li>
+                        <li><strong>AI Generator:</strong> Claude Sonnet 4 with tool calling capability</li>
+                        <li><strong>Tool Manager:</strong> Registry and executor for search tools</li>
+                        <li><strong>Course Search Tool:</strong> Semantic search with course/lesson filtering</li>
+                        <li><strong>Session Manager:</strong> In-memory conversation state (2 exchanges max)</li>
+                    </ul>
+                </div>
+
+                <div class="legend-section database">
+                    <h3>💾 Storage Layer</h3>
+                    <ul>
+                        <li><strong>ChromaDB Client:</strong> Persistent vector database with sentence transformers</li>
+                        <li><strong>Course Catalog Collection:</strong> Metadata (titles, instructors, links)</li>
+                        <li><strong>Course Content Collection:</strong> Chunked text with lesson mapping</li>
+                        <li><strong>Document Processor:</strong> Parses files and creates chunks</li>
+                        <li><strong>Chunking Strategy:</strong> 800 chars + 100 overlap, sentence-aware</li>
+                    </ul>
+                </div>
+
+                <div class="legend-section api">
+                    <h3>📋 File Mappings</h3>
+                    <ul>
+                        <li><strong>rag_system.py:</strong> Main RAG orchestration logic</li>
+                        <li><strong>ai_generator.py:</strong> Claude API integration</li>
+                        <li><strong>search_tools.py:</strong> Tool framework and CourseSearchTool</li>
+                        <li><strong>vector_store.py:</strong> ChromaDB client and operations</li>
+                        <li><strong>document_processor.py:</strong> File parsing and chunking</li>
+                        <li><strong>session_manager.py:</strong> Conversation state management</li>
+                    </ul>
+                </div>
+
+                <div class="legend-section frontend">
+                    <h3>🔄 Internal Data Flows</h3>
+                    <ul>
+                        <li><strong>Orchestration:</strong> RAG System coordinates all components</li>
+                        <li><strong>AI Invocation:</strong> AI Generator can autonomously invoke search tools</li>
+                        <li><strong>Tool Execution:</strong> Search Tool queries vector database</li>
+                        <li><strong>Document Pipeline:</strong> Files → Processor → Chunks → ChromaDB</li>
+                        <li><strong>Cross-Layer:</strong> Search tools bridge RAG and Storage layers</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="diagram-container">
+            <div class="mermaid">
+graph TB
+    subgraph RAGLayer["🤖 RAG/AI LAYER"]
+        direction TB
+        RAG1["🔄 RAG System<br/>Main orchestrator"]
+        RAG2["🧠 AI Generator<br/>Claude Sonnet 4"]
+        RAG3["🛠️ Tool Manager<br/>Tool registry"]
+        RAG4["🔍 Course Search<br/>Semantic search"]
+        RAG5["📝 Session Manager<br/>2 exchanges max"]
+
+        RAG1 --> RAG2
+        RAG1 --> RAG3
+        RAG1 --> RAG5
+        RAG3 --> RAG4
+        RAG2 -.-> RAG4
+    end
+
+    subgraph StorageLayer["💾 STORAGE LAYER"]
+        direction TB
+        ST1["🗄️ ChromaDB<br/>Vector database"]
+        ST2["📚 course_catalog<br/>Metadata collection"]
+        ST3["📄 course_content<br/>Content collection"]
+        ST4["📥 Doc Processor<br/>File parser"]
+        ST5["✂️ Chunking<br/>800 + 100 overlap"]
+        ST6["📁 /docs<br/>File system"]
+
+        ST6 --> ST4
+        ST4 --> ST5
+        ST5 --> ST1
+        ST1 --> ST2
+        ST1 --> ST3
+    end
+
+    RAG4 --> ST1
+
+    classDef ragStyle fill:#e8f5e9,stroke:#388e3c,stroke-width:3px
+    classDef storageStyle fill:#f3e5f5,stroke:#7b1fa2,stroke-width:3px
+
+    class RAGLayer ragStyle
+    class StorageLayer storageStyle
+            </div>
+        </div>
+
+        <footer>
+            <p>
+                <strong>Design Pattern:</strong> Layered Architecture with RAG (Retrieval-Augmented Generation) |
+                <strong>Generated:</strong> 2025-11-09 |
+                <a href="https://github.com/anthropics/claude-code" target="_blank">Built with Claude Code</a>
+            </p>
+        </footer>
+    </div>
+</body>
+</html>

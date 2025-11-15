@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAG Chatbot System Architecture</title>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis'
+            }
+        });
+    </script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            max-width: 1400px;
+            width: 100%;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+            color: white;
+            padding: 2rem 3rem;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.5px;
+        }
+
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.95;
+            line-height: 1.6;
+        }
+
+        .metadata {
+            background: #f8f9fa;
+            padding: 1.5rem 3rem;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+            justify-content: center;
+        }
+
+        .metadata-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .metadata-item strong {
+            color: #1976d2;
+            font-weight: 600;
+        }
+
+        .tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e0e0e0;
+            padding: 0 3rem;
+        }
+
+        .tab {
+            padding: 1.25rem 2rem;
+            cursor: pointer;
+            font-weight: 600;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+            user-select: none;
+        }
+
+        .tab:hover {
+            color: #1976d2;
+            background: rgba(25, 118, 210, 0.05);
+        }
+
+        .tab.active {
+            color: #1976d2;
+            border-bottom-color: #1976d2;
+            background: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .diagram-container {
+            padding: 3rem;
+            background: white;
+            overflow-x: auto;
+        }
+
+        .mermaid {
+            display: block;
+            text-align: center;
+            min-height: 600px;
+        }
+
+        .legend {
+            background: #f8f9fa;
+            padding: 2rem 3rem;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .legend h2 {
+            font-size: 1.5rem;
+            color: #1976d2;
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+        }
+
+        .legend-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .legend-section {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            border-left: 4px solid;
+        }
+
+        .legend-section.frontend { border-color: #1976d2; }
+        .legend-section.api { border-color: #f57c00; }
+        .legend-section.rag { border-color: #388e3c; }
+        .legend-section.database { border-color: #7b1fa2; }
+
+        .legend-section h3 {
+            font-size: 1.1rem;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .legend-section ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .legend-section li {
+            padding: 0.4rem 0;
+            color: #555;
+            font-size: 0.95rem;
+        }
+
+        .legend-section li:before {
+            content: "▸ ";
+            color: #1976d2;
+            font-weight: bold;
+            margin-right: 0.5rem;
+        }
+
+        footer {
+            background: #263238;
+            color: white;
+            padding: 1.5rem 3rem;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
+        footer a {
+            color: #64b5f6;
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+
+            header h1 {
+                font-size: 1.8rem;
+            }
+
+            .diagram-container {
+                padding: 1.5rem;
+            }
+
+            .legend-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🤖 RAG Chatbot System Architecture</h1>
+            <p>High-Level System Design for Retrieval-Augmented Generation Course Assistant</p>
+        </header>
+
+        <div class="metadata">
+            <div class="metadata-item">
+                <strong>Architecture:</strong>
+                <span>Monolithic Full-Stack RAG</span>
+            </div>
+            <div class="metadata-item">
+                <strong>Backend:</strong>
+                <span>FastAPI + Python 3.13</span>
+            </div>
+            <div class="metadata-item">
+                <strong>AI:</strong>
+                <span>Anthropic Claude Sonnet 4</span>
+            </div>
+            <div class="metadata-item">
+                <strong>Vector DB:</strong>
+                <span>ChromaDB</span>
+            </div>
+            <div class="metadata-item">
+                <strong>Frontend:</strong>
+                <span>Vanilla HTML/CSS/JS</span>
+            </div>
+        </div>
+
+        <!-- Tabs Navigation -->
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('architecture')">📊 System Architecture</div>
+            <div class="tab" onclick="switchTab('sequence')">🔄 System User Flow</div>
+            <div class="tab" onclick="switchTab('ragcomponents')">🤖 RAG Components</div>
+            <div class="tab" onclick="switchTab('ragflow')">🔬 RAG Processing Flow</div>
+        </div>
+
+        <!-- Tab 1: Architecture Diagram -->
+        <div id="architecture" class="tab-content active">
+            <div class="legend">
+                <h2>📚 Architecture Components Overview</h2>
+                <div class="legend-grid">
+                    <div class="legend-section frontend">
+                        <h3>🎨 Frontend Layer</h3>
+                        <ul>
+                            <li><strong>Technology:</strong> Vanilla HTML5/CSS3/JavaScript</li>
+                            <li><strong>Pages:</strong> Single-page chat interface</li>
+                            <li><strong>Components:</strong> Message rendering, loading states</li>
+                            <li><strong>Libraries:</strong> Marked.js for Markdown</li>
+                            <li><strong>State:</strong> Session-based conversation tracking</li>
+                        </ul>
+                    </div>
+
+                    <div class="legend-section api">
+                        <h3>🔌 API Layer</h3>
+                        <ul>
+                            <li><strong>Framework:</strong> FastAPI with Uvicorn ASGI</li>
+                            <li><strong>Endpoints:</strong> /api/query, /api/courses</li>
+                            <li><strong>Sessions:</strong> In-memory with 2 exchange limit</li>
+                            <li><strong>CORS:</strong> Enabled for development</li>
+                            <li><strong>Serving:</strong> Static files + API unified</li>
+                        </ul>
+                    </div>
+
+                    <div class="legend-section rag">
+                        <h3>🤖 RAG/AI Layer</h3>
+                        <ul>
+                            <li><strong>AI Model:</strong> Anthropic Claude Sonnet 4</li>
+                            <li><strong>RAG Core:</strong> Query orchestration & ingestion</li>
+                            <li><strong>Tools:</strong> CourseSearchTool with semantic search</li>
+                            <li><strong>Config:</strong> Temperature 0, max 800 tokens</li>
+                            <li><strong>Features:</strong> Tool calling, source tracking</li>
+                        </ul>
+                    </div>
+
+                    <div class="legend-section database">
+                        <h3>💾 Database/Storage Layer</h3>
+                        <ul>
+                            <li><strong>Vector DB:</strong> ChromaDB (persistent)</li>
+                            <li><strong>Collections:</strong> course_catalog, course_content</li>
+                            <li><strong>Embeddings:</strong> Sentence Transformers (all-MiniLM-L6-v2)</li>
+                            <li><strong>Chunking:</strong> 800 chars with 100 overlap</li>
+                            <li><strong>Files:</strong> Structured .txt course documents</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="diagram-container">
+                <div class="mermaid">
+graph TB
+    User([👤 User])
+
+    subgraph Layer1["🎨 FRONTEND LAYER - Vanilla HTML/CSS/JavaScript"]
+        direction LR
+        FE1["📄 Static Pages<br/>• index.html<br/>• Chat Interface<br/>• Statistics Panel"]
+        FE2["🧩 UI Components<br/>• Message Renderer<br/>• Loading States<br/>• Event Handlers"]
+        FE3["⚡ Utilities<br/>• Marked.js<br/>• Fetch Client<br/>• Session Mgmt"]
+
+        FE1 -.-> FE2 -.-> FE3
+    end
+
+    subgraph Layer2["🔌 API LAYER - FastAPI + Uvicorn"]
+        direction LR
+        API1["📡 FastAPI Endpoints<br/>• POST /api/query<br/>• GET /api/courses<br/>• Static serving<br/>• CORS enabled"]
+        API2["📝 Session Manager<br/>• In-memory sessions<br/>• 2 exchange limit<br/>• Context formatting"]
+
+        API1 -.-> API2
+    end
+
+    subgraph Layer3["🤖 RAG/AI LAYER - Anthropic Claude + Tools"]
+        direction LR
+        RAG1["🔄 RAG System<br/>• Query orchestration<br/>• Doc ingestion<br/>• Analytics"]
+        RAG2["🧠 AI Generator<br/>• Claude Sonnet 4<br/>• Tool calling<br/>• Temp: 0"]
+        RAG3["🔧 Tools<br/>• CourseSearchTool<br/>• ToolManager<br/>• Source tracking"]
+
+        RAG1 -.-> RAG2 -.-> RAG3
+    end
+
+    subgraph Layer4["💾 DATABASE/STORAGE LAYER - ChromaDB + File System"]
+        direction LR
+        DB1["📊 Vector Store<br/>• ChromaDB<br/>• course_catalog<br/>• course_content"]
+        DB2["📥 Doc Processor<br/>• 800 char chunks<br/>• 100 char overlap<br/>• Metadata extract"]
+        DB3["📁 File Storage<br/>• /docs folder<br/>• .txt files<br/>• UTF-8"]
+
+        DB2 -.-> DB3
+        DB2 -.-> DB1
+    end
+
+    %% Force vertical layout by creating explicit path
+    User --> Layer1
+    Layer1 --> Layer2
+    Layer2 --> Layer3
+    Layer3 --> Layer4
+
+    %% Styling
+    classDef frontendStyle fill:#e3f2fd,stroke:#1976d2,stroke-width:4px,color:#000
+    classDef apiStyle fill:#fff3e0,stroke:#f57c00,stroke-width:4px,color:#000
+    classDef ragStyle fill:#e8f5e9,stroke:#388e3c,stroke-width:4px,color:#000
+    classDef databaseStyle fill:#f3e5f5,stroke:#7b1fa2,stroke-width:4px,color:#000
+
+    class Layer1 frontendStyle
+    class Layer2 apiStyle
+    class Layer3 ragStyle
+    class Layer4 databaseStyle
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 2: Sequence Diagram -->
+        <div id="sequence" class="tab-content">
+            <div class="legend">
+                <h2>🔄 Sequence Flow Breakdown</h2>
+                <div class="legend-grid">
+                    <div class="legend-section frontend">
+                        <h3>1-3: User Interaction</h3>
+                        <ul>
+                            <li>User types question in chat interface</li>
+                            <li>Frontend shows loading state</li>
+                            <li>POST request sent to /api/query endpoint</li>
+                        </ul>
+                    </div>
+
+                    <div class="legend-section api">
+                        <h3>4-6: Session & Context</h3>
+                        <ul>
+                            <li>API retrieves conversation history from Session Manager</li>
+                            <li>Last 2 exchanges loaded for context</li>
+                            <li>Query passed to RAG System with context</li>
+                        </ul>
+                    </div>
+
+                    <div class="legend-section rag">
+                        <h3>7-16: RAG Processing</h3>
+                        <ul>
+                            <li>RAG formats message and sends to Claude AI</li>
+                            <li>AI analyzes query and decides to use search tool</li>
+                            <li>CourseSearchTool executes semantic vector search</li>
+                            <li>ChromaDB returns relevant chunks with metadata</li>
+                            <li>AI generates answer based on retrieved context</li>
+                        </ul>
+                    </div>
+
+                    <div class="legend-section database">
+                        <h3>17-21: Response & Display</h3>
+                        <ul>
+                            <li>Exchange saved to session (user msg + AI response)</li>
+                            <li>Session limited to 2 most recent exchanges</li>
+                            <li>Response sent back through API to frontend</li>
+                            <li>Frontend renders Markdown answer</li>
+                            <li>Sources displayed in collapsible section</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="diagram-container">
+                <div class="mermaid">
+sequenceDiagram
+    autonumber
+    actor User
+    participant FE as 🎨 Frontend
+    participant API as 🔌 API Layer
+    participant Session as 📝 Session Mgr
+    participant RAG as 🤖 RAG System
+    participant AI as 🧠 Claude AI
+    participant Tools as 🔧 Search Tools
+    participant DB as 💾 Vector DB
+
+    Note over User,DB: Core User Query Flow
+
+    %% User submits query
+    User->>+FE: Type question and click send
+    FE->>FE: Show loading state
+    FE->>+API: POST /api/query
+
+    %% Session management
+    API->>+Session: Get conversation history
+    Session-->>-API: Return last 2 exchanges
+
+    %% RAG processing
+    API->>+RAG: Process query with context
+    RAG->>RAG: Format user message
+
+    %% AI decides to search
+    RAG->>+AI: Send message with tool definitions
+    AI->>AI: Analyze query
+    AI-->>-RAG: Tool call: CourseSearchTool
+
+    %% Tool execution
+    RAG->>+Tools: Execute search tool
+    Tools->>+DB: Semantic vector search
+    DB->>DB: Find similar chunks
+    DB-->>-Tools: Return chunks and metadata
+    Tools-->>-RAG: Format search results
+
+    %% AI generates response
+    RAG->>+AI: Send tool results
+    AI->>AI: Generate answer (temp: 0)
+    AI-->>-RAG: Response text
+
+    %% Save to session
+    RAG->>+Session: Save exchange
+    Session->>Session: Limit to 2 exchanges
+    Session-->>-RAG: Confirmed
+
+    %% Return to frontend
+    RAG-->>-API: Return answer and sources
+    API-->>-FE: JSON response
+    FE->>FE: Render markdown answer
+    FE->>FE: Display sources
+    FE-->>-User: Show AI response
+
+    Note over User,DB: User sees answer with course sources
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 3: RAG Component Architecture -->
+        <div id="ragcomponents" class="tab-content">
+            <div class="legend">
+                <h2>🤖 RAG & Storage Components Overview</h2>
+                <div class="legend-grid">
+                    <div class="legend-section rag">
+                        <h3>🤖 RAG/AI Layer</h3>
+                        <ul>
+                            <li><strong>RAG System:</strong> Main orchestrator coordinating AI, tools, and sessions</li>
+                            <li><strong>AI Generator:</strong> Claude Sonnet 4 with tool calling capability</li>
+                            <li><strong>Tool Manager:</strong> Registry and executor for search tools</li>
+                            <li><strong>Course Search Tool:</strong> Semantic search with course/lesson filtering</li>
+                            <li><strong>Session Manager:</strong> In-memory conversation state (2 exchanges max)</li>
+                        </ul>
+                    </div>
+
+                    <div class="legend-section database">
+                        <h3>💾 Storage Layer</h3>
+                        <ul>
+                            <li><strong>ChromaDB Client:</strong> Persistent vector database with sentence transformers</li>
+                            <li><strong>Course Catalog Collection:</strong> Metadata (titles, instructors, links)</li>
+                            <li><strong>Course Content Collection:</strong> Chunked text with lesson mapping</li>
+                            <li><strong>Document Processor:</strong> Parses files and creates chunks</li>
+                            <li><strong>Chunking Strategy:</strong> 800 chars + 100 overlap, sentence-aware</li>
+                        </ul>
+                    </div>
+
+                    <div class="legend-section api">
+                        <h3>📋 File Mappings</h3>
+                        <ul>
+                            <li><strong>rag_system.py:</strong> Main RAG orchestration logic</li>
+                            <li><strong>ai_generator.py:</strong> Claude API integration</li>
+                            <li><strong>search_tools.py:</strong> Tool framework and CourseSearchTool</li>
+                            <li><strong>vector_store.py:</strong> ChromaDB client and operations</li>
+                            <li><strong>document_processor.py:</strong> File parsing and chunking</li>
+                            <li><strong>session_manager.py:</strong> Conversation state management</li>
+                        </ul>
+                    </div>
+
+                    <div class="legend-section frontend">
+                        <h3>🔄 Internal Data Flows</h3>
+                        <ul>
+                            <li><strong>Orchestration:</strong> RAG System coordinates all components</li>
+                            <li><strong>AI Invocation:</strong> AI Generator can autonomously invoke search tools</li>
+                            <li><strong>Tool Execution:</strong> Search Tool queries vector database</li>
+                            <li><strong>Document Pipeline:</strong> Files → Processor → Chunks → ChromaDB</li>
+                            <li><strong>Cross-Layer:</strong> Search tools bridge RAG and Storage layers</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="diagram-container">
+                <div class="mermaid">
+flowchart TB
+    RAG1[🔄 RAG System]
+    RAG2[🧠 AI Generator]
+    RAG3[🛠️ Tool Manager]
+    RAG4[🔍 Course Search]
+    RAG5[📝 Session Manager]
+
+    ST1[🗄️ ChromaDB]
+    ST2[📚 course_catalog]
+    ST3[📄 course_content]
+    ST4[📥 Doc Processor]
+    ST5[✂️ Chunking]
+    ST6[📁 /docs]
+
+    RAG1 --> RAG2
+    RAG1 --> RAG3
+    RAG1 --> RAG5
+    RAG3 --> RAG4
+    RAG2 -.-> RAG4
+
+    ST6 --> ST4
+    ST4 --> ST5
+    ST5 --> ST1
+    ST1 --> ST2
+    ST1 --> ST3
+
+    RAG4 --> ST1
+
+    style RAG1 fill:#e8f5e9,stroke:#388e3c
+    style RAG2 fill:#e8f5e9,stroke:#388e3c
+    style RAG3 fill:#e8f5e9,stroke:#388e3c
+    style RAG4 fill:#e8f5e9,stroke:#388e3c
+    style RAG5 fill:#e8f5e9,stroke:#388e3c
+    style ST1 fill:#f3e5f5,stroke:#7b1fa2
+    style ST2 fill:#f3e5f5,stroke:#7b1fa2
+    style ST3 fill:#f3e5f5,stroke:#7b1fa2
+    style ST4 fill:#f3e5f5,stroke:#7b1fa2
+    style ST5 fill:#f3e5f5,stroke:#7b1fa2
+    style ST6 fill:#f3e5f5,stroke:#7b1fa2
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 4: RAG Processing Flow -->
+        <div id="ragflow" class="tab-content">
+            <div class="legend">
+                <h2>🔬 RAG Processing Flow Breakdown</h2>
+                <div class="legend-grid">
+                    <div class="legend-section frontend">
+                        <h3>Steps 1-4: Request & Context Loading</h3>
+                        <ul>
+                            <li>User submits question through chat interface</li>
+                            <li>Frontend sends POST request to FastAPI with session_id and message</li>
+                            <li>RAG System retrieves conversation history (last 2 exchanges)</li>
+                            <li>Provides context continuity for follow-up questions</li>
+                        </ul>
+                    </div>
+
+                    <div class="legend-section api">
+                        <h3>Steps 5-6: AI Decision Point</h3>
+                        <ul>
+                            <li>RAG sends user message with available tool definitions to Claude</li>
+                            <li>AI analyzes query to determine if vector search is needed</li>
+                            <li><strong>Decision Logic:</strong> Search for course content vs. general conversation</li>
+                            <li>AI has autonomy to skip search for greetings, clarifications, etc.</li>
+                        </ul>
+                    </div>
+
+                    <div class="legend-section rag">
+                        <h3>Steps 7-13: Search Path (Conditional)</h3>
+                        <ul>
+                            <li><strong>Course Resolution:</strong> Fuzzy match course name to course_id</li>
+                            <li><strong>Vector Search:</strong> Generate embeddings and find similar chunks</li>
+                            <li><strong>Metadata Filtering:</strong> Apply course_id and lesson_id filters</li>
+                            <li><strong>Context Generation:</strong> AI receives chunks to ground response</li>
+                            <li><strong>Source Tracking:</strong> Each chunk includes origin metadata</li>
+                        </ul>
+                    </div>
+
+                    <div class="legend-section database">
+                        <h3>Steps 14-17: Response & Session Management</h3>
+                        <ul>
+                            <li>RAG saves complete exchange (user message + AI response) to session</li>
+                            <li>Session kept to 2 most recent exchanges (FIFO eviction)</li>
+                            <li>Response with sources sent back through API to frontend</li>
+                            <li>Frontend renders markdown answer and displays collapsible sources</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="diagram-container">
+                <h3 style="text-align: center; color: #7b1fa2; margin-bottom: 2rem;">RAG Processing Flow (Mid-Level Detail)</h3>
+                <div class="mermaid">
+sequenceDiagram
+    autonumber
+    participant User
+    participant Frontend as 🎨 Frontend
+    participant API as 🔌 FastAPI
+    participant RAG as 🤖 RAG System
+    participant AI as 🧠 Claude AI
+    participant Vector as 💾 Vector Store
+
+    Note over User,Vector: Mid-Level RAG Processing Flow
+
+    %% Request phase
+    User->>Frontend: Submit question
+    Frontend->>API: POST /api/query {session_id, message}
+
+    %% Context gathering
+    API->>RAG: Process query
+    RAG->>RAG: Load last 2 conversation exchanges
+
+    %% AI decision making
+    RAG->>AI: Send message + tool definitions
+    AI->>AI: Analyze: Does this need search?
+
+    alt Query needs search
+        AI->>RAG: Tool call: search(query, course, lesson)
+
+        %% Search execution
+        RAG->>Vector: Resolve course name (if provided)
+        Vector-->>RAG: Matched course_id
+
+        RAG->>Vector: Semantic search with filters
+        Vector->>Vector: Generate embeddings + similarity search
+        Vector-->>RAG: Top relevant chunks + metadata
+
+        %% Final generation with context
+        RAG->>AI: Generate answer with search results
+        AI-->>RAG: Response with sources
+    else No search needed
+        AI-->>RAG: Direct response
+    end
+
+    %% Save and return
+    RAG->>RAG: Save exchange to session (keep last 2)
+    RAG-->>API: Answer + sources
+    API-->>Frontend: JSON response
+    Frontend->>Frontend: Render markdown + sources
+    Frontend-->>User: Display AI answer
+
+    Note over User,Vector: Complete response with context
+                </div>
+            </div>
+
+            <div class="legend">
+                <h2>🎯 Key Technical Details</h2>
+                <div class="legend-grid">
+                    <div class="legend-section rag">
+                        <h3>🔍 Search Mechanics</h3>
+                        <ul>
+                            <li><strong>Two-Stage Search:</strong> First resolves course name, then searches content</li>
+                            <li><strong>Fuzzy Course Matching:</strong> Uses embeddings to find closest course name</li>
+                            <li><strong>Metadata Filtering:</strong> Applies course_id and lesson_id filters</li>
+                            <li><strong>Semantic Similarity:</strong> Cosine distance on vector embeddings</li>
+                            <li><strong>Top-K Results:</strong> Returns most relevant chunks with sources</li>
+                        </ul>
+                    </div>
+
+                    <div class="legend-section database">
+                        <h3>📦 Data Structures</h3>
+                        <ul>
+                            <li><strong>Course Chunk:</strong> {text, course_id, lesson_id, chunk_index}</li>
+                            <li><strong>Metadata:</strong> Extracted from structured .txt files</li>
+                            <li><strong>Embeddings:</strong> 384-dimensional vectors (MiniLM-L6-v2)</li>
+                            <li><strong>Collections:</strong> Separate indexes for catalog and content</li>
+                            <li><strong>Persistence:</strong> Stored in ./backend/chroma_db/ directory</li>
+                        </ul>
+                    </div>
+
+                    <div class="legend-section frontend">
+                        <h3>⚙️ Processing Pipeline</h3>
+                        <ul>
+                            <li><strong>Document Ingestion:</strong> Read → Parse → Chunk → Embed → Store</li>
+                            <li><strong>Query Flow:</strong> Format → AI Analyze → Tool Call → Search → Generate</li>
+                            <li><strong>Session Context:</strong> Included in every AI request for continuity</li>
+                            <li><strong>Tool Decision:</strong> AI autonomously decides when to search</li>
+                            <li><strong>Source Tracking:</strong> Every chunk includes origin metadata</li>
+                        </ul>
+                    </div>
+
+                    <div class="legend-section api">
+                        <h3>🧮 Configuration</h3>
+                        <ul>
+                            <li><strong>Chunk Size:</strong> 800 characters (sentence-aware splitting)</li>
+                            <li><strong>Chunk Overlap:</strong> 100 characters to preserve context</li>
+                            <li><strong>Temperature:</strong> 0 (deterministic AI responses)</li>
+                            <li><strong>Max Tokens:</strong> 800 per response</li>
+                            <li><strong>Session Limit:</strong> 2 exchanges (cost optimization)</li>
+                            <li><strong>Embedding Model:</strong> sentence-transformers/all-MiniLM-L6-v2</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>
+                <strong>Design Pattern:</strong> Layered Architecture with RAG (Retrieval-Augmented Generation) |
+                <strong>Generated:</strong> 2025-11-09 |
+                <a href="https://github.com/anthropics/claude-code" target="_blank">Built with Claude Code</a>
+            </p>
+        </footer>
+    </div>
+
+    <script>
+        function switchTab(tabName) {
+            // Hide all tab contents
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabContents.forEach(content => {
+                content.classList.remove('active');
+            });
+
+            // Remove active class from all tabs
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Show selected tab content
+            document.getElementById(tabName).classList.add('active');
+
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+        }
+    </script>
+</body>
+</html>

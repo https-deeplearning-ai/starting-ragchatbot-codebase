@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Architecture - RAG Chatbot</title>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true });
+    </script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #ffffff;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem 3rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.95;
+        }
+
+        .metadata {
+            background: #f8f9fa;
+            padding: 1.5rem 3rem;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+        }
+
+        .metadata-item {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .metadata-item strong {
+            color: #1976d2;
+            font-weight: 600;
+        }
+
+        .diagram-container {
+            padding: 3rem;
+            background: white;
+            overflow-x: auto;
+        }
+
+        .mermaid {
+            display: block;
+            text-align: center;
+            min-height: 600px;
+        }
+
+        .legend {
+            background: #f8f9fa;
+            padding: 2rem 3rem;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .legend h2 {
+            color: #1976d2;
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .legend-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 1.5rem;
+        }
+
+        .legend-section {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            border-left: 4px solid;
+        }
+
+        .legend-section.frontend {
+            border-left-color: #1976d2;
+        }
+
+        .legend-section.api {
+            border-left-color: #f57c00;
+        }
+
+        .legend-section.rag {
+            border-left-color: #388e3c;
+        }
+
+        .legend-section.database {
+            border-left-color: #7b1fa2;
+        }
+
+        .legend-section h3 {
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+
+        .legend-section ul {
+            list-style: none;
+        }
+
+        .legend-section li {
+            margin-bottom: 0.5rem;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .legend-section li:before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+            color: inherit;
+        }
+
+        footer {
+            background: #2c3e50;
+            color: white;
+            padding: 1.5rem 3rem;
+            text-align: center;
+        }
+
+        footer a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin: 2rem 3rem;
+            padding: 0.75rem 1.5rem;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background 0.3s ease;
+        }
+
+        .back-link:hover {
+            background: #764ba2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 System Architecture</h1>
+            <p class="subtitle">RAG Chatbot - Layered Architecture Overview</p>
+        </header>
+
+        <div class="metadata">
+            <div class="metadata-item">
+                <strong>Architecture:</strong>
+                <span>Monolithic Full-Stack RAG</span>
+            </div>
+            <div class="metadata-item">
+                <strong>Backend:</strong>
+                <span>FastAPI + Python 3.13</span>
+            </div>
+            <div class="metadata-item">
+                <strong>AI:</strong>
+                <span>Anthropic Claude Sonnet 4</span>
+            </div>
+            <div class="metadata-item">
+                <strong>Vector DB:</strong>
+                <span>ChromaDB</span>
+            </div>
+            <div class="metadata-item">
+                <strong>Frontend:</strong>
+                <span>Vanilla HTML/CSS/JS</span>
+            </div>
+        </div>
+
+        <a href="architecture-diagram.html" class="back-link">← Back to All Diagrams</a>
+
+        <div class="legend">
+            <h2>📚 Architecture Components Overview</h2>
+            <div class="legend-grid">
+                <div class="legend-section frontend">
+                    <h3>🎨 Frontend Layer</h3>
+                    <ul>
+                        <li><strong>Technology:</strong> Vanilla HTML5/CSS3/JavaScript</li>
+                        <li><strong>Pages:</strong> Single-page chat interface</li>
+                        <li><strong>Components:</strong> Message rendering, loading states</li>
+                        <li><strong>Libraries:</strong> Marked.js for Markdown</li>
+                        <li><strong>State:</strong> Session-based conversation tracking</li>
+                    </ul>
+                </div>
+
+                <div class="legend-section api">
+                    <h3>🔌 API Layer</h3>
+                    <ul>
+                        <li><strong>Framework:</strong> FastAPI with Uvicorn ASGI</li>
+                        <li><strong>Endpoints:</strong> /api/query, /api/courses</li>
+                        <li><strong>Sessions:</strong> In-memory with 2 exchange limit</li>
+                        <li><strong>CORS:</strong> Enabled for development</li>
+                        <li><strong>Serving:</strong> Static files + API unified</li>
+                    </ul>
+                </div>
+
+                <div class="legend-section rag">
+                    <h3>🤖 RAG/AI Layer</h3>
+                    <ul>
+                        <li><strong>AI Model:</strong> Anthropic Claude Sonnet 4</li>
+                        <li><strong>RAG Core:</strong> Query orchestration & ingestion</li>
+                        <li><strong>Tools:</strong> CourseSearchTool with semantic search</li>
+                        <li><strong>Config:</strong> Temperature 0, max 800 tokens</li>
+                        <li><strong>Features:</strong> Tool calling, source tracking</li>
+                    </ul>
+                </div>
+
+                <div class="legend-section database">
+                    <h3>💾 Database/Storage Layer</h3>
+                    <ul>
+                        <li><strong>Vector DB:</strong> ChromaDB (persistent)</li>
+                        <li><strong>Collections:</strong> course_catalog, course_content</li>
+                        <li><strong>Embeddings:</strong> Sentence Transformers (all-MiniLM-L6-v2)</li>
+                        <li><strong>Chunking:</strong> 800 chars with 100 overlap</li>
+                        <li><strong>Files:</strong> Structured .txt course documents</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="diagram-container">
+            <div class="mermaid">
+graph TB
+    User([👤 User])
+
+    subgraph Layer1["🎨 FRONTEND LAYER - Vanilla HTML/CSS/JavaScript"]
+        direction LR
+        FE1["📄 Static Pages<br/>• index.html<br/>• Chat Interface<br/>• Statistics Panel"]
+        FE2["🧩 UI Components<br/>• Message Renderer<br/>• Loading States<br/>• Event Handlers"]
+        FE3["⚡ Utilities<br/>• Marked.js<br/>• Fetch Client<br/>• Session Mgmt"]
+
+        FE1 -.-> FE2 -.-> FE3
+    end
+
+    subgraph Layer2["🔌 API LAYER - FastAPI + Uvicorn"]
+        direction LR
+        API1["📡 FastAPI Endpoints<br/>• POST /api/query<br/>• GET /api/courses<br/>• Static serving<br/>• CORS enabled"]
+        API2["📝 Session Manager<br/>• In-memory sessions<br/>• 2 exchange limit<br/>• Context formatting"]
+
+        API1 -.-> API2
+    end
+
+    subgraph Layer3["🤖 RAG/AI LAYER - Anthropic Claude + Tools"]
+        direction LR
+        RAG1["🔄 RAG System<br/>• Query orchestration<br/>• Doc ingestion<br/>• Analytics"]
+        RAG2["🧠 AI Generator<br/>• Claude Sonnet 4<br/>• Tool calling<br/>• Temp: 0"]
+        RAG3["🔧 Tools<br/>• CourseSearchTool<br/>• ToolManager<br/>• Source tracking"]
+
+        RAG1 -.-> RAG2 -.-> RAG3
+    end
+
+    subgraph Layer4["💾 DATABASE/STORAGE LAYER - ChromaDB + File System"]
+        direction LR
+        DB1["📊 Vector Store<br/>• ChromaDB<br/>• course_catalog<br/>• course_content"]
+        DB2["📥 Doc Processor<br/>• 800 char chunks<br/>• 100 char overlap<br/>• Metadata extract"]
+        DB3["📁 File Storage<br/>• /docs folder<br/>• .txt files<br/>• UTF-8"]
+
+        DB2 -.-> DB3
+        DB2 -.-> DB1
+    end
+
+    %% Force vertical layout by creating explicit path
+    User --> Layer1
+    Layer1 --> Layer2
+    Layer2 --> Layer3
+    Layer3 --> Layer4
+
+    %% Styling
+    classDef frontendStyle fill:#e3f2fd,stroke:#1976d2,stroke-width:4px,color:#000
+    classDef apiStyle fill:#fff3e0,stroke:#f57c00,stroke-width:4px,color:#000
+    classDef ragStyle fill:#e8f5e9,stroke:#388e3c,stroke-width:4px,color:#000
+    classDef databaseStyle fill:#f3e5f5,stroke:#7b1fa2,stroke-width:4px,color:#000
+
+    class Layer1 frontendStyle
+    class Layer2 apiStyle
+    class Layer3 ragStyle
+    class Layer4 databaseStyle
+            </div>
+        </div>
+
+        <footer>
+            <p>
+                <strong>Design Pattern:</strong> Layered Architecture with RAG (Retrieval-Augmented Generation) |
+                <strong>Generated:</strong> 2025-11-09 |
+                <a href="https://github.com/anthropics/claude-code" target="_blank">Built with Claude Code</a>
+            </p>
+        </footer>
+    </div>
+</body>
+</html>

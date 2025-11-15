@@ -1,0 +1,39 @@
+flowchart TB
+    RAG1[🔄 RAG System]
+    RAG2[🧠 AI Generator]
+    RAG3[🛠️ Tool Manager]
+    RAG4[🔍 Course Search]
+    RAG5[📝 Session Manager]
+
+    ST1[🗄️ ChromaDB]
+    ST2[📚 course_catalog]
+    ST3[📄 course_content]
+    ST4[📥 Doc Processor]
+    ST5[✂️ Chunking]
+    ST6[📁 /docs]
+
+    RAG1 --> RAG2
+    RAG1 --> RAG3
+    RAG1 --> RAG5
+    RAG3 --> RAG4
+    RAG2 -.-> RAG4
+
+    ST6 --> ST4
+    ST4 --> ST5
+    ST5 --> ST1
+    ST1 --> ST2
+    ST1 --> ST3
+
+    RAG4 --> ST1
+
+    style RAG1 fill:#e8f5e9,stroke:#388e3c
+    style RAG2 fill:#e8f5e9,stroke:#388e3c
+    style RAG3 fill:#e8f5e9,stroke:#388e3c
+    style RAG4 fill:#e8f5e9,stroke:#388e3c
+    style RAG5 fill:#e8f5e9,stroke:#388e3c
+    style ST1 fill:#f3e5f5,stroke:#7b1fa2
+    style ST2 fill:#f3e5f5,stroke:#7b1fa2
+    style ST3 fill:#f3e5f5,stroke:#7b1fa2
+    style ST4 fill:#f3e5f5,stroke:#7b1fa2
+    style ST5 fill:#f3e5f5,stroke:#7b1fa2
+    style ST6 fill:#f3e5f5,stroke:#7b1fa2

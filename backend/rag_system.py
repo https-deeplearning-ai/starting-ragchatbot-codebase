@@ -40,9 +40,9 @@ class RAGSystem:
             
             # Add course metadata to vector store for semantic search
             self.vector_store.add_course_metadata(course)
-            
-            # Add course content chunks to vector store
-            self.vector_store.add_course_content(course_chunks)
+
+            # Add course content chunks to vector store with lesson links
+            self.vector_store.add_course_content(course_chunks, course)
             
             return course, len(course_chunks)
         except Exception as e:
@@ -87,7 +87,7 @@ class RAGSystem:
                     if course and course.title not in existing_course_titles:
                         # This is a new course - add it to the vector store
                         self.vector_store.add_course_metadata(course)
-                        self.vector_store.add_course_content(course_chunks)
+                        self.vector_store.add_course_content(course_chunks, course)
                         total_courses += 1
                         total_chunks += len(course_chunks)
                         print(f"Added new course: {course.title} ({len(course_chunks)} chunks)")
@@ -102,42 +102,71 @@ class RAGSystem:
     def query(self, query: str, session_id: Optional[str] = None) -> Tuple[str, List[str]]:
         """
         Process a user query using the RAG system with tool-based search.
-        
+
         Args:
             query: User's question
             session_id: Optional session ID for conversation context
-            
+
         Returns:
             Tuple of (response, sources list - empty for tool-based approach)
-        """
-        # Create prompt for the AI with clear instructions
-        prompt = f"""Answer this question about course materials: {query}"""
-        
-        # Get conversation history if session exists
-        history = None
-        if session_id:
-            history = self.session_manager.get_conversation_history(session_id)
-        
-        # Generate response using AI with tools
-        response = self.ai_generator.generate_response(
-            query=prompt,
-            conversation_history=history,
-            tools=self.tool_manager.get_tool_definitions(),
-            tool_manager=self.tool_manager
-        )
-        
-        # Get sources from the search tool
-        sources = self.tool_manager.get_last_sources()
 
-        # Reset sources after retrieving them
-        self.tool_manager.reset_sources()
-        
-        # Update conversation history
-        if session_id:
-            self.session_manager.add_exchange(session_id, query, response)
-        
-        # Return response with sources from tool searches
-        return response, sources
+        Raises:
+            Exception: With descriptive message if query processing fails
+        """
+        try:
+            # Create prompt for the AI with clear instructions
+            prompt = f"""Answer this question about course materials: {query}"""
+
+            # Get conversation history if session exists
+            history = None
+            if session_id:
+                try:
+                    history = self.session_manager.get_conversation_history(session_id)
+                except Exception as e:
+                    print(f"[RAG WARNING] Failed to retrieve conversation history: {str(e)}")
+                    # Continue without history
+
+            # Generate response using AI with tools
+            try:
+                response = self.ai_generator.generate_response(
+                    query=prompt,
+                    conversation_history=history,
+                    tools=self.tool_manager.get_tool_definitions(),
+                    tool_manager=self.tool_manager
+                )
+            except Exception as e:
+                print(f"[RAG ERROR] AI generation failed: {str(e)}")
+                raise Exception(f"Failed to generate response: {str(e)}")
+
+            # Get sources from the search tool
+            sources = []
+            try:
+                sources = self.tool_manager.get_last_sources()
+            except Exception as e:
+                print(f"[RAG WARNING] Failed to retrieve sources: {str(e)}")
+                # Continue with empty sources list
+
+            # Reset sources after retrieving them
+            try:
+                self.tool_manager.reset_sources()
+            except Exception as e:
+                print(f"[RAG WARNING] Failed to reset sources: {str(e)}")
+                # Not critical, continue
+
+            # Update conversation history
+            if session_id:
+                try:
+                    self.session_manager.add_exchange(session_id, query, response)
+                except Exception as e:
+                    print(f"[RAG WARNING] Failed to update conversation history: {str(e)}")
+                    # Continue anyway
+
+            # Return response with sources from tool searches
+            return response, sources
+
+        except Exception as e:
+            print(f"[RAG CRITICAL] Query processing failed: {str(e)}")
+            raise Exception(f"Query processing failed: {str(e)}")
     
     def get_course_analytics(self) -> Dict:
         """Get analytics about the course catalog"""

@@ -1,0 +1,56 @@
+sequenceDiagram
+    autonumber
+    actor User
+    participant FE as 🎨 Frontend
+    participant API as 🔌 API Layer
+    participant Session as 📝 Session Mgr
+    participant RAG as 🤖 RAG System
+    participant AI as 🧠 Claude AI
+    participant Tools as 🔧 Search Tools
+    participant DB as 💾 Vector DB
+
+    Note over User,DB: Core User Query Flow
+
+    %% User submits query
+    User->>+FE: Type question and click send
+    FE->>FE: Show loading state
+    FE->>+API: POST /api/query
+
+    %% Session management
+    API->>+Session: Get conversation history
+    Session-->>-API: Return last 2 exchanges
+
+    %% RAG processing
+    API->>+RAG: Process query with context
+    RAG->>RAG: Format user message
+
+    %% AI decides to search
+    RAG->>+AI: Send message with tool definitions
+    AI->>AI: Analyze query
+    AI-->>-RAG: Tool call: CourseSearchTool
+
+    %% Tool execution
+    RAG->>+Tools: Execute search tool
+    Tools->>+DB: Semantic vector search
+    DB->>DB: Find similar chunks
+    DB-->>-Tools: Return chunks and metadata
+    Tools-->>-RAG: Format search results
+
+    %% AI generates response
+    RAG->>+AI: Send tool results
+    AI->>AI: Generate answer (temp: 0)
+    AI-->>-RAG: Response text
+
+    %% Save to session
+    RAG->>+Session: Save exchange
+    Session->>Session: Limit to 2 exchanges
+    Session-->>-RAG: Confirmed
+
+    %% Return to frontend
+    RAG-->>-API: Return answer and sources
+    API-->>-FE: JSON response
+    FE->>FE: Render markdown answer
+    FE->>FE: Display sources
+    FE-->>-User: Show AI response
+
+    Note over User,DB: User sees answer with course sources

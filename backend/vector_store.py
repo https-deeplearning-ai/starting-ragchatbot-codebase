@@ -159,20 +159,39 @@ class VectorStore:
             ids=[course.title]
         )
     
-    def add_course_content(self, chunks: List[CourseChunk]):
-        """Add course content chunks to the vector store"""
+    def add_course_content(self, chunks: List[CourseChunk], course: Course = None):
+        """Add course content chunks to the vector store with lesson links"""
         if not chunks:
             return
-        
+
         documents = [chunk.content for chunk in chunks]
-        metadatas = [{
-            "course_title": chunk.course_title,
-            "lesson_number": chunk.lesson_number,
-            "chunk_index": chunk.chunk_index
-        } for chunk in chunks]
+
+        # Build metadata with lesson links
+        metadatas = []
+        for chunk in chunks:
+            metadata = {
+                "course_title": chunk.course_title,
+                "lesson_number": chunk.lesson_number,
+                "chunk_index": chunk.chunk_index
+            }
+
+            # Add lesson link if course object is provided
+            if course and chunk.lesson_number is not None:
+                # Find the lesson with matching number
+                for lesson in course.lessons:
+                    if lesson.lesson_number == chunk.lesson_number:
+                        metadata["lesson_link"] = lesson.lesson_link
+                        break
+
+            # Add course link
+            if course and course.course_link:
+                metadata["course_link"] = course.course_link
+
+            metadatas.append(metadata)
+
         # Use title with chunk index for unique IDs
         ids = [f"{chunk.course_title.replace(' ', '_')}_{chunk.chunk_index}" for chunk in chunks]
-        
+
         self.course_content.add(
             documents=documents,
             metadatas=metadatas,

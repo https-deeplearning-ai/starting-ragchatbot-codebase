@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAG Chatbot Query Flow</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-style: italic;
+        }
+
+        .flow-diagram {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            position: relative;
+        }
+
+        .phase {
+            display: flex;
+            align-items: stretch;
+            gap: 15px;
+            position: relative;
+        }
+
+        .phase-label {
+            min-width: 100px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-size: 0.9em;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .phase-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .step {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 15px;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .step:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-color: #667eea;
+        }
+
+        .step-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .step-number {
+            background: #667eea;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9em;
+            flex-shrink: 0;
+        }
+
+        .step-title {
+            font-weight: bold;
+            color: #333;
+            font-size: 1em;
+        }
+
+        .step-file {
+            color: #667eea;
+            font-size: 0.85em;
+            font-family: 'Courier New', monospace;
+            margin-left: auto;
+        }
+
+        .step-description {
+            color: #666;
+            font-size: 0.9em;
+            line-height: 1.5;
+            margin-left: 40px;
+        }
+
+        .code-block {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 12px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+            margin: 10px 0 0 40px;
+            overflow-x: auto;
+            line-height: 1.4;
+        }
+
+        .code-block .keyword {
+            color: #f687b3;
+        }
+
+        .code-block .string {
+            color: #68d391;
+        }
+
+        .code-block .comment {
+            color: #a0aec0;
+        }
+
+        .arrow {
+            width: 4px;
+            height: 30px;
+            background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .arrow::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-top: 12px solid #764ba2;
+        }
+
+        .highlight-box {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+
+        .highlight-box .title {
+            font-weight: bold;
+            color: #856404;
+            margin-bottom: 8px;
+        }
+
+        .highlight-box .content {
+            color: #856404;
+            font-size: 0.9em;
+        }
+
+        .data-flow {
+            background: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            padding: 10px 15px;
+            margin: 10px 0 0 40px;
+            border-radius: 4px;
+        }
+
+        .data-flow-title {
+            font-weight: bold;
+            color: #1976D2;
+            font-size: 0.85em;
+            margin-bottom: 5px;
+        }
+
+        .data-flow-content {
+            color: #424242;
+            font-size: 0.85em;
+            font-family: 'Courier New', monospace;
+        }
+
+        .two-calls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 10px 0 0 40px;
+        }
+
+        .api-call {
+            background: #f3e5f5;
+            border: 2px solid #9c27b0;
+            border-radius: 8px;
+            padding: 12px;
+        }
+
+        .api-call-title {
+            font-weight: bold;
+            color: #6a1b9a;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .api-call-content {
+            color: #4a148c;
+            font-size: 0.85em;
+            line-height: 1.4;
+        }
+
+        .legend {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #e9ecef;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85em;
+            color: #666;
+        }
+
+        .legend-box {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+
+        .db-icon {
+            display: inline-block;
+            background: #4CAF50;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.75em;
+            font-weight: bold;
+            margin-left: 5px;
+        }
+
+        .ai-icon {
+            display: inline-block;
+            background: #9c27b0;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.75em;
+            font-weight: bold;
+            margin-left: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔄 RAG Chatbot Query Flow</h1>
+        <p class="subtitle">Complete journey of a user query: "What is covered in Lesson 0 of the MCP course?"</p>
+
+        <div class="flow-diagram">
+
+            <!-- PHASE 1: FRONTEND INPUT -->
+            <div class="phase">
+                <div class="phase-label">PHASE 1<br>Frontend<br>Input</div>
+                <div class="phase-content">
+                    <div class="step">
+                        <div class="step-header">
+                            <div class="step-number">1</div>
+                            <div class="step-title">User Types Query & Clicks Send</div>
+                            <div class="step-file">index.html:59-70</div>
+                        </div>
+                        <div class="step-description">
+                            User enters: "What is covered in Lesson 0 of the MCP course?"
+                        </div>
+                        <div class="data-flow">
+                            <div class="data-flow-title">Input:</div>
+                            <div class="data-flow-content">chatInput.value = "What is covered in Lesson 0..."</div>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-header">
+                            <div class="step-number">2</div>
+                            <div class="step-title">Event Handler Triggered</div>
+                            <div class="step-file">script.js:27-30</div>
+                        </div>
+                        <div class="step-description">
+                            Click or Enter key triggers <code>sendMessage()</code> function
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-header">
+                            <div class="step-number">3</div>
+                            <div class="step-title">Send API Request</div>
+                            <div class="step-file">script.js:45-96</div>
+                        </div>
+                        <div class="step-description">
+                            • Disable UI (prevent double-submit)<br>
+                            • Display user message in chat<br>
+                            • Show loading animation (three dots)<br>
+                            • POST request to backend API
+                        </div>
+                        <div class="data-flow">
+                            <div class="data-flow-title">POST /api/query:</div>
+                            <div class="data-flow-content">
+                                {<br>
+                                &nbsp;&nbsp;"query": "What is covered in Lesson 0...",<br>
+                                &nbsp;&nbsp;"session_id": null<br>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="arrow"></div>
+
+            <!-- PHASE 2: BACKEND API -->
+            <div class="phase">
+                <div class="phase-label">PHASE 2<br>Backend<br>API</div>
+                <div class="phase-content">
+                    <div class="step">
+                        <div class="step-header">
+                            <div class="step-number">4</div>
+                            <div class="step-title">FastAPI Receives Request</div>
+                            <div class="step-file">app.py:56-74</div>
+                        </div>
+                        <div class="step-description">
+                            • Parse request body (query + session_id)<br>
+                            • Create new session if none provided<br>
+                            • Call RAG system to process query
+                        </div>
+                        <div class="data-flow">
+                            <div class="data-flow-title">Session Created:</div>
+                            <div class="data-flow-content">session_id = "session_1"</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="arrow"></div>
+
+            <!-- PHASE 3: RAG ORCHESTRATION -->
+            <div class="phase">
+                <div class="phase-label">PHASE 3<br>RAG<br>System</div>
+                <div class="phase-content">
+                    <div class="step">
+                        <div class="step-header">
+                            <div class="step-number">5</div>
+                            <div class="step-title">RAG System Entry Point</div>
+                            <div class="step-file">rag_system.py:102-140</div>
+                        </div>
+                        <div class="step-description">
+                            • Build full prompt with instructions<br>
+                            • Load conversation history (empty for first query)<br>
+                            • Get tool definitions (search_course_content)<br>
+                            • Call AI Generator with tools enabled
+                        </div>
+                        <div class="data-flow">
+                            <div class="data-flow-title">Prepared Data:</div>
+                            <div class="data-flow-content">
+                                prompt = "Answer this question about course materials: ..."<br>
+                                history = None (new session)<br>
+                                tools = [search_course_content definition]
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="arrow"></div>
+
+            <!-- PHASE 4: AI GENERATOR -->
+            <div class="phase">
+                <div class="phase-label">PHASE 4<br>AI<br>Generator</div>
+                <div class="phase-content">
+                    <div class="step">
+                        <div class="step-header">
+                            <div class="step-number">6</div>
+                            <div class="step-title">Prepare Claude API Call <span class="ai-icon">CLAUDE</span></div>
+                            <div class="step-file">ai_generator.py:43-87</div>
+                        </div>
+                        <div class="step-description">
+                            • Build system prompt with instructions<br>
+                            • Add tool definitions to request<br>
+                            • Set temperature=0 for consistent responses<br>
+                            • Enable tool_choice="auto" (Claude decides)
+                        </div>
+
+                        <div class="highlight-box">
+                            <div class="title">📋 System Prompt Includes:</div>
+                            <div class="content">
+                                "You are an AI assistant specialized in course materials...<br>
+                                - Use search tool for course-specific questions<br>
+                                - One search per query maximum<br>
+                                - No meta-commentary - direct answers only"
+                            </div>
+                        </div>
+
+                        <div class="two-calls">
+                            <div class="api-call">
+                                <div class="api-call-title">🔵 FIRST API CALL</div>
+                                <div class="api-call-content">
+                                    <strong>Purpose:</strong> Claude decides if search is needed<br><br>
+                                    <strong>Claude's Decision:</strong><br>
+                                    "This is a course-specific question about Lesson 0 of MCP course. I need to search!"<br><br>
+                                    <strong>Response:</strong><br>
+                                    stop_reason = "tool_use"<br>
+                                    tool = "search_course_content"<br>
+                                    input = {<br>
+                                    &nbsp;&nbsp;query: "Lesson 0 content",<br>
+                                    &nbsp;&nbsp;course_name: "MCP",<br>
+                                    &nbsp;&nbsp;lesson_number: 0<br>
+                                    }
+                                </div>
+                            </div>
+
+                            <div class="api-call">
+                                <div class="api-call-title">🟣 SECOND API CALL</div>
+                                <div class="api-call-content">
+                                    <strong>Purpose:</strong> Synthesize final answer from search results<br><br>
+                                    <strong>Input:</strong><br>
+                                    - Original query<br>
+                                    - Tool use request<br>
+                                    - Tool results (search chunks)<br><br>
+                                    <strong>Response:</strong><br>
+                                    "Lesson 0 of the MCP course covers an introduction to the Model Context Protocol..."
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="arrow"></div>
+
+            <!-- PHASE 5: TOOL EXECUTION -->
+            <div class="phase">
+                <div class="phase-label">PHASE 5<br>Tool<br>Execution</div>
+                <div class="phase-content">
+                    <div class="step">
+                        <div class="step-header">
+                            <div class="step-number">7</div>
+                            <div class="step-title">Handle Tool Execution</div>
+                            <div class="step-file">ai_generator.py:89-135</div>
+                        </div>
+                        <div class="step-description">
+                            • Extract tool use request from Claude's response<br>
+                            • Call tool_manager.execute_tool() with parameters<br>
+                            • Collect tool results<br>
+                            • Prepare for second API call
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-header">
+                            <div class="step-number">8</div>
+                            <div class="step-title">Tool Manager Routes Request</div>
+                            <div class="step-file">search_tools.py:135-140</div>
+                        </div>
+                        <div class="step-description">
+                            • Look up tool by name: "search_course_content"<br>
+                            • Route to CourseSearchTool.execute()
+                        </div>
+                        <div class="data-flow">
+                            <div class="data-flow-title">Tool Parameters:</div>
+                            <div class="data-flow-content">
+                                query = "Lesson 0 content"<br>
+                                course_name = "MCP"<br>
+                                lesson_number = 0
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-header">
+                            <div class="step-number">9</div>
+                            <div class="step-title">Course Search Tool Executes</div>
+                            <div class="step-file">search_tools.py:52-86</div>
+                        </div>
+                        <div class="step-description">
+                            • Call vector_store.search() with parameters<br>
+                            • Check for errors or empty results<br>
+                            • Format results with course/lesson context<br>
+                            • Track sources for UI display
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="arrow"></div>
+
+            <!-- PHASE 6: VECTOR SEARCH -->
+            <div class="phase">
+                <div class="phase-label">PHASE 6<br>Vector<br>Search</div>
+                <div class="phase-content">
+                    <div class="step">
+                        <div class="step-header">
+                            <div class="step-number">10</div>
+                            <div class="step-title">Vector Store Semantic Search <span class="db-icon">ChromaDB</span></div>
+                            <div class="step-file">vector_store.py:61-100</div>
+                        </div>
+                        <div class="step-description">
+                            <strong>Step 1: Fuzzy Course Name Resolution</strong><br>
+                            • Search course_catalog collection for "MCP"<br>
+                            • Find best match: "MCP: Build Rich-Context AI Apps with Anthropic"<br><br>
+
+                            <strong>Step 2: Build Filter</strong><br>
+                            • Filter by course_title = "MCP: Build Rich-Context AI Apps..."<br>
+                            • AND lesson_number = 0<br><br>
+
+                            <strong>Step 3: Semantic Search</strong><br>
+                            • Embed query: "Lesson 0 content" → 384-dim vector<br>
+                            • Search course_content collection<br>
+                            • Cosine similarity against all chunk embeddings<br>
+                            • Apply filters (course + lesson)<br>
+                            • Return top 5 most similar chunks
+                        </div>
+
+                        <div class="highlight-box">
+                            <div class="title">🔍 ChromaDB Query Process:</div>
+                            <div class="content">
+                                1. Query text → SentenceTransformer (all-MiniLM-L6-v2) → Vector [384 dimensions]<br>
+                                2. Compare with 800-char chunk embeddings using cosine similarity<br>
+                                3. Filter: WHERE course_title = "MCP..." AND lesson_number = 0<br>
+                                4. Sort by similarity score (lower distance = better match)<br>
+                                5. Return top 5 results
+                            </div>
+                        </div>
+
+                        <div class="data-flow">
+                            <div class="data-flow-title">Search Results (3 of 5):</div>
+                            <div class="data-flow-content">
+                                Chunk 0: "Course MCP: ... Lesson 0 content: Welcome to MCP..." (distance: 0.45)<br>
+                                Chunk 1: "Lesson 0 content: In this lesson you'll learn..." (distance: 0.52)<br>
+                                Chunk 2: "Lesson 0 content: MCP enables AI applications..." (distance: 0.58)
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-header">
+                            <div class="step-number">11</div>
+                            <div class="step-title">Format Search Results</div>
+                            <div class="step-file">search_tools.py:88-114</div>
+                        </div>
+                        <div class="step-description">
+                            • Add headers with course + lesson context<br>
+                            • Extract and store sources for UI<br>
+                            • Join all results with double newlines
+                        </div>
+                        <div class="code-block">
+<span class="comment">// Formatted output sent to Claude:</span>
+[MCP: Build Rich-Context AI Apps with Anthropic - Lesson 0]
+Course MCP: ... Lesson 0 content: Welcome to MCP course...
+
+[MCP: Build Rich-Context AI Apps with Anthropic - Lesson 0]
+Lesson 0 content: In this lesson you'll learn...
+
+[MCP: Build Rich-Context AI Apps with Anthropic - Lesson 0]
+Lesson 0 content: MCP enables AI applications...
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="arrow"></div>
+
+            <!-- PHASE 7: AI SYNTHESIS -->
+            <div class="phase">
+                <div class="phase-label">PHASE 7<br>AI<br>Synthesis</div>
+                <div class="phase-content">
+                    <div class="step">
+                        <div class="step-header">
+                            <div class="step-number">12</div>
+                            <div class="step-title">Claude Generates Final Response <span class="ai-icon">CLAUDE</span></div>
+                            <div class="step-file">ai_generator.py:134</div>
+                        </div>
+                        <div class="step-description">
+                            • Receives formatted search results<br>
+                            • Synthesizes concise, educational answer<br>
+                            • No meta-commentary (follows system prompt)<br>
+                            • Returns text-only response
+                        </div>
+                        <div class="highlight-box">
+                            <div class="title">✨ Claude's Final Response:</div>
+                            <div class="content">
+                                "Lesson 0 of the MCP course covers an introduction to the Model Context Protocol (MCP).
+                                You'll learn how MCP enables AI applications to connect with external data sources and
+                                tools, creating rich-context interactions. The lesson demonstrates basic setup and
+                                explains the core concepts of servers, clients, and resources in the MCP architecture."
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="arrow"></div>
+
+            <!-- PHASE 8: RESPONSE JOURNEY -->
+            <div class="phase">
+                <div class="phase-label">PHASE 8<br>Response<br>Journey</div>
+                <div class="phase-content">
+                    <div class="step">
+                        <div class="step-header">
+                            <div class="step-number">13</div>
+                            <div class="step-title">Back Through RAG System</div>
+                            <div class="step-file">rag_system.py:129-140</div>
+                        </div>
+                        <div class="step-description">
+                            • Receive response from AI generator<br>
+                            • Extract sources from tool_manager<br>
+                            • Update conversation history (session_manager)<br>
+                            • Return (response, sources) tuple
+                        </div>
+                        <div class="data-flow">
+                            <div class="data-flow-title">Conversation History Updated:</div>
+                            <div class="data-flow-content">
+                                User: "What is covered in Lesson 0 of the MCP course?"<br>
+                                Assistant: "Lesson 0 of the MCP course covers..."
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-header">
+                            <div class="step-number">14</div>
+                            <div class="step-title">Back to FastAPI</div>
+                            <div class="step-file">app.py:68-72</div>
+                        </div>
+                        <div class="step-description">
+                            • Wrap response in QueryResponse model<br>
+                            • Include answer, sources, and session_id<br>
+                            • Return JSON to frontend
+                        </div>
+                        <div class="code-block">
+<span class="comment">// JSON Response:</span>
+{
+  <span class="string">"answer"</span>: <span class="string">"Lesson 0 of the MCP course covers..."</span>,
+  <span class="string">"sources"</span>: [<span class="string">"MCP: Build Rich-Context AI Apps - Lesson 0"</span>],
+  <span class="string">"session_id"</span>: <span class="string">"session_1"</span>
+}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="arrow"></div>
+
+            <!-- PHASE 9: FRONTEND DISPLAY -->
+            <div class="phase">
+                <div class="phase-label">PHASE 9<br>Frontend<br>Display</div>
+                <div class="phase-content">
+                    <div class="step">
+                        <div class="step-header">
+                            <div class="step-number">15</div>
+                            <div class="step-title">Process API Response</div>
+                            <div class="step-file">script.js:76-85</div>
+                        </div>
+                        <div class="step-description">
+                            • Parse JSON response<br>
+                            • Store session_id for next query<br>
+                            • Remove loading animation<br>
+                            • Call addMessage() to display
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-header">
+                            <div class="step-number">16</div>
+                            <div class="step-title">Render Message in Chat</div>
+                            <div class="step-file">script.js:113-138</div>
+                        </div>
+                        <div class="step-description">
+                            • Convert markdown to HTML (marked.js)<br>
+                            • Create message container with styling<br>
+                            • Add collapsible sources section<br>
+                            • Append to chat and auto-scroll<br>
+                            • Re-enable input field
+                        </div>
+
+                        <div class="highlight-box" style="background: #d4edda; border-color: #28a745;">
+                            <div class="title" style="color: #155724;">✅ USER SEES ANSWER</div>
+                            <div class="content" style="color: #155724;">
+                                <strong>Answer:</strong> "Lesson 0 of the MCP course covers an introduction to the Model Context Protocol..."<br><br>
+                                <strong>Sources:</strong> [Collapsible] "MCP: Build Rich-Context AI Apps with Anthropic - Lesson 0"<br><br>
+                                <strong>Next Query:</strong> Will include conversation history for context-aware responses
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-box" style="background: #667eea;"></div>
+                <span>Frontend Layer</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-box" style="background: #764ba2;"></div>
+                <span>Backend Layer</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-box" style="background: #4CAF50;"></div>
+                <span>Database (ChromaDB)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-box" style="background: #9c27b0;"></div>
+                <span>AI (Claude API)</span>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

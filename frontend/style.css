@@ -241,8 +241,58 @@ header h1 {
 }
 
 .sources-content {
-    padding: 0 0.5rem 0.25rem 1.5rem;
+    padding: 0.5rem 0.5rem 0.5rem 1rem;
     color: var(--text-secondary);
+}
+
+/* Source item styling */
+.source-item {
+    padding: 0.5rem;
+    margin: 0.25rem 0;
+    background: rgba(139, 92, 246, 0.05);
+    border-left: 3px solid var(--primary);
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.source-item:hover {
+    background: rgba(139, 92, 246, 0.1);
+    transform: translateX(2px);
+}
+
+/* Source links styling */
+.source-link {
+    color: var(--text-primary);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s ease;
+}
+
+.source-link:hover {
+    color: var(--primary);
+}
+
+.source-link:visited {
+    color: var(--text-primary);
+}
+
+.source-link:hover .external-icon {
+    transform: translate(2px, -2px);
+}
+
+/* Source icons */
+.source-icon {
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.external-icon {
+    font-size: 0.875rem;
+    opacity: 0.6;
+    margin-left: auto;
+    transition: transform 0.2s ease;
 }
 
 /* Markdown formatting styles */
@@ -443,6 +493,35 @@ header h1 {
     border-radius: 8px;
     border: 1px solid rgba(34, 197, 94, 0.2);
     margin: 0.5rem 0;
+}
+
+/* New Chat Button */
+.new-chat-button {
+    width: 100%;
+    padding: 0.5rem 0;
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: color 0.2s ease;
+    text-align: left;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.new-chat-button:focus {
+    outline: none;
+    color: var(--primary-color);
+}
+
+.new-chat-button:hover {
+    color: var(--primary-color);
+}
+
+.new-chat-button:active {
+    color: var(--primary-color);
 }
 
 /* Sidebar Headers */

@@ -5,7 +5,7 @@ const API_URL = '/api';
 let currentSessionId = null;
 
 // DOM elements
-let chatMessages, chatInput, sendButton, totalCourses, courseTitles;
+let chatMessages, chatInput, sendButton, totalCourses, courseTitles, newChatButton;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -15,6 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
     sendButton = document.getElementById('sendButton');
     totalCourses = document.getElementById('totalCourses');
     courseTitles = document.getElementById('courseTitles');
+    newChatButton = document.getElementById('newChatButton');
     
     setupEventListeners();
     createNewSession();
@@ -28,8 +29,13 @@ function setupEventListeners() {
     chatInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') sendMessage();
     });
-    
-    
+
+    // New chat button
+    newChatButton.addEventListener('click', () => {
+        createNewSession();
+        chatInput.focus();
+    });
+
     // Suggested questions
     document.querySelectorAll('.suggested-item').forEach(button => {
         button.addEventListener('click', (e) => {
@@ -71,10 +77,15 @@ async function sendMessage() {
             })
         });
 
-        if (!response.ok) throw new Error('Query failed');
+        // Handle HTTP errors with detailed messages
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            const errorDetail = errorData.detail || 'Query failed to process';
+            throw new Error(errorDetail);
+        }
 
         const data = await response.json();
-        
+
         // Update session ID if new
         if (!currentSessionId) {
             currentSessionId = data.session_id;
@@ -85,9 +96,31 @@ async function sendMessage() {
         addMessage(data.answer, 'assistant', data.sources);
 
     } catch (error) {
-        // Replace loading message with error
+        // Replace loading message with helpful error message
         loadingMessage.remove();
-        addMessage(`Error: ${error.message}`, 'assistant');
+
+        console.error('Query error details:', error);
+
+        // Provide user-friendly error messages based on error type
+        let errorMessage = 'Failed to process your query.';
+        const errorStr = error.message.toLowerCase();
+
+        if (errorStr.includes('network') || errorStr.includes('fetch')) {
+            errorMessage = 'Network error. Please check your internet connection and try again.';
+        } else if (errorStr.includes('timeout') || errorStr.includes('timed out')) {
+            errorMessage = 'Request timed out. Please try again.';
+        } else if (errorStr.includes('rate limit')) {
+            errorMessage = 'Too many requests. Please wait a moment before trying again.';
+        } else if (errorStr.includes('api key') || errorStr.includes('authentication')) {
+            errorMessage = 'Authentication error. Please contact support.';
+        } else if (errorStr.includes('connect') || errorStr.includes('connection')) {
+            errorMessage = 'Connection error. Please try again in a moment.';
+        } else if (error.message && error.message !== 'Query failed') {
+            // Use the actual error message if it's informative
+            errorMessage = error.message;
+        }
+
+        addMessage(`⚠️ ${errorMessage}`, 'assistant');
     } finally {
         chatInput.disabled = false;
         sendButton.disabled = false;
@@ -122,10 +155,31 @@ function addMessage(content, type, sources = null, isWelcome = false) {
     let html = `<div class="message-content">${displayContent}</div>`;
     
     if (sources && sources.length > 0) {
+        // Format sources as clickable links in a list
+        const sourceLinks = sources.map((source, index) => {
+            let linkHtml;
+            // Handle both old format (string) and new format (object with text and url)
+            if (typeof source === 'string') {
+                // Legacy format - display as plain text
+                linkHtml = escapeHtml(source);
+            } else if (source.url) {
+                // New format with URL - create clickable link with icon
+                linkHtml = `<a href="${escapeHtml(source.url)}" target="_blank" rel="noopener noreferrer" class="source-link">
+                    <span class="source-icon">📚</span>
+                    ${escapeHtml(source.text)}
+                    <span class="external-icon">↗</span>
+                </a>`;
+            } else {
+                // New format but no URL - display as plain text
+                linkHtml = `<span class="source-icon">📚</span>${escapeHtml(source.text)}`;
+            }
+            return `<div class="source-item">${linkHtml}</div>`;
+        }).join('');
+
         html += `
-            <details class="sources-collapsible">
-                <summary class="sources-header">Sources</summary>
-                <div class="sources-content">${sources.join(', ')}</div>
+            <details class="sources-collapsible" open>
+                <summary class="sources-header">📖 Sources (${sources.length})</summary>
+                <div class="sources-content">${sourceLinks}</div>
             </details>
         `;
     }
