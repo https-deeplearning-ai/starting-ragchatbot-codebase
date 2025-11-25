@@ -29,8 +29,8 @@ All responses must be:
 Provide only the direct answer to what was asked.
 """
     
-    def __init__(self, api_key: str, model: str):
-        self.client = anthropic.Anthropic(api_key=api_key)
+    def __init__(self, api_key: str, base_url: str, model: str):
+        self.client = anthropic.Anthropic(api_key=api_key, base_url=base_url)
         self.model = model
         
         # Pre-build base API parameters

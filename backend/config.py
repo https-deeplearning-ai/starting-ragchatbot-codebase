@@ -10,6 +10,7 @@ class Config:
     """Configuration settings for the RAG system"""
     # Anthropic API settings
     ANTHROPIC_API_KEY: str = os.getenv("ANTHROPIC_API_KEY", "")
+    ANTHROPIC_BASE_URL: str = os.getenv("ANTHROPIC_BASE_URL", "")
     ANTHROPIC_MODEL: str = "claude-sonnet-4-20250514"
     
     # Embedding model settings
