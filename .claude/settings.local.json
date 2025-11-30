@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__playwright__browser_take_screenshot",
+      "Bash(uv sync:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
