@@ -1,0 +1,1 @@
+- use uv to run Python not pip
