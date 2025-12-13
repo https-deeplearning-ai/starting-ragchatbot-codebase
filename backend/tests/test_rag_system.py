@@ -1,10 +1,11 @@
 """End-to-end integration tests for RAGSystem"""
-import pytest
-from unittest.mock import Mock, patch, MagicMock
+
+from unittest.mock import Mock, patch
+
 from rag_system import RAGSystem
+
 from tests.fixtures.sample_data import (
     SAMPLE_SEARCH_RESULTS_SUCCESS,
-    SAMPLE_ANTHROPIC_FINAL_RESPONSE
 )
 
 
@@ -22,10 +23,11 @@ class TestRAGSystemQueryFlow:
         4. No results returned
         5. User sees "query failed" or empty response
         """
-        with patch('rag_system.VectorStore') as MockVectorStore, \
-             patch('rag_system.AIGenerator') as MockAIGenerator, \
-             patch('rag_system.SessionManager'):
-
+        with (
+            patch("rag_system.VectorStore") as MockVectorStore,
+            patch("rag_system.AIGenerator") as MockAIGenerator,
+            patch("rag_system.SessionManager"),
+        ):
             # Mock VectorStore with max_results=0
             mock_store = Mock()
             mock_store.search.return_value = SAMPLE_SEARCH_RESULTS_SUCCESS
@@ -53,10 +55,11 @@ class TestRAGSystemQueryFlow:
 
     def test_query_with_valid_max_results_config(self, mock_config):
         """Test that query works correctly with valid MAX_RESULTS"""
-        with patch('rag_system.VectorStore') as MockVectorStore, \
-             patch('rag_system.AIGenerator') as MockAIGenerator, \
-             patch('rag_system.SessionManager') as MockSessionManager:
-
+        with (
+            patch("rag_system.VectorStore") as MockVectorStore,
+            patch("rag_system.AIGenerator") as MockAIGenerator,
+            patch("rag_system.SessionManager") as MockSessionManager,
+        ):
             # Mock components
             mock_store = Mock()
             mock_store.search.return_value = SAMPLE_SEARCH_RESULTS_SUCCESS
@@ -87,10 +90,11 @@ class TestRAGSystemQueryFlow:
 
     def test_query_sources_are_returned(self, mock_config):
         """Test that sources list is returned from query"""
-        with patch('rag_system.VectorStore') as MockVectorStore, \
-             patch('rag_system.AIGenerator') as MockAIGenerator, \
-             patch('rag_system.SessionManager') as MockSessionManager:
-
+        with (
+            patch("rag_system.VectorStore") as MockVectorStore,
+            patch("rag_system.AIGenerator") as MockAIGenerator,
+            patch("rag_system.SessionManager") as MockSessionManager,
+        ):
             # Setup mocks
             mock_store = Mock()
             MockVectorStore.return_value = mock_store
@@ -105,9 +109,9 @@ class TestRAGSystemQueryFlow:
             rag_system = RAGSystem(mock_config)
 
             # Mock tool_manager to return sources
-            rag_system.tool_manager.get_last_sources = Mock(return_value=[
-                {"text": "MCP - Lesson 1", "url": "https://example.com/lesson1"}
-            ])
+            rag_system.tool_manager.get_last_sources = Mock(
+                return_value=[{"text": "MCP - Lesson 1", "url": "https://example.com/lesson1"}]
+            )
 
             # Execute query
             response, sources = rag_system.query("What is MCP?")
@@ -115,15 +119,16 @@ class TestRAGSystemQueryFlow:
             # Verify sources are returned
             assert isinstance(sources, list)
             assert len(sources) == 1
-            assert sources[0]['text'] == "MCP - Lesson 1"
-            assert sources[0]['url'] == "https://example.com/lesson1"
+            assert sources[0]["text"] == "MCP - Lesson 1"
+            assert sources[0]["url"] == "https://example.com/lesson1"
 
     def test_query_updates_conversation_history(self, mock_config):
         """Test that queries update conversation history"""
-        with patch('rag_system.VectorStore') as MockVectorStore, \
-             patch('rag_system.AIGenerator') as MockAIGenerator, \
-             patch('rag_system.SessionManager') as MockSessionManager:
-
+        with (
+            patch("rag_system.VectorStore") as MockVectorStore,
+            patch("rag_system.AIGenerator") as MockAIGenerator,
+            patch("rag_system.SessionManager") as MockSessionManager,
+        ):
             # Setup mocks
             MockVectorStore.return_value = Mock()
 
@@ -154,10 +159,11 @@ class TestRAGSystemQueryFlow:
 
     def test_query_resets_sources_after_retrieval(self, mock_config):
         """Test that sources are reset after being retrieved"""
-        with patch('rag_system.VectorStore') as MockVectorStore, \
-             patch('rag_system.AIGenerator') as MockAIGenerator, \
-             patch('rag_system.SessionManager') as MockSessionManager:
-
+        with (
+            patch("rag_system.VectorStore") as MockVectorStore,
+            patch("rag_system.AIGenerator") as MockAIGenerator,
+            patch("rag_system.SessionManager") as MockSessionManager,
+        ):
             # Setup mocks
             MockVectorStore.return_value = Mock()
             MockAIGenerator.return_value = Mock(generate_response=Mock(return_value="Test"))
@@ -167,7 +173,9 @@ class TestRAGSystemQueryFlow:
             rag_system = RAGSystem(mock_config)
 
             # Mock tool_manager methods
-            rag_system.tool_manager.get_last_sources = Mock(return_value=[{"text": "source1", "url": "url1"}])
+            rag_system.tool_manager.get_last_sources = Mock(
+                return_value=[{"text": "source1", "url": "url1"}]
+            )
             rag_system.tool_manager.reset_sources = Mock()
 
             # Execute query
@@ -179,10 +187,11 @@ class TestRAGSystemQueryFlow:
 
     def test_query_passes_tools_to_ai_generator(self, mock_config):
         """Test that tool definitions are passed to AIGenerator"""
-        with patch('rag_system.VectorStore') as MockVectorStore, \
-             patch('rag_system.AIGenerator') as MockAIGenerator, \
-             patch('rag_system.SessionManager') as MockSessionManager:
-
+        with (
+            patch("rag_system.VectorStore") as MockVectorStore,
+            patch("rag_system.AIGenerator") as MockAIGenerator,
+            patch("rag_system.SessionManager") as MockSessionManager,
+        ):
             # Setup mocks
             MockVectorStore.return_value = Mock()
 
@@ -201,15 +210,15 @@ class TestRAGSystemQueryFlow:
             # Verify AIGenerator.generate_response was called with tools
             mock_ai.generate_response.assert_called_once()
             call_args = mock_ai.generate_response.call_args
-            assert 'tools' in call_args[1]
-            assert 'tool_manager' in call_args[1]
+            assert "tools" in call_args[1]
+            assert "tool_manager" in call_args[1]
 
             # Verify tools list includes search_course_content and get_course_outline
-            tools = call_args[1]['tools']
+            tools = call_args[1]["tools"]
             assert len(tools) == 2  # Should have 2 tools registered
-            tool_names = [t['name'] for t in tools]
-            assert 'search_course_content' in tool_names
-            assert 'get_course_outline' in tool_names
+            tool_names = [t["name"] for t in tools]
+            assert "search_course_content" in tool_names
+            assert "get_course_outline" in tool_names
 
 
 class TestRAGSystemInitialization:
@@ -217,11 +226,12 @@ class TestRAGSystemInitialization:
 
     def test_initialization_with_valid_config(self, mock_config):
         """Test that RAGSystem initializes correctly with valid config"""
-        with patch('rag_system.VectorStore') as MockVectorStore, \
-             patch('rag_system.AIGenerator') as MockAIGenerator, \
-             patch('rag_system.SessionManager') as MockSessionManager, \
-             patch('rag_system.DocumentProcessor'):
-
+        with (
+            patch("rag_system.VectorStore") as MockVectorStore,
+            patch("rag_system.AIGenerator") as MockAIGenerator,
+            patch("rag_system.SessionManager") as MockSessionManager,
+            patch("rag_system.DocumentProcessor"),
+        ):
             # Initialize
             rag_system = RAGSystem(mock_config)
 
@@ -241,11 +251,12 @@ class TestRAGSystemInitialization:
 
         After the fix, this should raise a ValueError
         """
-        with patch('rag_system.VectorStore') as MockVectorStore, \
-             patch('rag_system.AIGenerator'), \
-             patch('rag_system.SessionManager'), \
-             patch('rag_system.DocumentProcessor'):
-
+        with (
+            patch("rag_system.VectorStore") as MockVectorStore,
+            patch("rag_system.AIGenerator"),
+            patch("rag_system.SessionManager"),
+            patch("rag_system.DocumentProcessor"),
+        ):
             # Currently this doesn't raise an error (the bug)
             rag_system = RAGSystem(mock_config_with_zero_max_results)
 
@@ -255,18 +266,19 @@ class TestRAGSystemInitialization:
 
     def test_tools_are_registered_on_init(self, mock_config):
         """Test that both tools are registered during initialization"""
-        with patch('rag_system.VectorStore'), \
-             patch('rag_system.AIGenerator'), \
-             patch('rag_system.SessionManager'), \
-             patch('rag_system.DocumentProcessor'):
-
+        with (
+            patch("rag_system.VectorStore"),
+            patch("rag_system.AIGenerator"),
+            patch("rag_system.SessionManager"),
+            patch("rag_system.DocumentProcessor"),
+        ):
             # Initialize
             rag_system = RAGSystem(mock_config)
 
             # Verify both tools are registered
             tool_names = list(rag_system.tool_manager.tools.keys())
-            assert 'search_course_content' in tool_names
-            assert 'get_course_outline' in tool_names
+            assert "search_course_content" in tool_names
+            assert "get_course_outline" in tool_names
 
             # Verify tools have correct instances
             assert rag_system.search_tool is not None
@@ -278,11 +290,12 @@ class TestRAGSystemAnalytics:
 
     def test_get_course_analytics(self, mock_config):
         """Test that course analytics are returned correctly"""
-        with patch('rag_system.VectorStore') as MockVectorStore, \
-             patch('rag_system.AIGenerator'), \
-             patch('rag_system.SessionManager'), \
-             patch('rag_system.DocumentProcessor'):
-
+        with (
+            patch("rag_system.VectorStore") as MockVectorStore,
+            patch("rag_system.AIGenerator"),
+            patch("rag_system.SessionManager"),
+            patch("rag_system.DocumentProcessor"),
+        ):
             # Mock VectorStore methods
             mock_store = Mock()
             mock_store.get_course_count.return_value = 3
@@ -296,7 +309,7 @@ class TestRAGSystemAnalytics:
             analytics = rag_system.get_course_analytics()
 
             # Verify analytics structure
-            assert 'total_courses' in analytics
-            assert 'course_titles' in analytics
-            assert analytics['total_courses'] == 3
-            assert len(analytics['course_titles']) == 3
+            assert "total_courses" in analytics
+            assert "course_titles" in analytics
+            assert analytics["total_courses"] == 3
+            assert len(analytics["course_titles"]) == 3

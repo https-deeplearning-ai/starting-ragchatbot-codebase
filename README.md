@@ -54,3 +54,55 @@ The application will be available at:
 - Web Interface: `http://localhost:8000`
 - API Documentation: `http://localhost:8000/docs`
 
+## Development
+
+### Code Quality Tools
+
+This project uses modern Python code quality tools to maintain consistent, high-quality code:
+
+- **Black** - Automatic code formatting (100 char line length)
+- **Ruff** - Fast linting and import sorting (10-100x faster than flake8/isort)
+- **mypy** - Static type checking for type safety
+- **pytest** - Testing framework with 49 tests
+
+### Running Quality Checks
+
+```bash
+# Auto-fix formatting and linting issues
+./scripts/fix.sh
+
+# Format code only
+./scripts/format.sh
+
+# Run linters (Ruff + mypy)
+./scripts/lint.sh
+
+# Run tests
+./scripts/test.sh
+
+# Run all checks (formatting + linting + tests)
+./scripts/quality.sh
+```
+
+### Before Committing
+
+Always run quality checks before committing code:
+
+```bash
+./scripts/quality.sh
+```
+
+This ensures:
+- Code is consistently formatted
+- No linting errors
+- Type hints are valid
+- Tests pass
+
+### Code Quality Configuration
+
+All tools are configured in `pyproject.toml`:
+- Black uses 100-character line length for better readability
+- Ruff performs fast linting with modern Python best practices
+- mypy is configured leniently to allow gradual type adoption
+- Configuration can be adjusted as the project matures
+

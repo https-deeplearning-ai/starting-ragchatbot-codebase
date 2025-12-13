@@ -29,3 +29,8 @@ uploads/
 # OS
 .DS_Store
 Thumbs.db
+
+# Code quality tool caches
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
