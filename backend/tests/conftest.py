@@ -181,3 +181,131 @@ def mock_config_with_zero_max_results():
         CHROMA_PATH: str = "./test_chroma_db"
 
     return TestConfig()
+
+
+# ============================================================================
+# API Testing Fixtures
+# ============================================================================
+
+@pytest.fixture
+def mock_session_manager():
+    """Mock SessionManager for API tests"""
+    mock_manager = Mock()
+    mock_manager.create_session.return_value = "test-session-123"
+    mock_manager.get_conversation_history.return_value = []
+    mock_manager.add_exchange.return_value = None
+    return mock_manager
+
+
+@pytest.fixture
+def mock_rag_system(mock_session_manager):
+    """Mock RAGSystem for API endpoint tests"""
+    mock_rag = Mock()
+
+    # Mock session_manager
+    mock_rag.session_manager = mock_session_manager
+
+    # Mock query method to return (answer, sources)
+    mock_rag.query.return_value = (
+        "MCP stands for Model Context Protocol.",
+        [
+            {"text": "MCP: Build Rich-Context AI Apps - Lesson 1", "url": "https://example.com/mcp/lesson1"},
+            {"text": "Advanced MCP Topics - Lesson 2", "url": "https://example.com/mcp/lesson2"}
+        ]
+    )
+
+    # Mock get_course_analytics
+    mock_rag.get_course_analytics.return_value = {
+        "total_courses": 2,
+        "course_titles": [
+            "MCP: Build Rich-Context AI Apps with Anthropic",
+            "Advanced Retrieval for AI with Chroma"
+        ]
+    }
+
+    return mock_rag
+
+
+@pytest.fixture
+def test_app(mock_rag_system):
+    """FastAPI test app with API endpoints only (no static file mounting)"""
+    from fastapi import FastAPI, HTTPException
+    from fastapi.middleware.cors import CORSMiddleware
+    from pydantic import BaseModel
+    from typing import List, Optional
+
+    # Define Pydantic models inline
+    class QueryRequest(BaseModel):
+        """Request model for course queries"""
+        query: str
+        session_id: Optional[str] = None
+
+    class Source(BaseModel):
+        """Single source citation with optional link"""
+        text: str
+        url: Optional[str] = None
+
+    class QueryResponse(BaseModel):
+        """Response model for course queries"""
+        answer: str
+        sources: List[Source]
+        session_id: str
+
+    class CourseStats(BaseModel):
+        """Response model for course statistics"""
+        total_courses: int
+        course_titles: List[str]
+
+    # Create test app
+    app = FastAPI(title="Course Materials RAG System - Test", root_path="")
+
+    # Enable CORS
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+    # Define API endpoints using mock_rag_system
+    @app.post("/api/query", response_model=QueryResponse)
+    async def query_documents(request: QueryRequest):
+        """Process a query and return response with sources"""
+        try:
+            # Create session if not provided
+            session_id = request.session_id
+            if not session_id:
+                session_id = mock_rag_system.session_manager.create_session()
+
+            # Process query using RAG system
+            answer, sources = mock_rag_system.query(request.query, session_id)
+
+            return QueryResponse(
+                answer=answer,
+                sources=sources,
+                session_id=session_id
+            )
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get("/api/courses", response_model=CourseStats)
+    async def get_course_stats():
+        """Get course analytics and statistics"""
+        try:
+            analytics = mock_rag_system.get_course_analytics()
+            return CourseStats(
+                total_courses=analytics["total_courses"],
+                course_titles=analytics["course_titles"]
+            )
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    return app
+
+
+@pytest.fixture
+def test_client(test_app):
+    """FastAPI TestClient for making API requests"""
+    from fastapi.testclient import TestClient
+    return TestClient(test_app)
