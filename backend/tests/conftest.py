@@ -1,15 +1,16 @@
 """Shared pytest fixtures for testing the RAG system"""
+
+from unittest.mock import Mock, patch
+
 import pytest
-from unittest.mock import Mock, MagicMock, patch
+
 from tests.fixtures.sample_data import (
+    SAMPLE_ANTHROPIC_TEXT_RESPONSE,
     SAMPLE_COURSE_METADATA,
     SAMPLE_COURSE_METADATA_2,
-    SAMPLE_SEARCH_RESULTS_SUCCESS,
     SAMPLE_SEARCH_RESULTS_EMPTY,
+    SAMPLE_SEARCH_RESULTS_SUCCESS,
     SAMPLE_SEARCH_RESULTS_WITH_ERROR,
-    SAMPLE_ANTHROPIC_TEXT_RESPONSE,
-    SAMPLE_ANTHROPIC_TOOL_USE_RESPONSE,
-    SAMPLE_ANTHROPIC_FINAL_RESPONSE
 )
 
 
@@ -49,17 +50,9 @@ def mock_chroma_collection():
     mock_collection = Mock()
 
     # Default behavior: return empty results
-    mock_collection.query.return_value = {
-        'documents': [[]],
-        'metadatas': [[]],
-        'distances': [[]]
-    }
+    mock_collection.query.return_value = {"documents": [[]], "metadatas": [[]], "distances": [[]]}
 
-    mock_collection.get.return_value = {
-        'ids': [],
-        'documents': [],
-        'metadatas': []
-    }
+    mock_collection.get.return_value = {"ids": [], "documents": [], "metadatas": []}
 
     return mock_collection
 
@@ -69,12 +62,10 @@ def mock_vector_store(mock_chroma_collection):
     """Mock VectorStore with controllable search results"""
     from vector_store import VectorStore
 
-    with patch('vector_store.chromadb.PersistentClient'):
+    with patch("vector_store.chromadb.PersistentClient"):
         # Create VectorStore with default max_results=5
         store = VectorStore(
-            chroma_path="./test_chroma",
-            embedding_model="all-MiniLM-L6-v2",
-            max_results=5
+            chroma_path="./test_chroma", embedding_model="all-MiniLM-L6-v2", max_results=5
         )
 
         # Replace collections with mocks
@@ -89,12 +80,10 @@ def mock_vector_store_with_zero_max_results(mock_chroma_collection):
     """Mock VectorStore with max_results=0 to test the bug"""
     from vector_store import VectorStore
 
-    with patch('vector_store.chromadb.PersistentClient'):
+    with patch("vector_store.chromadb.PersistentClient"):
         # Create VectorStore with max_results=0 (the bug)
         store = VectorStore(
-            chroma_path="./test_chroma",
-            embedding_model="all-MiniLM-L6-v2",
-            max_results=0
+            chroma_path="./test_chroma", embedding_model="all-MiniLM-L6-v2", max_results=0
         )
 
         # Replace collections with mocks

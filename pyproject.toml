@@ -19,7 +19,82 @@ dev = [
     "pytest>=9.0.2",
     "pytest-asyncio>=1.3.0",
     "pytest-mock>=3.15.1",
+    "black>=24.12.0",
+    "ruff>=0.9.0",
+    "mypy>=1.14.0",
 ]
+
+[tool.black]
+line-length = 100
+target-version = ['py313']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+    \.git
+  | \.venv
+  | __pycache__
+  | chroma_db
+  | \.trees
+)/
+'''
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+extend-exclude = [".trees", "chroma_db"]
+
+[tool.ruff.lint]
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # pyflakes
+    "I",      # isort (import sorting)
+    "N",      # pep8-naming
+    "UP",     # pyupgrade (modern Python syntax)
+    "B",      # flake8-bugbear (catch common bugs)
+    "C4",     # flake8-comprehensions
+    "SIM",    # flake8-simplify
+    "RUF",    # Ruff-specific rules
+]
+ignore = [
+    "E501",   # Line too long (handled by Black)
+    "B008",   # Function call in argument defaults (common in FastAPI)
+    "B904",   # Exception chaining (nice to have but not critical)
+    "B905",   # zip() strict parameter (Python 3.10+ feature)
+    "SIM108", # Ternary operator suggestions (style preference)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"backend/app.py" = ["E402"]  # Warnings filter must be before imports
+"backend/tests/*" = ["S101", "N806", "F841", "E712", "RUF059"]  # Allow test patterns
+"backend/ai_generator.py" = ["B007"]  # Loop variable intentionally unused
+"backend/document_processor.py" = ["B007"]  # Loop variable intentionally unused
+
+[tool.ruff.lint.isort]
+known-first-party = ["backend"]
+section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
+
+[tool.mypy]
+python_version = "3.13"
+warn_return_any = false  # Start lenient
+warn_unused_configs = true
+disallow_untyped_defs = false  # Start lenient, tighten later
+check_untyped_defs = false  # Start lenient
+ignore_missing_imports = true  # Ignore all missing imports for now
+explicit_package_bases = true
+disable_error_code = ["var-annotated", "override", "call-overload", "union-attr", "arg-type", "return", "dict-item", "annotation-unchecked"]
+exclude = [
+    '\.trees/',
+    'chroma_db/',
+]
+
+[[tool.mypy.overrides]]
+module = [
+    "chromadb.*",
+    "sentence_transformers.*",
+    "anthropic.*",
+]
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["backend/tests"]

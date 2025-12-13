@@ -1,13 +1,13 @@
 """Tests for CourseSearchTool and CourseOutlineTool"""
-import pytest
-from unittest.mock import Mock, patch
-from search_tools import CourseSearchTool, CourseOutlineTool, ToolManager
-from vector_store import SearchResults
+
+from unittest.mock import Mock
+
+from search_tools import CourseOutlineTool, CourseSearchTool, ToolManager
+
 from tests.fixtures.sample_data import (
-    SAMPLE_SEARCH_RESULTS_SUCCESS,
     SAMPLE_SEARCH_RESULTS_EMPTY,
+    SAMPLE_SEARCH_RESULTS_SUCCESS,
     SAMPLE_SEARCH_RESULTS_WITH_ERROR,
-    SAMPLE_COURSE_METADATA
 )
 
 
@@ -29,7 +29,9 @@ class TestCourseSearchTool:
         result = tool.execute(query="What is MCP?")
 
         # With max_results=0, the tool should return "No relevant content found"
-        assert "No relevant content found" in result, "Tool should report no content when max_results=0"
+        assert (
+            "No relevant content found" in result
+        ), "Tool should report no content when max_results=0"
 
     def test_execute_returns_formatted_results(self, mock_vector_store):
         """Test that execute() formats results with course and lesson context"""
@@ -59,7 +61,7 @@ class TestCourseSearchTool:
         # Verify vector_store.search was called with course_name
         mock_vector_store.search.assert_called_once()
         call_args = mock_vector_store.search.call_args
-        assert call_args[1]['course_name'] == "MCP"
+        assert call_args[1]["course_name"] == "MCP"
 
     def test_execute_with_lesson_filter(self, mock_vector_store):
         """Test that lesson_number filter is passed to VectorStore"""
@@ -74,7 +76,7 @@ class TestCourseSearchTool:
         # Verify vector_store.search was called with lesson_number
         mock_vector_store.search.assert_called_once()
         call_args = mock_vector_store.search.call_args
-        assert call_args[1]['lesson_number'] == 2
+        assert call_args[1]["lesson_number"] == 2
 
     def test_execute_handles_vector_store_errors(self, mock_vector_store):
         """Test that tool handles VectorStore errors gracefully"""
@@ -103,10 +105,13 @@ class TestCourseSearchTool:
         # Verify sources are tracked
         assert len(tool.last_sources) == 2
         assert all(isinstance(source, dict) for source in tool.last_sources)
-        assert all('text' in source and 'url' in source for source in tool.last_sources)
+        assert all("text" in source and "url" in source for source in tool.last_sources)
 
         # Verify source text format
-        assert "MCP: Build Rich-Context AI Apps with Anthropic - Lesson 1" in tool.last_sources[0]['text']
+        assert (
+            "MCP: Build Rich-Context AI Apps with Anthropic - Lesson 1"
+            in tool.last_sources[0]["text"]
+        )
 
     def test_get_tool_definition(self):
         """Test that get_tool_definition returns valid Anthropic tool schema"""
@@ -116,19 +121,19 @@ class TestCourseSearchTool:
         definition = tool.get_tool_definition()
 
         # Verify required fields
-        assert definition['name'] == "search_course_content"
-        assert 'description' in definition
-        assert 'input_schema' in definition
+        assert definition["name"] == "search_course_content"
+        assert "description" in definition
+        assert "input_schema" in definition
 
         # Verify input schema
-        schema = definition['input_schema']
-        assert schema['type'] == "object"
-        assert 'query' in schema['properties']
-        assert schema['required'] == ["query"]
+        schema = definition["input_schema"]
+        assert schema["type"] == "object"
+        assert "query" in schema["properties"]
+        assert schema["required"] == ["query"]
 
         # Verify optional parameters
-        assert 'course_name' in schema['properties']
-        assert 'lesson_number' in schema['properties']
+        assert "course_name" in schema["properties"]
+        assert "lesson_number" in schema["properties"]
 
 
 class TestCourseOutlineTool:
@@ -139,12 +144,12 @@ class TestCourseOutlineTool:
         tool = CourseOutlineTool(mock_vector_store)
 
         # Mock course resolution
-        mock_vector_store._resolve_course_name.return_value = "MCP: Build Rich-Context AI Apps with Anthropic"
+        mock_vector_store._resolve_course_name.return_value = (
+            "MCP: Build Rich-Context AI Apps with Anthropic"
+        )
 
         # Mock catalog.get() to return course metadata
-        mock_vector_store.course_catalog.get.return_value = {
-            'metadatas': [sample_course_metadata]
-        }
+        mock_vector_store.course_catalog.get.return_value = {"metadatas": [sample_course_metadata]}
 
         # Execute
         result = tool.execute(course_name="MCP")
@@ -179,15 +184,15 @@ class TestCourseOutlineTool:
         definition = tool.get_tool_definition()
 
         # Verify required fields
-        assert definition['name'] == "get_course_outline"
-        assert 'description' in definition
-        assert 'input_schema' in definition
+        assert definition["name"] == "get_course_outline"
+        assert "description" in definition
+        assert "input_schema" in definition
 
         # Verify input schema
-        schema = definition['input_schema']
-        assert schema['type'] == "object"
-        assert 'course_name' in schema['properties']
-        assert schema['required'] == ["course_name"]
+        schema = definition["input_schema"]
+        assert schema["type"] == "object"
+        assert "course_name" in schema["properties"]
+        assert schema["required"] == ["course_name"]
 
 
 class TestToolManager:
@@ -216,7 +221,7 @@ class TestToolManager:
 
         # Verify both tools are in definitions
         assert len(definitions) == 2
-        tool_names = [d['name'] for d in definitions]
+        tool_names = [d["name"] for d in definitions]
         assert "search_course_content" in tool_names
         assert "get_course_outline" in tool_names
 
@@ -262,7 +267,7 @@ class TestToolManager:
 
         # Verify sources are retrieved
         assert len(sources) > 0
-        assert all('text' in s and 'url' in s for s in sources)
+        assert all("text" in s and "url" in s for s in sources)
 
     def test_reset_sources(self, mock_vector_store):
         """Test that reset_sources clears sources from all tools"""
