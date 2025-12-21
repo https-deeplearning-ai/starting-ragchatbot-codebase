@@ -1,1 +1,1 @@
-- use uv to run Python not pip
+claude - use uv to run Python not pip
