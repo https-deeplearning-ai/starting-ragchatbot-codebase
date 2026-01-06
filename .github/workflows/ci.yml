@@ -1,0 +1,90 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  quality-checks:
+    name: Code Quality & Tests
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python 3.13
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.13'
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v4
+      with:
+        enable-cache: true
+
+    - name: Install dependencies
+      run: |
+        uv sync
+
+    - name: Run Black (formatting check)
+      run: |
+        uv run black --check backend/ *.py
+      continue-on-error: false
+
+    - name: Run isort (import sorting check)
+      run: |
+        uv run isort --check-only backend/ *.py
+      continue-on-error: false
+
+    - name: Run flake8 (linting)
+      run: |
+        uv run flake8 backend/ *.py
+      continue-on-error: false
+
+    - name: Run mypy (type checking)
+      run: |
+        uv run mypy backend/ *.py
+      continue-on-error: true  # Allow type checking to fail without blocking
+
+    - name: Run pytest (tests with coverage)
+      run: |
+        # Set API provider based on available secrets
+        if [ -n "${{ secrets.ANTHROPIC_API_KEY }}" ]; then
+          export API_PROVIDER=anthropic
+          export ANTHROPIC_API_KEY="${{ secrets.ANTHROPIC_API_KEY }}"
+        elif [ -n "${{ secrets.OPENROUTER_API_KEY }}" ]; then
+          export API_PROVIDER=openrouter
+          export ANTHROPIC_API_KEY="${{ secrets.OPENROUTER_API_KEY }}"
+          export OPENROUTER_MODEL="anthropic/claude-3.5-sonnet"
+        fi
+
+        uv run pytest backend/tests/ -v --cov=backend --cov-report=term-missing --cov-report=xml
+
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@v4
+      if: always()
+      with:
+        file: ./coverage.xml
+        fail_ci_if_error: false
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+  summary:
+    name: CI Summary
+    runs-on: ubuntu-latest
+    needs: [quality-checks]
+    if: always()
+
+    steps:
+    - name: Check CI Status
+      run: |
+        if [ "${{ needs.quality-checks.result }}" == "success" ]; then
+          echo "✅ All quality checks and tests passed!"
+          exit 0
+        else
+          echo "❌ Some checks failed. Please review the logs above."
+          exit 1
+        fi

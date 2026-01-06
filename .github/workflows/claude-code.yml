@@ -1,0 +1,124 @@
+name: Claude Code
+
+on:
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  claude-code:
+    # Only run on comments that mention @claude code
+    if: |
+      github.event.comment.body != null &&
+      contains(github.event.comment.body, '@claude code')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get PR branch
+        id: get-branch
+        if: github.event.issue.pull_request
+        run: |
+          PR_NUMBER=${{ github.event.issue.number }}
+          BRANCH=$(gh pr view $PR_NUMBER --json headRefName --jq '.headRefName')
+          echo "branch=$BRANCH" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Checkout PR branch
+        if: github.event.issue.pull_request
+        run: |
+          git fetch origin ${{ steps.get-branch.outputs.branch }}
+          git checkout ${{ steps.get-branch.outputs.branch }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Extract task from comment
+        id: extract-task
+        run: |
+          COMMENT_BODY="${{ github.event.comment.body }}"
+          # Remove @claude code prefix and extract the actual task
+          TASK=$(echo "$COMMENT_BODY" | sed 's/@claude code//g' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+          echo "task=$TASK" >> $GITHUB_OUTPUT
+
+      - name: Add reaction to comment
+        run: |
+          gh api \
+            --method POST \
+            -H "Accept: application/vnd.github+json" \
+            /repos/${{ github.repository }}/issues/comments/${{ github.event.comment.id }}/reactions \
+            -f content='eyes'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Post processing status
+        run: |
+          gh pr comment ${{ github.event.issue.number }} \
+            --body "🤖 Claude Code is processing your request: \`${{ steps.extract-task.outputs.task }}\`"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run Claude Code task
+        id: claude-task
+        run: |
+          # Set API provider based on available secrets
+          if [ -n "${{ secrets.ANTHROPIC_API_KEY }}" ]; then
+            export API_PROVIDER=anthropic
+            export ANTHROPIC_API_KEY="${{ secrets.ANTHROPIC_API_KEY }}"
+          elif [ -n "${{ secrets.OPENROUTER_API_KEY }}" ]; then
+            export API_PROVIDER=openrouter
+            export ANTHROPIC_API_KEY="${{ secrets.OPENROUTER_API_KEY }}"
+            export OPENROUTER_MODEL="anthropic/claude-3.5-sonnet"
+          fi
+
+          # This is a placeholder - you would integrate with Claude Code CLI here
+          echo "Task: ${{ steps.extract-task.outputs.task }}"
+          echo "Using API Provider: ${API_PROVIDER:-none}"
+          echo "Note: Full Claude Code integration requires additional setup"
+
+      - name: Commit and push changes
+        if: success()
+        run: |
+          git config user.name "Claude Code Bot"
+          git config user.email "claude-code-bot@users.noreply.github.com"
+
+          if [[ -n $(git status -s) ]]; then
+            git add .
+            git commit -m "🤖 Claude Code: ${{ steps.extract-task.outputs.task }}"
+            git push
+
+            gh pr comment ${{ github.event.issue.number }} \
+              --body "✅ Changes have been committed to this PR"
+          else
+            gh pr comment ${{ github.event.issue.number }} \
+              --body "ℹ️ No changes were made"
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Handle errors
+        if: failure()
+        run: |
+          gh pr comment ${{ github.event.issue.number }} \
+            --body "❌ Claude Code encountered an error processing your request. Please check the workflow logs for details."
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
