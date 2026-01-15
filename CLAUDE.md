@@ -10,6 +10,8 @@ This is a Retrieval-Augmented Generation (RAG) system for querying course materi
 
 ## Development Commands
 
+**CRITICAL: Always use `uv` to run this service.** This project uses `uv` for Python package management and virtual environment management. Never use `pip`, `python`, or `python -m` directly - always prefix commands with `uv run` or use `uv sync` for dependency management.
+
 ### Running the Application
 
 ```bash
