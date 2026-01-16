@@ -29,3 +29,6 @@ uploads/
 # OS
 .DS_Store
 Thumbs.db
+
+# claude code tmp files
+tmpclaude-[0-9a-f]{4}-cwd
