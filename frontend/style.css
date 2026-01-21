@@ -103,6 +103,50 @@ header h1 {
     background: var(--text-secondary);
 }
 
+/* New Chat Button */
+.new-chat-btn {
+    display: block;
+    width: auto;
+    padding: 0.5rem 0;
+    margin-bottom: 1.5rem;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: color 0.2s ease;
+    text-align: left;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    box-shadow: none;
+}
+
+.new-chat-btn::before {
+    content: '+';
+    display: inline-block;
+    width: 0.75rem;
+    margin-right: 0.5rem;
+    font-size: 0.75rem;
+    text-align: left;
+}
+
+.new-chat-btn:hover {
+    color: var(--primary-color);
+    background: transparent !important;
+}
+
+.new-chat-btn:focus {
+    outline: none;
+    color: var(--primary-color);
+    background: transparent !important;
+    box-shadow: none;
+}
+
 .sidebar-section {
     margin-bottom: 1.5rem;
 }
@@ -241,8 +285,29 @@ header h1 {
 }
 
 .sources-content {
-    padding: 0 0.5rem 0.25rem 1.5rem;
-    color: var(--text-secondary);
+    padding: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.sources-content .source-link,
+.sources-content .source-item {
+    display: block;
+    padding: 0.5rem 0.75rem;
+    background: var(--background);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--text-primary);
+    font-size: 0.8rem;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.sources-content .source-link:hover {
+    border-color: var(--primary-color);
+    background: var(--surface-hover);
+    color: var(--primary-color);
 }
 
 /* Markdown formatting styles */
@@ -324,6 +389,23 @@ header h1 {
     border: none;
     border-top: 1px solid var(--border-color);
     margin: 1rem 0;
+}
+
+.message-content a,
+.message-content a:link,
+.message-content a:visited {
+    color: #7dd3fc !important;
+    text-decoration: underline !important;
+    text-decoration-color: rgba(125, 211, 252, 0.5) !important;
+    text-underline-offset: 2px;
+    transition: all 0.2s ease;
+}
+
+.message-content a:hover,
+.message-content a:link:hover,
+.message-content a:visited:hover {
+    color: #bae6fd !important;
+    text-decoration-color: rgba(186, 230, 253, 0.7) !important;
 }
 
 /* Chat Input Container */
@@ -481,9 +563,11 @@ header h1 {
 .suggested-header::before {
     content: '▶';
     display: inline-block;
+    width: 0.75rem;
     margin-right: 0.5rem;
     transition: transform 0.2s ease;
     font-size: 0.75rem;
+    text-align: left;
 }
 
 details[open] .stats-header::before,

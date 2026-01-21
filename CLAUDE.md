@@ -14,12 +14,12 @@ This is a Course Materials RAG (Retrieval-Augmented Generation) system - a full-
 # Install dependencies (requires uv package manager)
 uv sync
 
-# Run the application (from backend directory)
+# Run the application (primary method)
+./run.sh
+
+# Alternative: Run manually from backend directory
 cd backend
 uv run uvicorn app:app --reload --port 8000
-
-# Alternative: Quick start from root
-./run.sh
 ```
 
 The application serves both the API and frontend at `http://localhost:8000`.
