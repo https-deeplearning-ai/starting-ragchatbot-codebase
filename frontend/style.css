@@ -63,29 +63,34 @@ body {
     padding: 0;
 }
 
+/* Header Bar */
+.header-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.5rem;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
+    height: 64px;
+    box-sizing: border-box;
+}
+
+.header-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
 /* Container - Full Screen */
 .container {
-    height: 100vh;
+    height: calc(100vh - 64px);
     width: 100vw;
     display: flex;
     flex-direction: column;
     margin: 0;
     padding: 0;
-}
-
-/* Header - Hidden */
-header {
-    display: none;
-}
-
-header h1 {
-    font-size: 1.75rem;
-    font-weight: 700;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    margin: 0;
 }
 
 .subtitle {
@@ -755,6 +760,24 @@ details[open] .suggested-header::before {
 
 /* Responsive Design */
 @media (max-width: 768px) {
+    .header-bar {
+        padding: 0.75rem 1rem;
+        height: 56px;
+    }
+
+    .header-title {
+        font-size: 1rem;
+    }
+
+    .theme-toggle {
+        width: 36px;
+        height: 36px;
+    }
+
+    .container {
+        height: calc(100vh - 56px);
+    }
+
     .main-content {
         flex-direction: column;
     }
@@ -787,14 +810,6 @@ details[open] .suggested-header::before {
 
     .chat-main {
         order: 1;
-    }
-
-    header {
-        padding: 1rem;
-    }
-
-    header h1 {
-        font-size: 1.5rem;
     }
 
     .chat-messages {
@@ -838,22 +853,18 @@ details[open] .suggested-header::before {
 
 /* Theme Toggle Button */
 .theme-toggle {
-    position: fixed;
-    top: 1rem;
-    right: 1rem;
-    z-index: 1000;
-    width: 44px;
-    height: 44px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
     border: 1px solid var(--border-color);
-    background: var(--surface);
+    background: var(--background);
     color: var(--text-primary);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     transition: all 0.3s ease;
-    box-shadow: var(--shadow);
+    flex-shrink: 0;
 }
 
 .theme-toggle:hover {
@@ -902,6 +913,7 @@ details[open] .suggested-header::before {
 /* Smooth color transitions for theme switch */
 body,
 .container,
+.header-bar,
 .sidebar,
 .chat-main,
 .chat-container,
@@ -915,6 +927,7 @@ body,
 .suggested-item,
 .course-stats,
 .sources-content .source-link,
-.sources-content .source-item {
+.sources-content .source-item,
+.theme-toggle {
     transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
 }
