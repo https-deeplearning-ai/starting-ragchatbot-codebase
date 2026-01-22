@@ -8,15 +8,17 @@ The PR adds `position: relative` to the `.theme-toggle` button in `frontend/styl
 
 ## Installation
 
-1. Install Playwright and pytest-playwright:
+1. Install dependencies using uv sync (recommended):
    ```bash
-   uv pip install playwright pytest-playwright
+   uv sync --group dev
    ```
 
 2. Install Playwright browsers (Chromium is sufficient):
    ```bash
-   python -m playwright install chromium
+   uv run python -m playwright install chromium
    ```
+
+   **Note**: The project uses `uv` for dependency management. Playwright and pytest-playwright are defined in `pyproject.toml` under the `dev` dependency group.
 
 ## Running the Tests
 
@@ -27,7 +29,7 @@ The PR adds `position: relative` to the `.theme-toggle` button in `frontend/styl
 
 2. In a separate terminal, run the Playwright tests:
    ```bash
-   pytest backend/tests/test_frontend_theme_toggle.py -v
+   uv run pytest backend/tests/test_frontend_theme_toggle.py -v
    ```
 
 ## Test Coverage

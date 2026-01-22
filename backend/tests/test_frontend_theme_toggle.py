@@ -5,6 +5,7 @@ This test ensures that the CSS fix (position: relative on .theme-toggle)
 correctly positions the SVG icons within the button.
 """
 
+import os
 import pytest
 from playwright.sync_api import Page, expect
 
@@ -109,6 +110,9 @@ def test_theme_toggle_visual_regression(page: Page, base_url: str):
     """Visual regression test for the theme toggle button."""
     page.goto(base_url)
     page.wait_for_load_state("networkidle")
+
+    # Ensure screenshots directory exists
+    os.makedirs("backend/tests/screenshots", exist_ok=True)
 
     # Take screenshot of header area with theme toggle
     header = page.locator(".header-bar")

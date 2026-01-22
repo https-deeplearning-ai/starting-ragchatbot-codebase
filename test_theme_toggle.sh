@@ -6,13 +6,13 @@ set -e
 echo "=== Theme Toggle Playwright Test Setup ==="
 echo ""
 
-# Install Playwright and pytest-playwright
-echo "Installing Playwright dependencies..."
-uv pip install playwright pytest-playwright
+# Install dependencies using uv sync
+echo "Installing dependencies..."
+uv sync --group dev
 
 # Install Playwright browsers
 echo "Installing Playwright browsers..."
-python -m playwright install chromium
+uv run python -m playwright install chromium
 
 # Create screenshots directory
 mkdir -p backend/tests/screenshots
@@ -39,7 +39,7 @@ echo ""
 
 # Run the Playwright tests
 echo "=== Running Playwright Tests ==="
-pytest backend/tests/test_frontend_theme_toggle.py -v
+uv run pytest backend/tests/test_frontend_theme_toggle.py -v
 
 # Capture the test result
 TEST_RESULT=$?
