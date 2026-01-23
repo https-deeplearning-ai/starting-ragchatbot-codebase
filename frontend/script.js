@@ -5,7 +5,7 @@ const API_URL = '/api';
 let currentSessionId = null;
 
 // DOM elements
-let chatMessages, chatInput, sendButton, totalCourses, courseTitles;
+let chatMessages, chatInput, sendButton, totalCourses, courseTitles, newChatBtn, themeToggle;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -15,8 +15,11 @@ document.addEventListener('DOMContentLoaded', () => {
     sendButton = document.getElementById('sendButton');
     totalCourses = document.getElementById('totalCourses');
     courseTitles = document.getElementById('courseTitles');
-    
+    newChatBtn = document.getElementById('newChatBtn');
+    themeToggle = document.getElementById('themeToggle');
+
     setupEventListeners();
+    initializeTheme();
     createNewSession();
     loadCourseStats();
 });
@@ -28,8 +31,19 @@ function setupEventListeners() {
     chatInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') sendMessage();
     });
-    
-    
+
+    // New chat button
+    newChatBtn.addEventListener('click', handleNewChat);
+
+    // Theme toggle button
+    themeToggle.addEventListener('click', toggleTheme);
+    themeToggle.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            toggleTheme();
+        }
+    });
+
     // Suggested questions
     document.querySelectorAll('.suggested-item').forEach(button => {
         button.addEventListener('click', (e) => {
@@ -122,10 +136,22 @@ function addMessage(content, type, sources = null, isWelcome = false) {
     let html = `<div class="message-content">${displayContent}</div>`;
     
     if (sources && sources.length > 0) {
+        // Format sources as clickable link pills
+        const formattedSources = sources.map(source => {
+            if (typeof source === 'object' && source.text) {
+                if (source.link) {
+                    return `<a href="${source.link}" target="_blank" rel="noopener" class="source-link">${escapeHtml(source.text)}</a>`;
+                }
+                return `<span class="source-text">${escapeHtml(source.text)}</span>`;
+            }
+            // Backwards compatibility: plain string sources
+            return `<span class="source-text">${escapeHtml(source)}</span>`;
+        }).join('');
+
         html += `
             <details class="sources-collapsible">
                 <summary class="sources-header">Sources</summary>
-                <div class="sources-content">${sources.join(', ')}</div>
+                <div class="sources-content">${formattedSources}</div>
             </details>
         `;
     }
@@ -150,6 +176,24 @@ async function createNewSession() {
     currentSessionId = null;
     chatMessages.innerHTML = '';
     addMessage('Welcome to the Course Materials Assistant! I can help you with questions about courses, lessons and specific content. What would you like to know?', 'assistant', null, true);
+}
+
+async function handleNewChat() {
+    const oldSessionId = currentSessionId;
+
+    // Reset frontend immediately
+    createNewSession();
+
+    // Clean up old session on backend (async, non-blocking)
+    if (oldSessionId) {
+        try {
+            await fetch(`${API_URL}/session/${oldSessionId}`, {
+                method: 'DELETE'
+            });
+        } catch (error) {
+            console.warn('Failed to clear old session:', error);
+        }
+    }
 }
 
 // Load course statistics
@@ -188,4 +232,41 @@ async function loadCourseStats() {
             courseTitles.innerHTML = '<span class="error">Failed to load courses</span>';
         }
     }
+}
+
+// Theme Functions
+function initializeTheme() {
+    // Check for saved theme preference, default to dark
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    setTheme(savedTheme);
+}
+
+function setTheme(theme) {
+    if (theme === 'light') {
+        document.documentElement.setAttribute('data-theme', 'light');
+    } else {
+        document.documentElement.removeAttribute('data-theme');
+    }
+    localStorage.setItem('theme', theme);
+
+    // Update aria-label for accessibility
+    const isLight = theme === 'light';
+    themeToggle.setAttribute('aria-label', isLight ? 'Switch to dark mode' : 'Switch to light mode');
+    themeToggle.setAttribute('title', isLight ? 'Switch to dark mode' : 'Switch to light mode');
+}
+
+function toggleTheme() {
+    // Add animation class
+    themeToggle.classList.add('animating');
+
+    // Determine current theme and toggle
+    const currentTheme = document.documentElement.getAttribute('data-theme');
+    const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+
+    setTheme(newTheme);
+
+    // Remove animation class after animation completes
+    setTimeout(() => {
+        themeToggle.classList.remove('animating');
+    }, 300);
 }
