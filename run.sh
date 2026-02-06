@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Create necessary directories
-mkdir -p docs 
+mkdir -p docs
 
 # Check if backend directory exists
 if [ ! -d "backend" ]; then

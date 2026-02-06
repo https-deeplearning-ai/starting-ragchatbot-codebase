@@ -1,0 +1,4 @@
+[  122331ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:8000/api/courses:0
+[  122331ms] [ERROR] Error loading course stats: TypeError: Failed to fetch
+    at loadCourseStats (http://localhost:8000/script.js?v=9:170:32)
+    at HTMLDocument.<anonymous> (http://localhost:8000/script.js?v=9:22:5) @ http://localhost:8000/script.js?v=9:192

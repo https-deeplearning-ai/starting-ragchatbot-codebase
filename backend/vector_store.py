@@ -58,20 +58,20 @@ class VectorStore:
             embedding_function=self.embedding_function
         )
     
-    def search(self, 
+    def search(self,
                query: str,
                course_name: Optional[str] = None,
                lesson_number: Optional[int] = None,
                limit: Optional[int] = None) -> SearchResults:
         """
         Main search interface that handles course resolution and content search.
-        
+
         Args:
             query: What to search for in course content
             course_name: Optional course name/title to filter by
             lesson_number: Optional lesson number to filter by
             limit: Maximum results to return
-            
+
         Returns:
             SearchResults object with documents and metadata
         """
@@ -100,19 +100,35 @@ class VectorStore:
             return SearchResults.empty(f"Search error: {str(e)}")
     
     def _resolve_course_name(self, course_name: str) -> Optional[str]:
-        """Use vector search to find best matching course by name"""
+        """Use vector search to find best matching course by name.
+
+        First tries substring matching for better handling of short names/acronyms,
+        then falls back to semantic search.
+        """
+        course_name_lower = course_name.lower()
+
+        # First try: substring match (handles acronyms like "MCP" better)
+        try:
+            existing_titles = self.get_existing_course_titles()
+            for title in existing_titles:
+                if course_name_lower in title.lower():
+                    return title
+        except Exception as e:
+            print(f"Error in substring matching: {e}")
+
+        # Second try: semantic search
         try:
             results = self.course_catalog.query(
                 query_texts=[course_name],
                 n_results=1
             )
-            
+
             if results['documents'][0] and results['metadatas'][0]:
                 # Return the title (which is now the ID)
                 return results['metadatas'][0][0]['title']
         except Exception as e:
             print(f"Error resolving course name: {e}")
-        
+
         return None
     
     def _build_filter(self, course_title: Optional[str], lesson_number: Optional[int]) -> Optional[Dict]:
@@ -264,4 +280,26 @@ class VectorStore:
             return None
         except Exception as e:
             print(f"Error getting lesson link: {e}")
-    
+
+    def get_course_outline(self, course_title: str) -> Optional[Dict[str, Any]]:
+        """Get complete outline for a course by exact title."""
+        import json
+        try:
+            results = self.course_catalog.get(ids=[course_title])
+            if results and 'metadatas' in results and results['metadatas']:
+                metadata = results['metadatas'][0]
+                outline = {
+                    'title': metadata.get('title'),
+                    'instructor': metadata.get('instructor'),
+                    'course_link': metadata.get('course_link'),
+                    'lesson_count': metadata.get('lesson_count', 0),
+                    'lessons': []
+                }
+                lessons_json = metadata.get('lessons_json')
+                if lessons_json:
+                    outline['lessons'] = json.loads(lessons_json)
+                return outline
+            return None
+        except Exception as e:
+            print(f"Error getting course outline: {e}")
+            return None
