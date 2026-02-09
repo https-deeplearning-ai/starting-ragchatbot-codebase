@@ -1,9 +1,19 @@
 import os
 from dataclasses import dataclass
+from pathlib import Path
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
-load_dotenv()
+# Search backend/ directory first, then project root
+_backend_dir = Path(__file__).resolve().parent
+_project_root = _backend_dir.parent
+
+if (_backend_dir / ".env").exists():
+    load_dotenv(_backend_dir / ".env")
+elif (_project_root / ".env").exists():
+    load_dotenv(_project_root / ".env")
+else:
+    load_dotenv()
 
 @dataclass
 class Config:
@@ -26,4 +36,10 @@ class Config:
 
 config = Config()
 
-
+if not config.ANTHROPIC_API_KEY:
+    print("\n" + "=" * 60)
+    print("WARNING: ANTHROPIC_API_KEY is not set!")
+    print("The /api/query endpoint will fail.")
+    print("Please create a .env file with your API key.")
+    print("See .env.example for the expected format.")
+    print("=" * 60 + "\n")

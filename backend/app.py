@@ -8,6 +8,10 @@ from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
 import os
+import logging
+import anthropic
+
+logger = logging.getLogger(__name__)
 
 from config import config
 from rag_system import RAGSystem
@@ -70,8 +74,33 @@ async def query_documents(request: QueryRequest):
             sources=sources,
             session_id=session_id
         )
+    except anthropic.AuthenticationError as e:
+        logger.error(f"Anthropic API authentication failed: {e}")
+        raise HTTPException(
+            status_code=503,
+            detail="AI service authentication failed. Please check that ANTHROPIC_API_KEY is set correctly in the .env file."
+        )
+    except anthropic.RateLimitError as e:
+        logger.error(f"Anthropic API rate limit: {e}")
+        raise HTTPException(
+            status_code=429,
+            detail="AI service rate limit reached. Please try again in a moment."
+        )
+    except anthropic.APIConnectionError as e:
+        logger.error(f"Anthropic API connection error: {e}")
+        raise HTTPException(
+            status_code=503,
+            detail="Could not connect to AI service. Please check your internet connection."
+        )
+    except anthropic.APIError as e:
+        logger.error(f"Anthropic API error: {e}")
+        raise HTTPException(
+            status_code=502,
+            detail=f"AI service error: {str(e)}"
+        )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Unexpected error processing query: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Internal error: {str(e)}")
 
 @app.get("/api/courses", response_model=CourseStats)
 async def get_course_stats():
