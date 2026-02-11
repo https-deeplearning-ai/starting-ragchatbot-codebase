@@ -1,0 +1,495 @@
+================================================================================
+COMPLETE USER QUERY FLOW: FRONTEND TO BACKEND
+================================================================================
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           PHASE 1: USER INTERACTION                         │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+1. USER ENTERS QUERY (Frontend)
+   Location: frontend/index.html:59-64
+   ├─ User types in #chatInput text field
+   └─ Clicks #sendButton OR presses Enter
+
+2. JAVASCRIPT EVENT HANDLER TRIGGERED
+   Location: frontend/script.js:45-96
+   ├─ sendMessage() function executes
+   ├─ Query text extracted from input field (line 46)
+   ├─ Input disabled to prevent duplicate submissions (lines 51-52)
+   ├─ User message displayed in chat UI (line 55)
+   └─ Loading animation shown (lines 58-60)
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         PHASE 2: HTTP REQUEST                               │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+3. FRONTEND SENDS POST REQUEST
+   Location: frontend/script.js:63-72
+   ├─ URL: /api/query
+   ├─ Method: POST
+   ├─ Headers: Content-Type: application/json
+   └─ Body: {
+         "query": "user's question",
+         "session_id": "abc123" (or null for first query)
+       }
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                      PHASE 3: FASTAPI ENDPOINT                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+4. FASTAPI RECEIVES REQUEST
+   Location: backend/app.py:56-74
+   ├─ @app.post("/api/query") endpoint triggered
+   ├─ Request validated against QueryRequest model (lines 38-41)
+   ├─ Session ID created if not provided (lines 61-63)
+   │  └─ Uses SessionManager to generate UUID
+   └─ Calls rag_system.query(request.query, session_id) (line 66)
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                       PHASE 4: RAG ORCHESTRATION                            │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+5. RAG SYSTEM PROCESSES QUERY
+   Location: backend/rag_system.py:102-140
+   ├─ Wraps query in prompt: "Answer this question about course materials: {query}"
+   │  (line 114)
+   ├─ Retrieves conversation history if session exists (lines 117-119)
+   │  └─ SessionManager returns last 2 exchanges (4 messages) as plain text
+   └─ Calls ai_generator.generate_response() with:
+      ├─ query (prompt)
+      ├─ conversation_history (formatted as text)
+      ├─ tools (from tool_manager.get_tool_definitions())
+      └─ tool_manager (for executing tools)
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    PHASE 5: FIRST CLAUDE API CALL                           │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+6. AI GENERATOR PREPARES FIRST API CALL
+   Location: backend/ai_generator.py:43-87
+   ├─ Builds system prompt with conversation history (lines 61-64)
+   │  └─ System prompt includes instructions for tool usage
+   ├─ Prepares API parameters (lines 68-77):
+   │  ├─ model: "claude-sonnet-4-20250514"
+   │  ├─ temperature: 0 (deterministic)
+   │  ├─ max_tokens: 800
+   │  ├─ messages: [{"role": "user", "content": query}]
+   │  ├─ system: system_content
+   │  ├─ tools: [search_course_content tool definition]
+   │  └─ tool_choice: {"type": "auto"}
+   └─ Calls client.messages.create() (line 80)
+
+7. CLAUDE DECIDES TO USE TOOL OR NOT
+   ├─ If general question: Returns direct answer (stop_reason: "end_turn")
+   │  └─ Flow jumps to PHASE 9
+   └─ If course-specific question: Decides to search (stop_reason: "tool_use")
+      └─ Continue to PHASE 6
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                       PHASE 6: TOOL EXECUTION                               │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+8. HANDLE TOOL EXECUTION
+   Location: backend/ai_generator.py:89-135
+   ├─ Detects stop_reason == "tool_use" (line 83)
+   ├─ Calls _handle_tool_execution() (line 84)
+   ├─ Copies existing messages (line 102)
+   └─ Adds Claude's tool_use response to messages (line 105)
+
+9. EXECUTE TOOL VIA TOOL MANAGER
+   Location: backend/ai_generator.py:108-120
+   ├─ Iterates through content blocks looking for tool_use (line 110)
+   ├─ Calls tool_manager.execute_tool() with:
+   │  ├─ tool_name: "search_course_content"
+   │  └─ parameters: {query, course_name?, lesson_number?}
+   └─ Collects tool results (lines 116-120)
+
+10. TOOL MANAGER DISPATCHES TO SEARCH TOOL
+    Location: backend/search_tools.py:135-140
+    ├─ Looks up tool by name in self.tools dict
+    └─ Calls CourseSearchTool.execute(**kwargs)
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                      PHASE 7: VECTOR SEARCH                                 │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+11. COURSE SEARCH TOOL EXECUTES
+    Location: backend/search_tools.py:52-86
+    ├─ Calls vector_store.search() with parameters (lines 66-70)
+    ├─ Handles errors (lines 73-74)
+    ├─ Handles empty results (lines 77-83)
+    └─ Formats results (line 86)
+
+12. VECTOR STORE PERFORMS TWO-STAGE SEARCH
+    Location: backend/vector_store.py:61-100
+
+    STAGE 1: COURSE NAME RESOLUTION (if course_name provided)
+    ├─ Calls _resolve_course_name() (line 81)
+    ├─ Performs semantic search on course_catalog collection (lines 105-108)
+    │  └─ Finds best matching course title (fuzzy matching)
+    └─ Returns exact course title or error (lines 82-83)
+
+    STAGE 2: CONTENT SEARCH
+    ├─ Builds filter from course_title and lesson_number (line 86)
+    │  Location: vector_store.py:118-133
+    │  └─ Creates ChromaDB where clause:
+    │     ├─ Single filter: {"course_title": "exact_match"}
+    │     ├─ Lesson filter: {"lesson_number": 5}
+    │     └─ Combined: {"$and": [{...}, {...}]}
+    ├─ Searches course_content collection (lines 93-96)
+    │  ├─ Uses semantic similarity on query text
+    │  ├─ Filters by exact course_title and/or lesson_number
+    │  └─ Returns top N results (default: 5)
+    └─ Wraps results in SearchResults object (line 98)
+
+13. CHROMADB PERFORMS VECTOR SEARCH
+    ├─ Converts query to embeddings using SentenceTransformer
+    │  └─ Model: "all-MiniLM-L6-v2" (384 dimensions)
+    ├─ Calculates cosine similarity with stored embeddings
+    ├─ Applies metadata filters (course_title, lesson_number)
+    └─ Returns top N matching chunks with metadata
+
+14. FORMAT SEARCH RESULTS
+    Location: backend/search_tools.py:88-114
+    ├─ Iterates through documents and metadata (line 93)
+    ├─ Builds header: "[Course Title - Lesson N]" (lines 98-101)
+    ├─ Tracks sources for UI display (lines 104-107)
+    │  └─ Stored in self.last_sources = ["Course - Lesson N", ...]
+    ├─ Formats as: "header\ncontent\n\nheader\ncontent..." (line 109)
+    └─ Returns formatted string to ToolManager
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                   PHASE 8: SECOND CLAUDE API CALL                           │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+15. SEND TOOL RESULTS BACK TO CLAUDE
+    Location: backend/ai_generator.py:122-135
+    ├─ Appends tool results as user message (line 124):
+    │  └─ {"role": "user", "content": [{
+    │       "type": "tool_result",
+    │       "tool_use_id": "toolu_xyz",
+    │       "content": "[Course - Lesson 1]\nContent here..."
+    │     }]}
+    ├─ Prepares final API call WITHOUT tools (lines 127-131)
+    │  └─ No tools parameter - Claude must respond with text
+    └─ Calls client.messages.create() (line 134)
+
+16. CLAUDE SYNTHESIZES FINAL ANSWER
+    ├─ Reads tool results containing search content
+    ├─ Generates answer based on the content
+    ├─ Returns response (stop_reason: "end_turn")
+    └─ Final response extracted: final_response.content[0].text (line 135)
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    PHASE 9: RESPONSE FINALIZATION                           │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+17. EXTRACT SOURCES
+    Location: backend/rag_system.py:129-133
+    ├─ Calls tool_manager.get_last_sources() (line 130)
+    │  Location: backend/search_tools.py:142-148
+    │  └─ Returns self.last_sources from CourseSearchTool
+    └─ Calls tool_manager.reset_sources() (line 133)
+
+18. UPDATE SESSION HISTORY
+    Location: backend/rag_system.py:136-137
+    ├─ session_manager.add_exchange(session_id, query, response)
+    └─ Maintains last 2 exchanges (4 messages total) in memory
+
+19. RETURN TO FASTAPI
+    Location: backend/rag_system.py:140
+    └─ Returns (response, sources) tuple
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                       PHASE 10: HTTP RESPONSE                               │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+20. FASTAPI FORMATS RESPONSE
+    Location: backend/app.py:68-72
+    └─ Returns QueryResponse model:
+       {
+         "answer": "Claude's synthesized answer",
+         "sources": ["Course Title - Lesson 1", "Course Title - Lesson 3"],
+         "session_id": "abc123"
+       }
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                       PHASE 11: FRONTEND DISPLAY                            │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+21. JAVASCRIPT RECEIVES RESPONSE
+    Location: frontend/script.js:76-85
+    ├─ Parses JSON response (line 76)
+    ├─ Updates session_id if new (lines 79-81)
+    ├─ Removes loading animation (line 84)
+    └─ Calls addMessage() to display response (line 85)
+
+22. RENDER MESSAGE IN UI
+    Location: frontend/script.js:113-138
+    ├─ Creates message div with 'assistant' class (line 116)
+    ├─ Converts markdown to HTML using marked.js (line 120)
+    ├─ Adds sources in collapsible section if present (lines 124-130)
+    │  └─ <details> element with sources as comma-separated text
+    ├─ Appends to chatMessages container (line 134)
+    └─ Auto-scrolls to bottom (line 135)
+
+23. RE-ENABLE INPUT
+    Location: frontend/script.js:92-94
+    ├─ chatInput.disabled = false
+    ├─ sendButton.disabled = false
+    └─ chatInput.focus() - ready for next query
+
+================================================================================
+                            DUAL-COLLECTION DESIGN
+================================================================================
+
+TWO CHROMADB COLLECTIONS:
+
+1. course_catalog (Course Metadata)
+   Location: backend/vector_store.py:51
+   ├─ Stores: Course titles for semantic matching
+   ├─ ID: course.title (unique identifier)
+   ├─ Metadata: {title, instructor, course_link, lessons_json, lesson_count}
+   └─ Purpose: Fuzzy course name resolution
+       Example: "MCP" → "MCP: Build Rich-Context AI Apps with Anthropic"
+
+2. course_content (Content Chunks)
+   Location: backend/vector_store.py:52
+   ├─ Stores: Text chunks from lessons
+   ├─ ID: "{course_title}_{chunk_index}"
+   ├─ Metadata: {course_title, lesson_number, chunk_index}
+   └─ Purpose: Precise content search with filtering
+
+WHY TWO COLLECTIONS?
+Enables semantic course name matching THEN exact filtering, avoiding
+precision loss from fuzzy matching on the content collection.
+
+================================================================================
+                            KEY DECISION POINTS
+================================================================================
+
+1. TOOL VS NO-TOOL DECISION (ai_generator.py:83)
+   └─ Claude autonomously decides based on query type:
+      ├─ General questions → Direct answer (no search)
+      └─ Course-specific → Use search_course_content tool
+
+2. COURSE NAME RESOLUTION (vector_store.py:78-83)
+   └─ If course_name provided:
+      ├─ Semantic search in course_catalog
+      ├─ If found → Use exact title for filtering
+      └─ If not found → Return error immediately
+
+3. CONTENT FILTERING (vector_store.py:118-133)
+   └─ Build ChromaDB where clause:
+      ├─ No filters → Search all content
+      ├─ Course only → {"course_title": "exact"}
+      ├─ Lesson only → {"lesson_number": 5}
+      └─ Both → {"$and": [...]}
+
+================================================================================
+                            SESSION MANAGEMENT
+================================================================================
+
+Storage: In-memory dictionary (not persisted)
+Structure: {session_id: {"history": [exchange1, exchange2]}}
+History Format: Plain text conversation (not message objects)
+Max History: 2 exchanges (4 messages: 2 user + 2 assistant)
+Lifecycle: Created on demand, persists for app lifetime
+
+Injected into Claude via system prompt:
+"Previous conversation:\nUser: ...\nAssistant: ...\n"
+
+================================================================================
+                            SOURCE TRACKING
+================================================================================
+
+Sources tracked via SIDE EFFECTS (not return values):
+
+1. CourseSearchTool._format_results() (search_tools.py:112)
+   └─ Stores: self.last_sources = ["Course - Lesson N", ...]
+
+2. ToolManager.get_last_sources() (search_tools.py:142-148)
+   └─ Retrieves from any tool with last_sources attribute
+
+3. RAGSystem.query() (rag_system.py:130)
+   └─ Extracts sources after response generation
+
+4. ToolManager.reset_sources() (rag_system.py:133)
+   └─ Clears to prevent stale sources
+
+This pattern keeps tool execution logic clean while enabling UI display.
+
+================================================================================
+                          EMBEDDING PIPELINE
+================================================================================
+
+1. Document Processing → Text Chunks
+   ├─ Sentence-aware splitting (800 chars, 100 overlap)
+   └─ First chunk prefixed: "Lesson N content: {chunk}"
+
+2. Chunk → Embedding Vector
+   ├─ SentenceTransformer: "all-MiniLM-L6-v2"
+   ├─ Dimension: 384
+   └─ Stored in ChromaDB with metadata
+
+3. Query → Embedding Vector
+   ├─ Same model as above
+   └─ Cosine similarity against stored vectors
+
+4. Ranking
+   ├─ Top N by similarity score
+   └─ Filtered by metadata (course_title, lesson_number)
+
+================================================================================
+                         COMPLETE DATA FLOW
+================================================================================
+
+User Input
+    ↓
+JavaScript sendMessage()
+    ↓
+POST /api/query {query, session_id}
+    ↓
+FastAPI Endpoint (app.py:56)
+    ↓
+RAGSystem.query() (rag_system.py:102)
+    ├─ Get session history
+    └─ Build prompt
+    ↓
+AIGenerator.generate_response() (ai_generator.py:43)
+    ├─ Build system prompt
+    └─ First Claude API call (with tools)
+    ↓
+Claude Decision:
+├─ stop_reason="end_turn" → Direct answer (skip to Phase 9)
+└─ stop_reason="tool_use" → Tool execution (continue)
+    ↓
+ToolManager.execute_tool() (search_tools.py:135)
+    ↓
+CourseSearchTool.execute() (search_tools.py:52)
+    ↓
+VectorStore.search() (vector_store.py:61)
+    ├─ Step 1: Resolve course name (semantic)
+    ├─ Step 2: Build filter
+    └─ Step 3: Search content (vector + filter)
+    ↓
+ChromaDB Query
+    ├─ Convert query to embedding
+    ├─ Cosine similarity search
+    ├─ Apply metadata filters
+    └─ Return top N results
+    ↓
+Format Results (search_tools.py:88)
+    ├─ Add headers: "[Course - Lesson N]"
+    ├─ Track sources
+    └─ Return formatted text
+    ↓
+Second Claude API call (with tool results)
+    ↓
+Claude Synthesis → Final Answer
+    ↓
+Extract sources (rag_system.py:130)
+Update session history (rag_system.py:137)
+    ↓
+Return (answer, sources) to FastAPI
+    ↓
+JSON Response {answer, sources, session_id}
+    ↓
+JavaScript receives response
+    ├─ Parse JSON
+    ├─ Remove loading animation
+    ├─ Convert markdown to HTML
+    └─ Display in chat UI
+    ↓
+User sees answer with sources
+
+================================================================================
+                              KEY COMPONENTS
+================================================================================
+
+┌─────────────────────┬──────────────────────────────────────────────────────┐
+│ Component           │ Responsibility                                       │
+├─────────────────────┼──────────────────────────────────────────────────────┤
+│ Frontend            │ User interface, HTTP requests, display results       │
+│ FastAPI             │ API endpoints, request/response handling             │
+│ RAG System          │ Orchestration, conversation history, coordination    │
+│ AI Generator        │ Claude API calls, tool execution loop                │
+│ Tool Manager        │ Register and execute tools                           │
+│ Search Tool         │ Execute searches, format results, track sources      │
+│ Vector Store        │ Course name resolution, semantic search, ChromaDB    │
+│ ChromaDB            │ Vector embeddings storage, similarity search         │
+│ Session Manager     │ Conversation history (last 2 exchanges)              │
+└─────────────────────┴──────────────────────────────────────────────────────┘
+
+================================================================================
+                       SYSTEM ARCHITECTURE LAYERS
+================================================================================
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           PRESENTATION LAYER                                │
+│  - HTML/CSS UI (index.html)                                                 │
+│  - JavaScript (script.js)                                                   │
+│  - Markdown rendering (marked.js)                                           │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    ↕ HTTP
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           API LAYER                                         │
+│  - FastAPI (app.py)                                                         │
+│  - Request validation (Pydantic models)                                     │
+│  - CORS middleware                                                          │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    ↕
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                        ORCHESTRATION LAYER                                  │
+│  - RAGSystem (rag_system.py)                                                │
+│  - SessionManager (session history)                                         │
+│  - ToolManager (tool registry)                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    ↕
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           AI LAYER                                          │
+│  - AIGenerator (ai_generator.py)                                            │
+│  - Anthropic Claude API                                                     │
+│  - Tool execution loop                                                      │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    ↕
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                          TOOL LAYER                                         │
+│  - CourseSearchTool (search_tools.py)                                       │
+│  - Result formatting                                                        │
+│  - Source tracking                                                          │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    ↕
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                          DATA LAYER                                         │
+│  - VectorStore (vector_store.py)                                            │
+│  - ChromaDB (persistent storage)                                            │
+│  - SentenceTransformer (embeddings)                                         │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+================================================================================
+                            EXAMPLE QUERY FLOW
+================================================================================
+
+QUERY: "What is prompt caching?"
+
+1. Frontend: User types query, clicks send
+2. HTTP: POST /api/query {"query": "What is prompt caching?"}
+3. FastAPI: Validates, creates session if needed
+4. RAGSystem: Gets history, builds prompt
+5. AIGenerator: First Claude call with tools
+6. Claude: "I need to search" → tool_use(query="prompt caching")
+7. ToolManager: Routes to CourseSearchTool
+8. VectorStore:
+   - No course specified → Search all content
+   - Convert "prompt caching" → embedding vector
+   - Find top 5 similar chunks
+9. ChromaDB: Returns chunks about prompt caching
+10. SearchTool: Formats results with headers
+11. AIGenerator: Second Claude call with tool results
+12. Claude: Synthesizes answer from search results
+13. RAGSystem: Extracts sources, updates history
+14. FastAPI: Returns JSON {answer, sources, session_id}
+15. Frontend: Displays markdown answer with collapsible sources
+
+================================================================================

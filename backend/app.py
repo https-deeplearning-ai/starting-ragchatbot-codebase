@@ -40,10 +40,17 @@ class QueryRequest(BaseModel):
     query: str
     session_id: Optional[str] = None
 
+class SourceItem(BaseModel):
+    """Structured source with optional link"""
+    title: str
+    link: Optional[str] = None
+    course_title: str
+    lesson_number: Optional[int] = None
+
 class QueryResponse(BaseModel):
     """Response model for course queries"""
     answer: str
-    sources: List[str]
+    sources: List[SourceItem]
     session_id: str
 
 class CourseStats(BaseModel):
