@@ -4,7 +4,7 @@ from document_processor import DocumentProcessor
 from vector_store import VectorStore
 from ai_generator import AIGenerator
 from session_manager import SessionManager
-from search_tools import ToolManager, CourseSearchTool
+from search_tools import ToolManager, CourseSearchTool, CourseOutlineTool
 from models import Course, Lesson, CourseChunk
 
 class RAGSystem:
@@ -16,13 +16,15 @@ class RAGSystem:
         # Initialize core components
         self.document_processor = DocumentProcessor(config.CHUNK_SIZE, config.CHUNK_OVERLAP)
         self.vector_store = VectorStore(config.CHROMA_PATH, config.EMBEDDING_MODEL, config.MAX_RESULTS)
-        self.ai_generator = AIGenerator(config.ANTHROPIC_API_KEY, config.ANTHROPIC_MODEL)
+        self.ai_generator = AIGenerator(config.OLLAMA_BASE_URL, config.OLLAMA_MODEL)
         self.session_manager = SessionManager(config.MAX_HISTORY)
         
         # Initialize search tools
         self.tool_manager = ToolManager()
         self.search_tool = CourseSearchTool(self.vector_store)
+        self.outline_tool = CourseOutlineTool(self.vector_store)
         self.tool_manager.register_tool(self.search_tool)
+        self.tool_manager.register_tool(self.outline_tool)
     
     def add_course_document(self, file_path: str) -> Tuple[Course, int]:
         """
@@ -99,44 +101,52 @@ class RAGSystem:
         
         return total_courses, total_chunks
     
-    def query(self, query: str, session_id: Optional[str] = None) -> Tuple[str, List[str]]:
+    def _is_search_error(self, result: str) -> bool:
+        """Check if a search tool result is an error/empty message, not real content."""
+        error_prefixes = ("Search error:", "No relevant content found", "No course found")
+        return result.startswith(error_prefixes)
+
+    def query(self, query: str, session_id: Optional[str] = None) -> Tuple[str, List[Dict]]:
         """
-        Process a user query using the RAG system with tool-based search.
-        
+        Process a user query using the RAG system.
+
+        The LLM decides which tools to call via the tool-calling loop in AIGenerator.
+
         Args:
             query: User's question
             session_id: Optional session ID for conversation context
-            
+
         Returns:
-            Tuple of (response, sources list - empty for tool-based approach)
+            Tuple of (response, sources list)
         """
-        # Create prompt for the AI with clear instructions
-        prompt = f"""Answer this question about course materials: {query}"""
-        
-        # Get conversation history if session exists
+        # Reset sources from previous query
+        self.tool_manager.reset_sources()
+
+        # Get conversation history
         history = None
         if session_id:
             history = self.session_manager.get_conversation_history(session_id)
-        
-        # Generate response using AI with tools
-        response = self.ai_generator.generate_response(
-            query=prompt,
-            conversation_history=history,
-            tools=self.tool_manager.get_tool_definitions(),
-            tool_manager=self.tool_manager
-        )
-        
-        # Get sources from the search tool
+
+        # Let the LLM decide which tools to call
+        try:
+            response = self.ai_generator.generate_response(
+                query=query,
+                conversation_history=history,
+                tools=self.tool_manager.get_tool_definitions(),
+                tool_executor=self.tool_manager.execute_tool,
+            )
+        except Exception as e:
+            print(f"AI generation error: {e}")
+            sources = self.tool_manager.get_last_sources()
+            return "Sorry, I'm having trouble generating a response right now. Please try again.", sources
+
+        # Collect sources from all tools used during the conversation
         sources = self.tool_manager.get_last_sources()
 
-        # Reset sources after retrieving them
-        self.tool_manager.reset_sources()
-        
-        # Update conversation history
+        # Update session history
         if session_id:
             self.session_manager.add_exchange(session_id, query, response)
-        
-        # Return response with sources from tool searches
+
         return response, sources
     
     def get_course_analytics(self) -> Dict:

@@ -40,10 +40,19 @@ class QueryRequest(BaseModel):
     query: str
     session_id: Optional[str] = None
 
+class SourceItem(BaseModel):
+    """A single source with title and optional link"""
+    title: str
+    link: Optional[str] = None
+
 class QueryResponse(BaseModel):
     """Response model for course queries"""
     answer: str
-    sources: List[str]
+    sources: List[SourceItem]
+    session_id: str
+
+class ClearSessionRequest(BaseModel):
+    """Request model for clearing a session"""
     session_id: str
 
 class CourseStats(BaseModel):
@@ -70,6 +79,15 @@ async def query_documents(request: QueryRequest):
             sources=sources,
             session_id=session_id
         )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/sessions/clear")
+async def clear_session(request: ClearSessionRequest):
+    """Clear a chat session to free server memory"""
+    try:
+        rag_system.session_manager.clear_session(request.session_id)
+        return {"status": "ok"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
