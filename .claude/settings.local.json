@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add:*)",
+      "Bash(git push:*)",
+      "Bash(git pull:*)",
+      "Bash(echo:*)",
+      "Bash(uv run -m pytest:*)",
+      "Bash(git commit:*)",
+      "Bash(git merge:*)"
+    ]
+  }
+}

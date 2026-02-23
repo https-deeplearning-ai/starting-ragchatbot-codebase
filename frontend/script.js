@@ -15,7 +15,8 @@ document.addEventListener('DOMContentLoaded', () => {
     sendButton = document.getElementById('sendButton');
     totalCourses = document.getElementById('totalCourses');
     courseTitles = document.getElementById('courseTitles');
-    
+
+    initTheme();
     setupEventListeners();
     createNewSession();
     loadCourseStats();
@@ -38,6 +39,20 @@ function setupEventListeners() {
             sendMessage();
         });
     });
+
+    // Theme toggle
+    const themeToggle = document.getElementById('themeToggle');
+    if (themeToggle) {
+        themeToggle.addEventListener('click', toggleTheme);
+    }
+
+    // New chat button
+    const newChatButton = document.getElementById('newChatButton');
+    if (newChatButton) {
+        newChatButton.addEventListener('click', () => {
+            createNewSession();
+        });
+    }
 }
 
 
@@ -122,10 +137,28 @@ function addMessage(content, type, sources = null, isWelcome = false) {
     let html = `<div class="message-content">${displayContent}</div>`;
     
     if (sources && sources.length > 0) {
+        // Format sources - handle both string and object formats
+        const formattedSources = sources.map(source => {
+            // Handle legacy string format (backward compatibility)
+            if (typeof source === 'string') {
+                return escapeHtml(source);
+            }
+            // Handle new object format with optional link
+            if (typeof source === 'object' && source.text) {
+                const text = escapeHtml(source.text);
+                if (source.link) {
+                    // Create clickable link that opens in new tab
+                    return `<a href="${escapeHtml(source.link)}" target="_blank" rel="noopener noreferrer" class="source-link">${text}</a>`;
+                }
+                return text;
+            }
+            return '';
+        }).filter(s => s); // Remove empty strings
+
         html += `
             <details class="sources-collapsible">
                 <summary class="sources-header">Sources</summary>
-                <div class="sources-content">${sources.join(', ')}</div>
+                <div class="sources-content">${formattedSources.join(', ')}</div>
             </details>
         `;
     }
@@ -147,9 +180,111 @@ function escapeHtml(text) {
 // Removed removeMessage function - no longer needed since we handle loading differently
 
 async function createNewSession() {
+    // Store old session ID for potential backend cleanup
+    const oldSessionId = currentSessionId;
+
+    // Reset session state
     currentSessionId = null;
+
+    // Clear UI
     chatMessages.innerHTML = '';
+
+    // Add welcome message
     addMessage('Welcome to the Course Materials Assistant! I can help you with questions about courses, lessons and specific content. What would you like to know?', 'assistant', null, true);
+
+    // Focus input for immediate use
+    if (chatInput) {
+        chatInput.focus();
+    }
+
+    // Clear backend session if one existed
+    if (oldSessionId) {
+        clearBackendSession(oldSessionId);
+    }
+}
+
+async function clearBackendSession(sessionId) {
+    if (!sessionId) return;
+
+    try {
+        await fetch(`${API_URL}/session/clear`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ session_id: sessionId })
+        });
+    } catch (error) {
+        // Silent fail - session will be garbage collected eventually
+        console.warn('Failed to clear backend session:', error);
+    }
+}
+
+// Theme Toggle
+function initTheme() {
+    // Theme was already applied by the inline <script> in index.html to prevent FOUC.
+    // Here we just enable transitions now that the page has loaded,
+    // update the toggle button's aria-label, and listen for OS changes.
+
+    // Remove transition suppression after a frame so the browser has painted
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            document.documentElement.classList.remove('no-transitions');
+        });
+    });
+
+    updateToggleLabel();
+
+    // Listen for OS-level theme changes (only applies when no saved preference)
+    window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', (e) => {
+        if (!localStorage.getItem('theme')) {
+            applyTheme(e.matches ? 'light' : 'dark', false);
+        }
+    });
+
+    // Keyboard shortcut: Ctrl+Shift+L to toggle theme
+    document.addEventListener('keydown', (e) => {
+        if (e.ctrlKey && e.shiftKey && e.key === 'L') {
+            e.preventDefault();
+            toggleTheme();
+        }
+    });
+}
+
+function getCurrentTheme() {
+    return document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+}
+
+function applyTheme(theme, save) {
+    if (theme === 'light') {
+        document.documentElement.setAttribute('data-theme', 'light');
+    } else {
+        document.documentElement.removeAttribute('data-theme');
+    }
+    // Keep color-scheme meta in sync for browser chrome (scrollbars, form controls)
+    var meta = document.querySelector('meta[name="color-scheme"]');
+    if (meta) meta.content = theme === 'light' ? 'light' : 'dark';
+    if (save) {
+        localStorage.setItem('theme', theme);
+    }
+    updateToggleLabel();
+}
+
+function toggleTheme() {
+    const next = getCurrentTheme() === 'light' ? 'dark' : 'light';
+    applyTheme(next, true);
+}
+
+function updateToggleLabel() {
+    const toggle = document.getElementById('themeToggle');
+    if (!toggle) return;
+    const current = getCurrentTheme();
+    toggle.setAttribute('aria-label',
+        current === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'
+    );
+    toggle.setAttribute('title',
+        current === 'dark' ? 'Switch to light mode (Ctrl+Shift+L)' : 'Switch to dark mode (Ctrl+Shift+L)'
+    );
 }
 
 // Load course statistics
