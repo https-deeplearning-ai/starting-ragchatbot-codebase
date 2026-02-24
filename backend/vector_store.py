@@ -1,9 +1,47 @@
+import boto3
+import json
 import chromadb
 from chromadb.config import Settings
+from chromadb.api.types import EmbeddingFunction, Documents, Embeddings
 from typing import List, Dict, Any, Optional
 from dataclasses import dataclass
 from models import Course, CourseChunk
-from sentence_transformers import SentenceTransformer
+
+
+class CohereBedrockEmbeddingFunction(EmbeddingFunction):
+    """ChromaDB embedding function using Cohere via AWS Bedrock"""
+
+    def __init__(self, model_id: str):
+        self.model_id = model_id
+        # Extract region from ARN (arn:aws:bedrock:<region>:...) if present
+        region = None
+        parts = model_id.split(":")
+        if len(parts) >= 4 and parts[0] == "arn":
+            region = parts[3]
+        session = boto3.session.Session()
+        self.client = session.client("bedrock-runtime", region_name=region)
+
+    BATCH_SIZE = 96  # Cohere limit is 128; use 96 for safety
+
+    def _embed(self, texts: Documents, input_type: str) -> Embeddings:
+        # Replace empty/whitespace-only strings to avoid API errors
+        texts = [t if t and t.strip() else "." for t in texts]
+        embeddings = []
+        for i in range(0, len(texts), self.BATCH_SIZE):
+            batch = texts[i:i + self.BATCH_SIZE]
+            response = self.client.invoke_model(
+                modelId=self.model_id,
+                body=json.dumps({"texts": batch, "input_type": input_type}),
+            )
+            result = json.loads(response["body"].read())
+            embeddings.extend(result["embeddings"])
+        return embeddings
+
+    def __call__(self, input: Documents) -> Embeddings:
+        return self._embed(input, "search_document")
+
+    def query(self, texts: Documents) -> Embeddings:
+        return self._embed(texts, "search_query")
 
 @dataclass
 class SearchResults:
@@ -42,10 +80,8 @@ class VectorStore:
             settings=Settings(anonymized_telemetry=False)
         )
         
-        # Set up sentence transformer embedding function
-        self.embedding_function = chromadb.utils.embedding_functions.SentenceTransformerEmbeddingFunction(
-            model_name=embedding_model
-        )
+        # Set up Cohere embedding function via Bedrock
+        self.embedding_function = CohereBedrockEmbeddingFunction(model_id=embedding_model)
         
         # Create collections for different types of data
         self.course_catalog = self._create_collection("course_catalog")  # Course titles/instructors

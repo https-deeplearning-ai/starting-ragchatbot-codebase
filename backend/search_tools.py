@@ -25,27 +25,31 @@ class CourseSearchTool(Tool):
         self.last_sources = []  # Track sources from last search
     
     def get_tool_definition(self) -> Dict[str, Any]:
-        """Return Anthropic tool definition for this tool"""
+        """Return boto3 converse tool definition for this tool"""
         return {
-            "name": "search_course_content",
-            "description": "Search course materials with smart course name matching and lesson filtering",
-            "input_schema": {
-                "type": "object",
-                "properties": {
-                    "query": {
-                        "type": "string", 
-                        "description": "What to search for in the course content"
-                    },
-                    "course_name": {
-                        "type": "string",
-                        "description": "Course title (partial matches work, e.g. 'MCP', 'Introduction')"
-                    },
-                    "lesson_number": {
-                        "type": "integer",
-                        "description": "Specific lesson number to search within (e.g. 1, 2, 3)"
+            "toolSpec": {
+                "name": "search_course_content",
+                "description": "Search course materials with smart course name matching and lesson filtering",
+                "inputSchema": {
+                    "json": {
+                        "type": "object",
+                        "properties": {
+                            "query": {
+                                "type": "string",
+                                "description": "What to search for in the course content"
+                            },
+                            "course_name": {
+                                "type": "string",
+                                "description": "Course title (partial matches work, e.g. 'MCP', 'Introduction')"
+                            },
+                            "lesson_number": {
+                                "type": "integer",
+                                "description": "Specific lesson number to search within (e.g. 1, 2, 3)"
+                            }
+                        },
+                        "required": ["query"]
                     }
-                },
-                "required": ["query"]
+                }
             }
         }
     
@@ -122,9 +126,7 @@ class ToolManager:
     def register_tool(self, tool: Tool):
         """Register any tool that implements the Tool interface"""
         tool_def = tool.get_tool_definition()
-        tool_name = tool_def.get("name")
-        if not tool_name:
-            raise ValueError("Tool must have a 'name' in its definition")
+        tool_name = tool_def["toolSpec"]["name"]
         self.tools[tool_name] = tool
 
     

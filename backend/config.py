@@ -8,12 +8,13 @@ load_dotenv()
 @dataclass
 class Config:
     """Configuration settings for the RAG system"""
-    # Anthropic API settings
-    ANTHROPIC_API_KEY: str = os.getenv("ANTHROPIC_API_KEY", "")
-    ANTHROPIC_MODEL: str = "claude-sonnet-4-20250514"
+    # Anthropic API settings (via AWS Bedrock)
+    ANTHROPIC_MODEL: str = os.getenv("ANTHROPIC_MODEL", "")
+    AWS_REGION: str = os.getenv("AWS_REGION", "us-west-2")
+    AWS_PROFILE: str = os.getenv("AWS_PROFILE", "")
     
     # Embedding model settings
-    EMBEDDING_MODEL: str = "all-MiniLM-L6-v2"
+    EMBEDDING_MODEL: str = os.getenv("EMBED_MODEL", "")
     
     # Document processing settings
     CHUNK_SIZE: int = 800       # Size of text chunks for vector storage

@@ -4,15 +4,13 @@ A Retrieval-Augmented Generation (RAG) system designed to answer questions about
 
 ## Overview
 
-This application is a full-stack web application that enables users to query course materials and receive intelligent, context-aware responses. It uses ChromaDB for vector storage, Anthropic's Claude for AI generation, and provides a web interface for interaction.
-
+This application is a full-stack web application that enables users to query course materials and receive intelligent, context-aware responses. It uses ChromaDB for vector storage, Claude (via AWS Bedrock) for AI generation, and Cohere Embed Multilingual v3 (via AWS Bedrock) for embeddings.
 
 ## Prerequisites
 
 - Python 3.13 or higher
 - uv (Python package manager)
-- An Anthropic API key (for Claude AI)
-- **For Windows**: Use Git Bash to run the application commands - [Download Git for Windows](https://git-scm.com/downloads/win)
+- AWS credentials configured with access to Bedrock (Claude and Cohere inference profiles)
 
 ## Installation
 
@@ -27,30 +25,20 @@ This application is a full-stack web application that enables users to query cou
    ```
 
 3. **Set up environment variables**
-   
-   Create a `.env` file in the root directory:
+
+   Copy `.env.example` to `.env` and fill in your Bedrock inference profile ARNs:
    ```bash
-   ANTHROPIC_API_KEY=your_anthropic_api_key_here
+   ANTHROPIC_MODEL=arn:aws:bedrock:<region>:<account-id>:application-inference-profile/<profile-id>
+   EMBED_MODEL=arn:aws:bedrock:<region>:<account-id>:application-inference-profile/<profile-id>
+   AWS_PROFILE=your-aws-profile-name  # if not already set in your environment
    ```
 
 ## Running the Application
 
-### Quick Start
-
-Use the provided shell script:
 ```bash
-chmod +x run.sh
 ./run.sh
-```
-
-### Manual Start
-
-```bash
-cd backend
-uv run uvicorn app:app --reload --port 8000
 ```
 
 The application will be available at:
 - Web Interface: `http://localhost:8000`
 - API Documentation: `http://localhost:8000/docs`
-
