@@ -41,15 +41,20 @@ jobs:
           prompt: '/code-review:code-review ${{ github.repository }}/pull/${{ github.event.pull_request.number }}'
           model: 'claude-opus-4-20250514'
 
-          #Direct prompt for automated review (no @claude mention needed)
-          direct_prompt: 
-              "please review this pull request and provide feedback on: 
-                - code quality and best practices 
-                - potential bugs or issues
-                - performance considerations
-                - security concerns
-                - test coverage
-                Be constructive and helpful in your feedback"
+      
+    # Direct prompt for automated review (no @claude mention needed)
+      direct_prompt: |
+        Please review this pull request and provide feedback on:
+        - Code quality and best practices
+        - Potential bugs or issues
+        - Performance considerations
+        - Security concerns
+        - Test coverage
+
+        Be constructive and helpful in your feedback.
+
+      # Optional: Use sticky comments to make Claude reuse the same comment on subsequent pushes to the same PR
+      # use_sticky_comment: true
      
           # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
           # or https://code.claude.com/docs/en/cli-reference for available options
