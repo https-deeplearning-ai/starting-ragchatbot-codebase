@@ -13,3 +13,20 @@ dependencies = [
     "python-multipart==0.0.20",
     "python-dotenv==1.1.1",
 ]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.2",
+    "black>=24.0.0",
+    "httpx>=0.28.0",
+]
+
+[tool.black]
+line-length = 88
+target-version = ["py313"]
+
+[tool.pytest.ini_options]
+# Make both backend/ and backend/tests/ importable without sys.path hacks
+pythonpath = ["backend", "backend/tests"]
+testpaths = ["backend/tests"]
+addopts = "-v --tb=short"
