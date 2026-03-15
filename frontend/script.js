@@ -5,7 +5,7 @@ const API_URL = '/api';
 let currentSessionId = null;
 
 // DOM elements
-let chatMessages, chatInput, sendButton, totalCourses, courseTitles;
+let chatMessages, chatInput, sendButton, totalCourses, courseTitles, newChatBtn;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -15,11 +15,37 @@ document.addEventListener('DOMContentLoaded', () => {
     sendButton = document.getElementById('sendButton');
     totalCourses = document.getElementById('totalCourses');
     courseTitles = document.getElementById('courseTitles');
-    
+    newChatBtn = document.getElementById('newChatBtn');
+
+    setupThemeToggle();
     setupEventListeners();
     createNewSession();
     loadCourseStats();
 });
+
+// Theme Toggle
+function setupThemeToggle() {
+    const toggle = document.getElementById('themeToggle');
+    if (!toggle) return;
+
+    // The inline <head> script already set data-theme on <html> before first paint.
+    // Nothing to transfer — just read the current value.
+    const isLight = () => document.documentElement.getAttribute('data-theme') === 'light';
+
+    const syncButton = () => {
+        const light = isLight();
+        toggle.setAttribute('aria-pressed', String(light));
+        toggle.setAttribute('aria-label', light ? 'Switch to dark mode' : 'Switch to light mode');
+    };
+    syncButton();
+
+    toggle.addEventListener('click', () => {
+        const next = isLight() ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', next);
+        localStorage.setItem('theme', next);
+        syncButton();
+    });
+}
 
 // Event Listeners
 function setupEventListeners() {
@@ -28,8 +54,10 @@ function setupEventListeners() {
     chatInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') sendMessage();
     });
-    
-    
+
+    // New chat button
+    newChatBtn.addEventListener('click', createNewSession);
+
     // Suggested questions
     document.querySelectorAll('.suggested-item').forEach(button => {
         button.addEventListener('click', (e) => {
@@ -39,7 +67,6 @@ function setupEventListeners() {
         });
     });
 }
-
 
 // Chat Functions
 async function sendMessage() {
@@ -74,7 +101,7 @@ async function sendMessage() {
         if (!response.ok) throw new Error('Query failed');
 
         const data = await response.json();
-        
+
         // Update session ID if new
         if (!currentSessionId) {
             currentSessionId = data.session_id;
@@ -125,7 +152,7 @@ function addMessage(content, type, sources = null, isWelcome = false) {
         html += `
             <details class="sources-collapsible">
                 <summary class="sources-header">Sources</summary>
-                <div class="sources-content">${sources.join(', ')}</div>
+                <div class="sources-content">${sources.map(s => `<span class="source-tag">${renderSource(s)}</span>`).join('')}</div>
             </details>
         `;
     }
@@ -137,6 +164,15 @@ function addMessage(content, type, sources = null, isWelcome = false) {
     return messageId;
 }
 
+// Render a source as a clickable link if it contains a URL (label||url format)
+function renderSource(source) {
+    const parts = source.split('||');
+    if (parts.length === 2 && parts[1]) {
+        return `<a href="${parts[1]}" target="_blank" rel="noopener noreferrer">${escapeHtml(parts[0])}</a>`;
+    }
+    return escapeHtml(source);
+}
+
 // Helper function to escape HTML for user messages
 function escapeHtml(text) {
     const div = document.createElement('div');
@@ -144,9 +180,10 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-// Removed removeMessage function - no longer needed since we handle loading differently
-
 async function createNewSession() {
+    if (currentSessionId) {
+        fetch(`${API_URL}/sessions/${currentSessionId}`, { method: 'DELETE' }).catch(() => {});
+    }
     currentSessionId = null;
     chatMessages.innerHTML = '';
     addMessage('Welcome to the Course Materials Assistant! I can help you with questions about courses, lessons and specific content. What would you like to know?', 'assistant', null, true);
