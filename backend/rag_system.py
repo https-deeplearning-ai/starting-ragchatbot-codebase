@@ -1,11 +1,11 @@
 from typing import List, Tuple, Optional, Dict
 import os
-from document_processor import DocumentProcessor
-from vector_store import VectorStore
-from ai_generator import AIGenerator
-from session_manager import SessionManager
-from search_tools import ToolManager, CourseSearchTool
-from models import Course, Lesson, CourseChunk
+from ..document_processor import DocumentProcessor
+from ..vector_store import VectorStore
+from ..ai_generator import AIGenerator
+from ..session_manager import SessionManager
+from ..search_tools import ToolManager, CourseSearchTool
+from ..models import Course, Lesson, CourseChunk
 
 class RAGSystem:
     """Main orchestrator for the Retrieval-Augmented Generation system"""

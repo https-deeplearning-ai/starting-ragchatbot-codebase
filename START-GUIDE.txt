@@ -1,0 +1,31 @@
+# Starting RAG Chatbot - Quick Start Guide
+
+## Current Status
+✅ Frontend running on http://localhost:8000
+❌ Backend API needs import fixes
+
+## Quick Fix for Backend
+
+1. Open PowerShell/CMD in backend directory:
+   cd "g:\AI-St\claude code\codeTest\starting-ragchatbot-codebase\backend"
+
+2. Fix all imports by replacing:
+   - `from .` with `from `
+   - `from ..` with `from `
+
+3. Start the API server:
+   uv run uvicorn app:app --reload --port 8000
+
+## Manual Steps to Fix Imports
+
+Edit these files and remove "backend." prefix from imports:
+- backend/rag_system.py (line 3)
+- backend/document_processor.py (line 4)
+- backend/vector_store.py (line 5)
+- backend/session_manager.py (line 3)
+- backend/search_tools.py (line 5)
+- backend/models.py (line 3)
+- backend/ai_generator.py (line 3)
+
+## After Fix
+Frontend will automatically connect to backend API at /api endpoints.

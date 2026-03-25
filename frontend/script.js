@@ -117,7 +117,22 @@ function addMessage(content, type, sources = null, isWelcome = false) {
     messageDiv.id = `message-${messageId}`;
     
     // Convert markdown to HTML for assistant messages
-    const displayContent = type === 'assistant' ? marked.parse(content) : escapeHtml(content);
+    let displayContent;
+    if (type === 'assistant') {
+        try {
+            if (typeof marked !== 'undefined') {
+                displayContent = marked.parse(content);
+            } else {
+                console.warn('marked library not loaded, using plain text');
+                displayContent = escapeHtml(content);
+            }
+        } catch (e) {
+            console.error('Markdown parsing error:', e);
+            displayContent = escapeHtml(content);
+        }
+    } else {
+        displayContent = escapeHtml(content);
+    }
     
     let html = `<div class="message-content">${displayContent}</div>`;
     

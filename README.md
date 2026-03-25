@@ -23,6 +23,7 @@ This application is a full-stack web application that enables users to query cou
 
 2. **Install Python dependencies**
    ```bash
+   
    uv sync
    ```
 

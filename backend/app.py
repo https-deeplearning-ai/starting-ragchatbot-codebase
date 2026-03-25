@@ -8,6 +8,8 @@ from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
 import os
+import sys
+sys.path.append('..')
 
 from config import config
 from rag_system import RAGSystem
