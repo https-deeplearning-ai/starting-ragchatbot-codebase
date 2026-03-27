@@ -16,6 +16,7 @@ sys.path.append(str(backend_path))
 
 from backend.config import config
 from backend.rag_system import RAGSystem
+from backend.language_detector import detect_language
 
 # Initialize FastAPI app
 app = FastAPI(title="Course Materials RAG System", root_path="")
@@ -70,10 +71,23 @@ async def query_documents(request: QueryRequest):
         session_id = request.session_id
         if not session_id:
             session_id = rag_system.session_manager.create_session()
-        
-        # Process query using RAG system
-        answer, sources = rag_system.query(request.query, session_id)
-        
+
+        # Detect language from query
+        detected_language = detect_language(request.query)
+
+        # Get or set session language
+        session_language = rag_system.session_manager.get_session_language(session_id)
+        if session_language is None:
+            # First query in session - set language based on detection
+            rag_system.session_manager.set_session_language(session_id, detected_language)
+            language = detected_language
+        else:
+            # Use existing session language for consistency
+            language = session_language
+
+        # Process query using RAG system with language parameter
+        answer, sources = rag_system.query(request.query, session_id, language)
+
         return QueryResponse(
             answer=answer,
             sources=sources,

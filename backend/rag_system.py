@@ -99,31 +99,33 @@ class RAGSystem:
         
         return total_courses, total_chunks
     
-    def query(self, query: str, session_id: Optional[str] = None) -> Tuple[str, List[str]]:
+    def query(self, query: str, session_id: Optional[str] = None, language: str = 'en') -> Tuple[str, List[str]]:
         """
         Process a user query using the RAG system with tool-based search.
-        
+
         Args:
             query: User's question
             session_id: Optional session ID for conversation context
-            
+            language: Language for response ('en' or 'zh')
+
         Returns:
             Tuple of (response, sources list - empty for tool-based approach)
         """
         # Create prompt for the AI with clear instructions
         prompt = f"""Answer this question about course materials: {query}"""
-        
+
         # Get conversation history if session exists
         history = None
         if session_id:
             history = self.session_manager.get_conversation_history(session_id)
-        
+
         # Generate response using AI with tools
         response = self.ai_generator.generate_response(
             query=prompt,
             conversation_history=history,
             tools=self.tool_manager.get_tool_definitions(),
-            tool_manager=self.tool_manager
+            tool_manager=self.tool_manager,
+            language=language
         )
         
         # Get sources from the search tool
