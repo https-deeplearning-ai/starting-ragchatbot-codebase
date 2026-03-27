@@ -17,6 +17,18 @@
         </header>
 
         <div class="main-content">
+            <!-- Language Selector (Top Left) -->
+            <div class="language-selector">
+                <button id="languageToggle" class="language-toggle" title="Toggle language">
+                    <span class="language-icon">🌐</span>
+                    <span class="language-text">EN</span>
+                </button>
+                <div id="languageMenu" class="language-menu" style="display: none;">
+                    <button class="language-option" data-lang="en">English</button>
+                    <button class="language-option" data-lang="zh">中文</button>
+                </div>
+            </div>
+
             <!-- Left Sidebar -->
             <aside class="sidebar">
                 <!-- New Chat Button -->
@@ -83,6 +95,7 @@
 
 
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="i18n.js?v=1"></script>
     <script src="script.js?v=9"></script>
 </body>
 </html>

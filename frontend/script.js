@@ -3,9 +3,11 @@ const API_URL = '/api';
 
 // Global state
 let currentSessionId = null;
+let currentLanguage = 'en';
 
 // DOM elements
 let chatMessages, chatInput, sendButton, totalCourses, courseTitles, newChatButton;
+let languageToggle, languageMenu, languageOptions;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -16,7 +18,14 @@ document.addEventListener('DOMContentLoaded', () => {
     totalCourses = document.getElementById('totalCourses');
     courseTitles = document.getElementById('courseTitles');
     newChatButton = document.getElementById('newChatButton');
-    
+    languageToggle = document.getElementById('languageToggle');
+    languageMenu = document.getElementById('languageMenu');
+    languageOptions = document.querySelectorAll('.language-option');
+
+    // Initialize language
+    currentLanguage = getCurrentLanguage();
+    updateLanguageUI();
+
     setupEventListeners();
     createNewSession();
     loadCourseStats();
@@ -35,6 +44,27 @@ function setupEventListeners() {
         newChatButton.addEventListener('click', newChat);
     }
 
+    // Language selector
+    if (languageToggle) {
+        languageToggle.addEventListener('click', toggleLanguageMenu);
+    }
+
+    if (languageOptions) {
+        languageOptions.forEach(option => {
+            option.addEventListener('click', (e) => {
+                const lang = e.target.getAttribute('data-lang');
+                changeLanguage(lang);
+            });
+        });
+    }
+
+    // Close language menu when clicking outside
+    document.addEventListener('click', (e) => {
+        if (languageMenu && languageToggle && !languageToggle.contains(e.target) && !languageMenu.contains(e.target)) {
+            languageMenu.style.display = 'none';
+        }
+    });
+
     // Suggested questions
     document.querySelectorAll('.suggested-item').forEach(button => {
         button.addEventListener('click', (e) => {
@@ -46,7 +76,93 @@ function setupEventListeners() {
 }
 
 
-// Chat Functions
+// Language Functions
+function toggleLanguageMenu() {
+    if (languageMenu.style.display === 'none') {
+        languageMenu.style.display = 'block';
+    } else {
+        languageMenu.style.display = 'none';
+    }
+}
+
+function changeLanguage(lang) {
+    if (setLanguage(lang)) {
+        currentLanguage = lang;
+        languageMenu.style.display = 'none';
+        updateLanguageUI();
+    }
+}
+
+function updateLanguageUI() {
+    // Update language toggle button
+    const langText = currentLanguage === 'en' ? 'EN' : '中文';
+    const langToggleText = languageToggle.querySelector('.language-text');
+    if (langToggleText) {
+        langToggleText.textContent = langText;
+    }
+
+    // Update active language option
+    languageOptions.forEach(option => {
+        if (option.getAttribute('data-lang') === currentLanguage) {
+            option.classList.add('active');
+        } else {
+            option.classList.remove('active');
+        }
+    });
+
+    // Update all UI text
+    updatePageText();
+}
+
+function updatePageText() {
+    // Update sidebar
+    if (newChatButton) {
+        newChatButton.textContent = t('newChat');
+    }
+
+    // Update course stats header
+    const statsHeader = document.querySelector('.stats-header');
+    if (statsHeader) {
+        statsHeader.textContent = t('courses');
+    }
+
+    // Update course stats label
+    const statLabel = document.querySelector('.stat-label');
+    if (statLabel) {
+        statLabel.textContent = t('numberOfCourses');
+    }
+
+    // Update suggested questions header
+    const suggestedHeader = document.querySelector('.suggested-header');
+    if (suggestedHeader) {
+        suggestedHeader.textContent = t('tryAsking');
+    }
+
+    // Update chat input placeholder
+    if (chatInput) {
+        chatInput.placeholder = t('placeholder');
+    }
+
+    // Update suggested questions text
+    const suggestedItems = document.querySelectorAll('.suggested-item');
+    const suggestedTexts = [
+        t('outlineOfCourse'),
+        t('courseAboutChatbot'),
+        t('courseExplainingRAG'),
+        t('detailsOfLesson')
+    ];
+    suggestedItems.forEach((item, index) => {
+        if (index < suggestedTexts.length) {
+            item.textContent = suggestedTexts[index];
+        }
+    });
+
+    // Update sources header in existing messages
+    document.querySelectorAll('.sources-header').forEach(header => {
+        header.textContent = t('sources');
+    });
+}
+
 async function sendMessage() {
     const query = chatInput.value.trim();
     if (!query) return;
@@ -72,7 +188,8 @@ async function sendMessage() {
             },
             body: JSON.stringify({
                 query: query,
-                session_id: currentSessionId
+                session_id: currentSessionId,
+                language: currentLanguage  // Send current language preference
             })
         });
 
@@ -144,7 +261,7 @@ function addMessage(content, type, sources = null, isWelcome = false) {
     if (sources && sources.length > 0) {
         html += `
             <details class="sources-collapsible">
-                <summary class="sources-header">Sources</summary>
+                <summary class="sources-header">${t('sources')}</summary>
                 <div class="sources-content">${sources.join(', ')}</div>
             </details>
         `;
@@ -169,7 +286,7 @@ function escapeHtml(text) {
 async function createNewSession() {
     currentSessionId = null;
     chatMessages.innerHTML = '';
-    addMessage('Welcome to the Course Materials Assistant! I can help you with questions about courses, lessons and specific content. What would you like to know?', 'assistant', null, true);
+    addMessage(t('welcome'), 'assistant', null, true);
 }
 
 async function newChat() {
@@ -216,7 +333,7 @@ async function loadCourseStats() {
                     .map(title => `<div class="course-title-item">${title}</div>`)
                     .join('');
             } else {
-                courseTitles.innerHTML = '<span class="no-courses">No courses available</span>';
+                courseTitles.innerHTML = `<span class="no-courses">${t('noCourses')}</span>`;
             }
         }
         
@@ -227,7 +344,7 @@ async function loadCourseStats() {
             totalCourses.textContent = '0';
         }
         if (courseTitles) {
-            courseTitles.innerHTML = '<span class="error">Failed to load courses</span>';
+            courseTitles.innerHTML = `<span class="error">${t('failedToLoadCourses')}</span>`;
         }
     }
 }

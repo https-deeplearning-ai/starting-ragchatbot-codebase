@@ -45,6 +45,7 @@ class QueryRequest(BaseModel):
     """Request model for course queries"""
     query: str
     session_id: Optional[str] = None
+    language: Optional[str] = None  # 'en' or 'zh' - user's language preference
 
 class QueryResponse(BaseModel):
     """Response model for course queries"""
@@ -72,18 +73,22 @@ async def query_documents(request: QueryRequest):
         if not session_id:
             session_id = rag_system.session_manager.create_session()
 
-        # Detect language from query
-        detected_language = detect_language(request.query)
-
-        # Get or set session language
-        session_language = rag_system.session_manager.get_session_language(session_id)
-        if session_language is None:
-            # First query in session - set language based on detection
-            rag_system.session_manager.set_session_language(session_id, detected_language)
-            language = detected_language
+        # Determine language: user preference > session language > detected language
+        if request.language:
+            # User explicitly selected a language
+            language = request.language
+            rag_system.session_manager.set_session_language(session_id, language)
         else:
-            # Use existing session language for consistency
-            language = session_language
+            # Check session language
+            session_language = rag_system.session_manager.get_session_language(session_id)
+            if session_language is None:
+                # First query in session - detect language from query
+                detected_language = detect_language(request.query)
+                rag_system.session_manager.set_session_language(session_id, detected_language)
+                language = detected_language
+            else:
+                # Use existing session language for consistency
+                language = session_language
 
         # Process query using RAG system with language parameter
         answer, sources = rag_system.query(request.query, session_id, language)
