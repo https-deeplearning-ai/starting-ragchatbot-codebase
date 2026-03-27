@@ -15,6 +15,12 @@ const translations = {
         courseExplainingRAG: 'Courses explaining RAG',
         detailsOfLesson: "Details of a course's lesson",
 
+        // Suggested questions (actual questions to send)
+        suggestedQuestion1: 'What is the outline of the "MCP: Build Rich-Context AI Apps with Anthropic" course?',
+        suggestedQuestion2: 'Are there any courses that include a Chatbot implementation?',
+        suggestedQuestion3: 'Are there any courses that explain what RAG is?',
+        suggestedQuestion4: 'What was covered in lesson 5 of the MCP course?',
+
         // Chat
         placeholder: 'Ask about courses, lessons, or specific content...',
         sources: 'Sources',
@@ -45,6 +51,12 @@ const translations = {
         courseAboutChatbot: '关于聊天机器人的课程',
         courseExplainingRAG: '解释RAG的课程',
         detailsOfLesson: '课程课时详情',
+
+        // Suggested questions (actual questions to send)
+        suggestedQuestion1: '"MCP: Build Rich-Context AI Apps with Anthropic"课程的大纲是什么？',
+        suggestedQuestion2: '有哪些课程包含聊天机器人的实现？',
+        suggestedQuestion3: '有哪些课程解释了什么是RAG？',
+        suggestedQuestion4: 'MCP课程第5课讲了什么内容？',
 
         // Chat
         placeholder: '提问关于课程、课时或具体内容...',

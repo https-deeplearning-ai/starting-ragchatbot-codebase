@@ -66,9 +66,11 @@ function setupEventListeners() {
     });
 
     // Suggested questions
-    document.querySelectorAll('.suggested-item').forEach(button => {
+    document.querySelectorAll('.suggested-item').forEach((button, index) => {
         button.addEventListener('click', (e) => {
-            const question = e.target.getAttribute('data-question');
+            // Get the question based on current language
+            const questionKey = `suggestedQuestion${index + 1}`;
+            const question = t(questionKey);
             chatInput.value = question;
             sendMessage();
         });
