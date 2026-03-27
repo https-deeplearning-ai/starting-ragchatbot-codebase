@@ -634,6 +634,35 @@ details[open] .suggested-header::before {
     transform: translateX(2px);
 }
 
+/* New Chat Button in Sidebar */
+.new-chat-button {
+    padding: 0.75rem 1rem;
+    background: var(--background);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+    width: 100%;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.new-chat-button:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+.new-chat-button:hover {
+    background: var(--surface-hover);
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    transform: translateX(2px);
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .main-content {
@@ -706,6 +735,11 @@ details[open] .suggested-header::before {
     }
     
     .suggested-item {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.8rem;
+    }
+
+    .new-chat-button {
         padding: 0.5rem 0.75rem;
         font-size: 0.8rem;
     }
