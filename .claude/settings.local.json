@@ -33,7 +33,8 @@
       "Bash(python:*)",
       "Bash(ls:*)",
       "Bash(dir:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ]
   }
 }
