@@ -1,7 +1,7 @@
 import warnings
 warnings.filterwarnings("ignore", message="resource_tracker: There appear to be.*")
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
@@ -10,13 +10,15 @@ from typing import List, Optional
 import os
 import sys
 import pathlib
+import shutil
 # Add the backend directory to Python path
 backend_path = pathlib.Path(__file__).parent
 sys.path.append(str(backend_path))
 
-from backend.config import config
-from backend.rag_system import RAGSystem
-from backend.language_detector import detect_language
+# Use relative imports
+from config import config
+from rag_system import RAGSystem
+from language_detector import detect_language
 
 # Initialize FastAPI app
 app = FastAPI(title="Course Materials RAG System", root_path="")
@@ -25,16 +27,6 @@ app = FastAPI(title="Course Materials RAG System", root_path="")
 app.add_middleware(
     TrustedHostMiddleware,
     allowed_hosts=["*"]
-)
-
-# Enable CORS with proper settings for proxy
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-    expose_headers=["*"],
 )
 
 # Initialize RAG system
@@ -120,6 +112,37 @@ async def clear_session(request: ClearSessionRequest):
         rag_system.session_manager.clear_session(request.session_id)
         return {"status": "success", "message": f"Session {request.session_id} cleared"}
     except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/test")
+async def test_route():
+    return {"status": "success", "message": "Test route working"}
+
+@app.post("/api/upload-course", include_in_schema=True)
+async def upload_course(file: UploadFile = File(...)):
+    print(f"Received file upload request: {file.filename}")
+    if not file.filename.endswith('.txt'):
+        raise HTTPException(status_code=400, detail="Only .txt files are allowed")
+
+    docs_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "docs")
+    os.makedirs(docs_path, exist_ok=True)
+    print(f"Docs path: {docs_path}")
+
+    file_path = os.path.join(docs_path, file.filename)
+    print(f"Saving file to: {file_path}")
+
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    try:
+        print("Processing course document...")
+        course_title = rag_system.add_course_document(file_path)
+        print(f"Successfully processed course: {course_title}")
+        return {"status": "success", "course_title": course_title}
+    except Exception as e:
+        print(f"Error processing file: {e}")
+        if os.path.exists(file_path):
+            os.remove(file_path)
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.on_event("startup")

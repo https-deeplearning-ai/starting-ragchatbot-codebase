@@ -78,6 +78,47 @@ function setupEventListeners() {
 }
 
 
+    document.getElementById('uploadBtn').addEventListener('click', async () => {
+        const fileInput = document.getElementById('courseFile');
+        const file = fileInput.files[0];
+        if (!file) {
+            document.getElementById('uploadStatus').textContent = 'Please select a file';
+            document.getElementById('uploadStatus').style.display = 'block';
+            return;
+        }
+        if (!file.name.endsWith('.txt')) {
+            document.getElementById('uploadStatus').textContent = 'Only .txt files are allowed';
+            document.getElementById('uploadStatus').style.display = 'block';
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const response = await fetch('/api/upload-course', {
+                method: 'POST',
+                body: formData
+            });
+            if (response.ok) {
+                loadCourseStats();
+                fileInput.value = '';
+                document.getElementById('uploadStatus').textContent = 'Upload successful!';
+                document.getElementById('uploadStatus').style.display = 'block';
+                setTimeout(() => {
+                    document.getElementById('uploadStatus').style.display = 'none';
+                }, 3000);
+            } else {
+                const error = await response.json();
+                document.getElementById('uploadStatus').textContent = `Error: ${error.detail}`;
+                document.getElementById('uploadStatus').style.display = 'block';
+            }
+        } catch (error) {
+            document.getElementById('uploadStatus').textContent = `Network error: ${error.message}`;
+            document.getElementById('uploadStatus').style.display = 'block';
+        }
+    });
+
 // Language Functions
 function toggleLanguageMenu() {
     if (languageMenu.style.display === 'none') {
