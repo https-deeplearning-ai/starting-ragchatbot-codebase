@@ -2,39 +2,9 @@
   "permissions": {
     "allow": [
       "Skill(claude-api)",
-      "Bash(python -m py_compile backend/app.py)",
-      "Bash(python -c \"import ast; ast.parse\\(open\\(''backend/app.py''\\).read\\(\\)\\)\")",
-      "Bash(python -c \"import sys; sys.path.append\\(''.''\\); from backend import app\")",
-      "Bash(python -c \"import uvicorn; print\\(''uvicorn available''\\)\")",
-      "Bash(python -m py_compile backend/*.py)",
-      "Bash(uv:*)",
-      "Bash(netstat -ano)",
-      "Bash(findstr :8000)",
-      "Bash(timeout 5)",
-      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:8000/api/courses)",
-      "Bash(ping -n 6 127.0.0.1)",
-      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8000/api/courses)",
-      "Bash(curl:*)",
-      "Bash(python -c \"import sys; sys.path.insert\\(0, ''backend''\\); from backend import search_tools; print\\(''导入成功''\\)\")",
-      "Bash(pushd ..)",
-      "Bash(chmod +x run.sh)",
-      "Bash(./run.sh)",
-      "Bash(gh repo:*)",
-      "Bash(python -c \"import backend.session_manager\")",
-      "Bash(python3:*)",
-      "Bash(python -c \"import ast; ast.parse\\(open\\(''backend/language_detector.py''\\).read\\(\\)\\); print\\(''✓ language_detector.py 语法正确''\\)\")",
-      "Bash(python -c \"import ast; ast.parse\\(open\\(''backend/session_manager.py''\\).read\\(\\)\\); print\\(''✓ session_manager.py 语法正确''\\)\")",
-      "Bash(python -c \"import ast; ast.parse\\(open\\(''backend/ai_generator.py''\\).read\\(\\)\\); print\\(''✓ ai_generator.py 语法正确''\\)\")",
-      "Bash(python -m py_compile backend/app.py frontend/i18n.js)",
-      "Bash(python -c \"import ast; ast.parse\\(open\\(''frontend/i18n.js''\\).read\\(\\)\\)\")",
-      "Bash(pkill:*)",
-      "Bash(uvicorn:*)",
-      "Bash(taskstop bpx0hrs0h:*)",
-      "Bash(python:*)",
-      "Bash(ls:*)",
-      "Bash(dir:*)",
-      "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git pull:*)",
+      "Bash(git stash:*)",
+      "Bash(git add:*)"
     ]
   }
 }
