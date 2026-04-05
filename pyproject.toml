@@ -22,3 +22,27 @@ dependencies = [
 
 [tool.uv]
 python-preference = "system"
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+testpaths = ["backend/tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = """
+    -ra
+    --strict-markers
+    --strict-config
+    --tb=short
+    --disable-warnings
+"""
+markers = [
+    "api: API endpoint tests",
+    "unit: Unit component tests",
+    "integration: Integration tests requiring full system",
+    "slow: Slow running tests",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+]
