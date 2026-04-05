@@ -51,7 +51,31 @@ class CourseStats(BaseModel):
     total_courses: int
     course_titles: List[str]
 
+class SessionClearRequest(BaseModel):
+    """Request model for clearing session"""
+    session_id: Optional[str] = None
+
+class SessionClearResponse(BaseModel):
+    """Response model for session clear"""
+    success: bool
+    cleared_session_id: Optional[str] = None
+
 # API Endpoints
+
+@app.post("/api/session/clear", response_model=SessionClearResponse)
+async def clear_session(request: SessionClearRequest):
+    """Clear session history on the backend"""
+    try:
+        session_id = request.session_id
+        if session_id:
+            rag_system.session_manager.clear_session(session_id)
+            return SessionClearResponse(
+                success=True,
+                cleared_session_id=session_id
+            )
+        return SessionClearResponse(success=True, cleared_session_id=None)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/query", response_model=QueryResponse)
 async def query_documents(request: QueryRequest):
@@ -61,16 +85,18 @@ async def query_documents(request: QueryRequest):
         session_id = request.session_id
         if not session_id:
             session_id = rag_system.session_manager.create_session()
-        
+
         # Process query using RAG system
         answer, sources = rag_system.query(request.query, session_id)
-        
+
         return QueryResponse(
             answer=answer,
             sources=sources,
             session_id=session_id
         )
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/courses", response_model=CourseStats)

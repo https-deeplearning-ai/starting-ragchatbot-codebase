@@ -245,6 +245,90 @@ header h1 {
     color: var(--text-secondary);
 }
 
+/* Source Links - Beautiful styling */
+.source-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0.5rem 0.6rem 0.5rem 0;
+    padding: 0.7rem 1.4rem;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border: none;
+    border-radius: 50px;
+    color: #ffffff !important;
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.35);
+    cursor: pointer;
+    letter-spacing: 0.3px;
+}
+
+.source-link::before {
+    content: "▶";
+    font-size: 0.6rem;
+    background: rgba(255, 255, 255, 0.25);
+    padding: 5px 8px;
+    border-radius: 50%;
+    margin-right: 2px;
+}
+
+.source-link:hover {
+    background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
+    transform: translateY(-4px) scale(1.03);
+    box-shadow: 0 12px 35px rgba(16, 185, 129, 0.45);
+    color: #ffffff !important;
+}
+
+.source-link:active {
+    transform: translateY(-2px);
+}
+
+/* Sources section styling */
+.sources-collapsible {
+    margin-top: 0.75rem;
+}
+
+.sources-header {
+    color: #9ca3af !important;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    padding: 0.5rem 0.75rem;
+    background: rgba(31, 41, 55, 0.6);
+    border-radius: 8px;
+}
+
+.sources-content {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    padding: 1rem;
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.7) 0%, rgba(31, 41, 55, 0.5) 100%);
+    border-radius: 0 0 12px 12px;
+    border-top: 1px solid rgba(55, 65, 81, 0.5);
+}
+
+/* Source text without link */
+.source-text {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0.5rem 0.6rem 0.5rem 0;
+    padding: 0.7rem 1.4rem;
+    background: linear-gradient(135deg, #4b5563 0%, #374151 100%);
+    border: none;
+    border-radius: 50px;
+    color: #d1d5db !important;
+    font-size: 0.9rem;
+    font-weight: 600;
+    white-space: nowrap;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
 /* Markdown formatting styles */
 .message-content h1,
 .message-content h2,
@@ -469,6 +553,31 @@ header h1 {
 
 .stats-header:hover,
 .suggested-header:hover {
+    color: var(--primary-color);
+}
+
+/* New Chat Button */
+.new-chat-btn {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 0.5rem 0;
+    border: none;
+    background: none;
+    outline: none;
+    transition: color 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    width: 100%;
+    text-align: left;
+}
+
+.new-chat-btn:focus {
+    color: var(--primary-color);
+}
+
+.new-chat-btn:hover {
     color: var(--primary-color);
 }
 

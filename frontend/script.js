@@ -38,6 +38,12 @@ function setupEventListeners() {
             sendMessage();
         });
     });
+
+    // New chat button
+    const newChatBtn = document.getElementById('newChatBtn');
+    if (newChatBtn) {
+        newChatBtn.addEventListener('click', newChat);
+    }
 }
 
 
@@ -122,10 +128,24 @@ function addMessage(content, type, sources = null, isWelcome = false) {
     let html = `<div class="message-content">${displayContent}</div>`;
     
     if (sources && sources.length > 0) {
+        const sourcesHtml = sources.map(source => {
+            // Parse source format: "source_name|link" or just "source_name"
+            const pipeIndex = source.lastIndexOf('|');
+            if (pipeIndex > 0) {
+                const name = source.substring(0, pipeIndex);
+                const link = source.substring(pipeIndex + 1);
+                if (link) {
+                    // Render as clickable link opening in new tab
+                    return `<a href="${link}" target="_blank" rel="noopener noreferrer" class="source-link">${name}</a>`;
+                }
+            }
+            return `<span class="source-text">${source}</span>`;
+        }).join('');
+
         html += `
             <details class="sources-collapsible">
                 <summary class="sources-header">Sources</summary>
-                <div class="sources-content">${sources.join(', ')}</div>
+                <div class="sources-content">${sourcesHtml}</div>
             </details>
         `;
     }
@@ -145,6 +165,24 @@ function escapeHtml(text) {
 }
 
 // Removed removeMessage function - no longer needed since we handle loading differently
+
+// New chat button handler - clears session on backend and resets frontend
+async function newChat() {
+    // Clear session on backend if we have an active session
+    if (currentSessionId) {
+        try {
+            await fetch('/api/session/clear', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({session_id: currentSessionId})
+            });
+        } catch (e) {
+            // Ignore errors - just reset frontend anyway
+        }
+    }
+    // Reset frontend state
+    await createNewSession();
+}
 
 async function createNewSession() {
     currentSessionId = null;
