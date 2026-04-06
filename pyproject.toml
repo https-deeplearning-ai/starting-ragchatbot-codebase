@@ -1,15 +1,48 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
 [project]
 name = "starting-codebase"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.12"
 dependencies = [
     "chromadb==1.0.15",
     "anthropic==0.58.2",
-    "sentence-transformers==5.0.0",
+    "sentence-transformers>=2.2,<2.4",
+    "torch>=2.2,<2.3",
     "fastapi==0.116.1",
     "uvicorn==0.35.0",
     "python-multipart==0.0.20",
     "python-dotenv==1.1.1",
+    "onnxruntime>=1.19,<1.24",
+]
+
+[tool.uv]
+python-preference = "system"
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+testpaths = ["backend/tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = """
+    -ra
+    --strict-markers
+    --strict-config
+    --tb=short
+    --disable-warnings
+"""
+markers = [
+    "api: API endpoint tests",
+    "unit: Unit component tests",
+    "integration: Integration tests requiring full system",
+    "slow: Slow running tests",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
 ]
