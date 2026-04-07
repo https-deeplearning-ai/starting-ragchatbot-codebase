@@ -5,7 +5,7 @@ const API_URL = '/api';
 let currentSessionId = null;
 
 // DOM elements
-let chatMessages, chatInput, sendButton, totalCourses, courseTitles;
+let chatMessages, chatInput, sendButton, totalCourses, courseTitles, newChatButton;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -15,6 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
     sendButton = document.getElementById('sendButton');
     totalCourses = document.getElementById('totalCourses');
     courseTitles = document.getElementById('courseTitles');
+    newChatButton = document.getElementById('newChatButton');
     
     setupEventListeners();
     createNewSession();
@@ -30,6 +31,9 @@ function setupEventListeners() {
     });
     
     
+    // New chat button
+    newChatButton.addEventListener('click', startNewChat);
+
     // Suggested questions
     document.querySelectorAll('.suggested-item').forEach(button => {
         button.addEventListener('click', (e) => {
@@ -122,10 +126,16 @@ function addMessage(content, type, sources = null, isWelcome = false) {
     let html = `<div class="message-content">${displayContent}</div>`;
     
     if (sources && sources.length > 0) {
+        const sourceChips = sources.map(s => {
+            if (s.url) {
+                return `<a class="source-chip" href="${s.url}" target="_blank" rel="noopener noreferrer">${escapeHtml(s.label)}</a>`;
+            }
+            return `<span class="source-chip">${escapeHtml(s.label)}</span>`;
+        }).join('');
         html += `
             <details class="sources-collapsible">
-                <summary class="sources-header">Sources</summary>
-                <div class="sources-content">${sources.join(', ')}</div>
+                <summary class="sources-header"><span class="sources-icon">&#128196;</span> Sources <span class="sources-count">${sources.length}</span></summary>
+                <div class="sources-content">${sourceChips}</div>
             </details>
         `;
     }
@@ -145,6 +155,18 @@ function escapeHtml(text) {
 }
 
 // Removed removeMessage function - no longer needed since we handle loading differently
+
+async function startNewChat() {
+    // Clean up old session on backend
+    if (currentSessionId) {
+        try {
+            await fetch(`${API_URL}/session/${currentSessionId}`, { method: 'DELETE' });
+        } catch (err) {
+            console.warn('Failed to clear session on backend:', err);
+        }
+    }
+    createNewSession();
+}
 
 async function createNewSession() {
     currentSessionId = null;
