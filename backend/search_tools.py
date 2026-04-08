@@ -1,6 +1,6 @@
 from typing import Dict, Any, Optional, Protocol
 from abc import ABC, abstractmethod
-from vector_store import VectorStore, SearchResults
+from .vector_store import VectorStore, SearchResults
 
 
 class Tool(ABC):

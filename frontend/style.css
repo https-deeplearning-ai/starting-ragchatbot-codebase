@@ -67,12 +67,100 @@ header h1 {
     margin-top: 0.5rem;
 }
 
+/* Language Selector */
+.language-selector {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    z-index: 1000;
+}
+
+.language-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: var(--surface);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.language-toggle:hover {
+    background: var(--surface-hover);
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+.language-toggle:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+.language-icon {
+    font-size: 1rem;
+}
+
+.language-text {
+    min-width: 2rem;
+    text-align: center;
+}
+
+.language-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: 0.5rem;
+    background: var(--surface);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    min-width: 120px;
+    z-index: 1001;
+}
+
+.language-option {
+    display: block;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.language-option:first-child {
+    border-radius: 8px 8px 0 0;
+}
+
+.language-option:last-child {
+    border-radius: 0 0 8px 8px;
+}
+
+.language-option:hover {
+    background: var(--surface-hover);
+    color: var(--primary-color);
+}
+
+.language-option.active {
+    background: var(--primary-color);
+    color: white;
+}
+
 /* Main Content Area with Sidebar */
 .main-content {
     flex: 1;
     display: flex;
     overflow: hidden;
     background: var(--background);
+    position: relative;
 }
 
 /* Left Sidebar */
@@ -634,6 +722,35 @@ details[open] .suggested-header::before {
     transform: translateX(2px);
 }
 
+/* New Chat Button in Sidebar */
+.new-chat-button {
+    padding: 0.75rem 1rem;
+    background: var(--background);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+    width: 100%;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.new-chat-button:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+.new-chat-button:hover {
+    background: var(--surface-hover);
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    transform: translateX(2px);
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .main-content {
@@ -706,6 +823,11 @@ details[open] .suggested-header::before {
     }
     
     .suggested-item {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.8rem;
+    }
+
+    .new-chat-button {
         padding: 0.5rem 0.75rem;
         font-size: 0.8rem;
     }

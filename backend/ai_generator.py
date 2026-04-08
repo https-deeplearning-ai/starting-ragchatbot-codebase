@@ -3,7 +3,7 @@ from typing import List, Optional, Dict, Any
 
 class AIGenerator:
     """Handles interactions with Anthropic's Claude API for generating responses"""
-    
+
     # Static system prompt to avoid rebuilding on each call
     SYSTEM_PROMPT = """ You are an AI assistant specialized in course materials and educational content with access to a comprehensive search tool for course information.
 
@@ -28,6 +28,28 @@ All responses must be:
 4. **Example-supported** - Include relevant examples when they aid understanding
 Provide only the direct answer to what was asked.
 """
+
+    # Chinese system prompt
+    SYSTEM_PROMPT_ZH = """你是一个专门处理课程材料和教育内容的AI助手，可以使用综合搜索工具查询课程信息。
+
+搜索工具使用规则：
+- 仅在询问具体课程内容或详细教育材料时使用搜索工具
+- 每次查询最多搜索一次
+- 将搜索结果综合成准确、基于事实的回答
+- 如果搜索无结果，明确说明，不要提供替代方案
+
+回答规范：
+- 通用知识问题：直接使用现有知识回答，无需搜索
+- 课程相关问题：先搜索，再回答
+- 禁止元评论：只提供直接答案，不要说明推理过程、搜索解释或问题类型分析
+
+所有回答必须：
+1. 简洁明了 - 快速切入重点
+2. 具有教育价值 - 保持教学性
+3. 清晰易懂 - 使用通俗语言
+4. 举例说明 - 在有助于理解时提供相关示例
+只提供所问问题的直接答案。
+"""
     
     def __init__(self, api_key: str, model: str):
         self.client = anthropic.Anthropic(api_key=api_key)
@@ -43,25 +65,30 @@ Provide only the direct answer to what was asked.
     def generate_response(self, query: str,
                          conversation_history: Optional[str] = None,
                          tools: Optional[List] = None,
-                         tool_manager=None) -> str:
+                         tool_manager=None,
+                         language: str = 'en') -> str:
         """
         Generate AI response with optional tool usage and conversation context.
-        
+
         Args:
             query: The user's question or request
             conversation_history: Previous messages for context
             tools: Available tools the AI can use
             tool_manager: Manager to execute tools
-            
+            language: Language for response ('en' or 'zh')
+
         Returns:
             Generated response as string
         """
-        
+
+        # Select system prompt based on language
+        system_prompt = self.SYSTEM_PROMPT_ZH if language == 'zh' else self.SYSTEM_PROMPT
+
         # Build system content efficiently - avoid string ops when possible
         system_content = (
-            f"{self.SYSTEM_PROMPT}\n\nPrevious conversation:\n{conversation_history}"
-            if conversation_history 
-            else self.SYSTEM_PROMPT
+            f"{system_prompt}\n\nPrevious conversation:\n{conversation_history}"
+            if conversation_history
+            else system_prompt
         )
         
         # Prepare API call parameters efficiently

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Fixed Page</title>
+    <style>
+        .message { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .message.user { background: #e3f2fd; }
+        .message.assistant { background: #f5f5f5; }
+        .message-content { margin-top: 5px; }
+    </style>
+</head>
+<body>
+    <h1>Fixed Test Page</h1>
+    <button onclick="testAPI()">Test API</button>
+    <div id="messages"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script>
+        async function testAPI() {
+            try {
+                const response = await fetch('/api/query', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        query: 'Hello',
+                        session_id: 'test'
+                    })
+                });
+
+                console.log('Response status:', response.status);
+                const data = await response.json();
+                console.log('Response data:', data);
+
+                // Add message to display
+                const div = document.createElement('div');
+                div.className = 'message assistant';
+                div.innerHTML = `<div class="message-content">${marked.parse(data.answer)}</div>`;
+                document.getElementById('messages').appendChild(div);
+
+            } catch (error) {
+                console.error('Error:', error);
+                const div = document.createElement('div');
+                div.className = 'message error';
+                div.textContent = `Error: ${error.message}`;
+                document.getElementById('messages').appendChild(div);
+            }
+        }
+    </script>
+</body>
+</html>

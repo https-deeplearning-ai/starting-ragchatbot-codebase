@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug API Issues</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; }
+        button { padding: 10px 15px; margin: 5px; cursor: pointer; }
+        #log { background: #f5f5f5; padding: 10px; height: 300px; overflow-y: auto; }
+    </style>
+</head>
+<body>
+    <h1>API Debug Page</h1>
+
+    <div class="section">
+        <h2>Test API Endpoints</h2>
+        <button onclick="testQuery()">Test /api/query</button>
+        <button onclick="testCourses()">Test /api/courses</button>
+        <button onclick="clearLog()">Clear Log</button>
+    </div>
+
+    <div class="section">
+        <h2>Response Log</h2>
+        <div id="log"></div>
+    </div>
+
+    <script>
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        async function testQuery() {
+            log("Testing /api/query...");
+
+            try {
+                const response = await fetch('/api/query', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        query: 'test question',
+                        session_id: 'debug-session'
+                    })
+                });
+
+                log(`Response status: ${response.status}`);
+                log(`Response headers: ${JSON.stringify([...response.headers])}`);
+
+                if (response.ok) {
+                    const data = await response.json();
+                    log(`Success: ${JSON.stringify(data, null, 2)}`);
+                } else {
+                    const errorText = await response.text();
+                    log(`Error: ${response.status} - ${errorText}`);
+                }
+            } catch (error) {
+                log(`Network error: ${error.message}`);
+                log(`Error stack: ${error.stack}`);
+            }
+        }
+
+        async function testCourses() {
+            log("Testing /api/courses...");
+
+            try {
+                const response = await fetch('/api/courses');
+
+                log(`Response status: ${response.status}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    log(`Success: ${JSON.stringify(data, null, 2)}`);
+                } else {
+                    const errorText = await response.text();
+                    log(`Error: ${response.status} - ${errorText}`);
+                }
+            } catch (error) {
+                log(`Network error: ${error.message}`);
+            }
+        }
+
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+        }
+    </script>
+</body>
+</html>

@@ -17,9 +17,35 @@
         </header>
 
         <div class="main-content">
+            <!-- Language Selector (Top Left) -->
+            <div class="language-selector">
+                <button id="languageToggle" class="language-toggle" title="Toggle language">
+                    <span class="language-icon">🌐</span>
+                    <span class="language-text">EN</span>
+                </button>
+                <div id="languageMenu" class="language-menu" style="display: none;">
+                    <button class="language-option" data-lang="en">English</button>
+                    <button class="language-option" data-lang="zh">中文</button>
+                </div>
+            </div>
+
             <!-- Left Sidebar -->
             <aside class="sidebar">
-                <!-- Course Stats -->
+                <!-- New Chat Button -->
+                <div class="sidebar-section">
+                    <button id="newChatButton" class="new-chat-button">
+                        + New Chat
+                    </button>
+                </div>
+
+                <div class="sidebar-section">
+    <h4>Add New Course</h4>
+    <input type="file" id="courseFile" accept=".txt">
+    <button id="uploadBtn">Upload</button>
+    <div id="uploadStatus" style="display:none"></div>
+</div>
+
+<!-- Course Stats -->
                 <div class="sidebar-section">
                     <details class="stats-collapsible">
                         <summary class="stats-header">Courses</summary>
@@ -76,6 +102,7 @@
 
 
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="i18n.js?v=1"></script>
     <script src="script.js?v=9"></script>
 </body>
 </html>
