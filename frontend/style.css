@@ -111,6 +111,29 @@ header h1 {
     margin-bottom: 0;
 }
 
+/* New Chat Button */
+.new-chat-btn {
+    width: auto;
+    padding: 0.5rem 1rem;
+    background: transparent;
+    border: 1px solid var(--primary-color);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--primary-color);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-align: left;
+    display: block;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.new-chat-btn:hover {
+    background: var(--primary-color);
+    color: white;
+}
+
 /* Main Chat Area */
 .chat-main {
     flex: 1;
@@ -243,6 +266,17 @@ header h1 {
 .sources-content {
     padding: 0 0.5rem 0.25rem 1.5rem;
     color: var(--text-secondary);
+}
+
+.sources-content a {
+    color: #60a5fa;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    transition: color 0.2s ease;
+}
+
+.sources-content a:hover {
+    color: #93c5fd;
 }
 
 /* Markdown formatting styles */

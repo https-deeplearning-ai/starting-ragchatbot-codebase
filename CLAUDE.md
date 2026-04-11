@@ -7,6 +7,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Requires Python 3.13+ and `uv`. On Windows, use Git Bash. Always use `uv` to run Python and manage all dependencies — never use `pip` directly.
 
 ```bash
+# Install uv (one-time, run in Git Bash)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
 # Install dependencies
 uv sync
 
