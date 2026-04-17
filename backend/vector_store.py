@@ -90,9 +90,15 @@ class VectorStore:
         search_limit = limit if limit is not None else self.max_results
         
         try:
+            # Guard: clamp n_results to actual collection size.
+            # ChromaDB raises ValueError if n_results > number of indexed documents.
+            collection_count = self.course_content.count()
+            if collection_count == 0:
+                return SearchResults(documents=[], metadata=[], distances=[])
+            actual_limit = min(search_limit, collection_count)
             results = self.course_content.query(
                 query_texts=[query],
-                n_results=search_limit,
+                n_results=actual_limit,
                 where=filter_dict
             )
             return SearchResults.from_chroma(results)
@@ -102,6 +108,8 @@ class VectorStore:
     def _resolve_course_name(self, course_name: str) -> Optional[str]:
         """Use vector search to find best matching course by name"""
         try:
+            if self.course_catalog.count() == 0:
+                return None
             results = self.course_catalog.query(
                 query_texts=[course_name],
                 n_results=1
@@ -246,6 +254,26 @@ class VectorStore:
             print(f"Error getting course link: {e}")
             return None
     
+    def get_course_outline(self, course_name: str) -> Optional[Dict[str, Any]]:
+        """Get course outline (title, link, lessons list) by course name (fuzzy match)"""
+        import json
+        course_title = self._resolve_course_name(course_name)
+        if not course_title:
+            return None
+        try:
+            results = self.course_catalog.get(ids=[course_title])
+            if results and results['metadatas']:
+                meta = results['metadatas'][0]
+                lessons = json.loads(meta.get('lessons_json', '[]'))
+                return {
+                    'title': meta.get('title'),
+                    'course_link': meta.get('course_link'),
+                    'lessons': lessons
+                }
+        except Exception as e:
+            print(f"Error getting course outline: {e}")
+        return None
+
     def get_lesson_link(self, course_title: str, lesson_number: int) -> Optional[str]:
         """Get lesson link for a given course title and lesson number"""
         import json
