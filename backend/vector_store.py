@@ -90,9 +90,11 @@ class VectorStore:
         search_limit = limit if limit is not None else self.max_results
         
         try:
+            count = self.course_content.count()
+            safe_limit = min(search_limit, count) if count > 0 else 1
             results = self.course_content.query(
                 query_texts=[query],
-                n_results=search_limit,
+                n_results=safe_limit,
                 where=filter_dict
             )
             return SearchResults.from_chroma(results)
@@ -151,8 +153,8 @@ class VectorStore:
             documents=[course_text],
             metadatas=[{
                 "title": course.title,
-                "instructor": course.instructor,
-                "course_link": course.course_link,
+                "instructor": course.instructor or "",
+                "course_link": course.course_link or "",
                 "lessons_json": json.dumps(lessons_metadata),  # Serialize as JSON string
                 "lesson_count": len(course.lessons)
             }],
@@ -167,7 +169,7 @@ class VectorStore:
         documents = [chunk.content for chunk in chunks]
         metadatas = [{
             "course_title": chunk.course_title,
-            "lesson_number": chunk.lesson_number,
+            "lesson_number": chunk.lesson_number if chunk.lesson_number is not None else -1,
             "chunk_index": chunk.chunk_index
         } for chunk in chunks]
         # Use title with chunk index for unique IDs
@@ -246,6 +248,28 @@ class VectorStore:
             print(f"Error getting course link: {e}")
             return None
     
+    def get_course_outline(self, course_name: str) -> Optional[Dict[str, Any]]:
+        """Get course outline (title, link, lessons) with fuzzy name matching"""
+        import json
+        course_title = self._resolve_course_name(course_name)
+        if not course_title:
+            return None
+        try:
+            results = self.course_catalog.get(ids=[course_title])
+            if results and results['metadatas']:
+                meta = results['metadatas'][0]
+                outline = {
+                    'title': meta.get('title'),
+                    'course_link': meta.get('course_link'),
+                    'lessons': []
+                }
+                if meta.get('lessons_json'):
+                    outline['lessons'] = json.loads(meta['lessons_json'])
+                return outline
+        except Exception as e:
+            print(f"Error getting course outline: {e}")
+        return None
+
     def get_lesson_link(self, course_title: str, lesson_number: int) -> Optional[str]:
         """Get lesson link for a given course title and lesson number"""
         import json

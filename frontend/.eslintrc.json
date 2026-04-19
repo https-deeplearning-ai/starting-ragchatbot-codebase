@@ -1,0 +1,22 @@
+{
+  "env": {
+    "browser": true,
+    "es2021": true
+  },
+  "parserOptions": {
+    "ecmaVersion": "latest",
+    "sourceType": "script"
+  },
+  "rules": {
+    "no-unused-vars": "warn",
+    "no-undef": "error",
+    "eqeqeq": ["error", "always"],
+    "no-console": "off",
+    "no-var": "error",
+    "prefer-const": "warn",
+    "curly": ["error", "all"]
+  },
+  "globals": {
+    "marked": "readonly"
+  }
+}
