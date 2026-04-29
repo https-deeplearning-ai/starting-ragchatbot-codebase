@@ -1,13 +1,20 @@
 import pytest
 from unittest.mock import MagicMock, patch
-from tests.helpers import make_search_results, make_text_block, make_tool_use_block, make_message
+from tests.helpers import (
+    make_search_results,
+    make_text_block,
+    make_tool_use_block,
+    make_message,
+)
 
 
 @pytest.fixture
 def rag(tmp_path):
-    with patch("vector_store.chromadb.PersistentClient") as mock_chroma, \
-         patch("vector_store.SentenceTransformer"), \
-         patch("ai_generator.anthropic.Anthropic") as mock_anthropic_cls:
+    with (
+        patch("vector_store.chromadb.PersistentClient") as mock_chroma,
+        patch("vector_store.SentenceTransformer"),
+        patch("ai_generator.anthropic.Anthropic") as mock_anthropic_cls,
+    ):
 
         mock_collection = MagicMock()
         mock_chroma.return_value.get_or_create_collection.return_value = mock_collection
@@ -17,6 +24,7 @@ def rag(tmp_path):
         mock_create = mock_client.messages.create
 
         from config import Config
+
         cfg = Config(
             ANTHROPIC_API_KEY="test-key",
             ANTHROPIC_MODEL="claude-sonnet-4-6",
@@ -29,6 +37,7 @@ def rag(tmp_path):
         )
 
         from rag_system import RAGSystem
+
         system = RAGSystem(cfg)
 
         # Swap out vector_store with a clean MagicMock for full test control
@@ -48,7 +57,9 @@ def _text_response(text):
 class TestRAGSystemQuery:
 
     def test_query_without_tool_use_returns_answer_and_empty_sources(self, rag):
-        rag["mock_create"].return_value = _text_response("Python is a programming language.")
+        rag["mock_create"].return_value = _text_response(
+            "Python is a programming language."
+        )
         response, sources = rag["system"].query("What is Python?", session_id="s1")
         assert response == "Python is a programming language."
         assert sources == []
@@ -60,7 +71,10 @@ class TestRAGSystemQuery:
                 [make_tool_use_block("search_course_content", tool_input, "tu_1")],
                 stop_reason="tool_use",
             ),
-            make_message([make_text_block("RAG combines retrieval with generation.")], stop_reason="end_turn"),
+            make_message(
+                [make_text_block("RAG combines retrieval with generation.")],
+                stop_reason="end_turn",
+            ),
         ]
         rag["mock_store"].search.return_value = make_search_results(
             documents=["RAG content block."],

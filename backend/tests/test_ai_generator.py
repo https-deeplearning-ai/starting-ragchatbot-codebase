@@ -52,12 +52,20 @@ class TestToolUseFlow:
     def test_tool_use_calls_execute_tool_with_correct_args(self, generator):
         tool_input = {"query": "what is RAG?", "course_name": "AI Fundamentals"}
         generator._mock_create.side_effect = [
-            make_message([make_tool_use_block("search_course_content", tool_input)], stop_reason="tool_use"),
-            make_message([make_text_block("RAG stands for Retrieval-Augmented Generation.")], stop_reason="end_turn"),
+            make_message(
+                [make_tool_use_block("search_course_content", tool_input)],
+                stop_reason="tool_use",
+            ),
+            make_message(
+                [make_text_block("RAG stands for Retrieval-Augmented Generation.")],
+                stop_reason="end_turn",
+            ),
         ]
         mock_tm = MagicMock()
         mock_tm.execute_tool.return_value = "search result"
-        generator.generate_response(query="what is RAG?", tools=[{}], tool_manager=mock_tm)
+        generator.generate_response(
+            query="what is RAG?", tools=[{}], tool_manager=mock_tm
+        )
         mock_tm.execute_tool.assert_called_once_with(
             "search_course_content", query="what is RAG?", course_name="AI Fundamentals"
         )
@@ -66,7 +74,11 @@ class TestToolUseFlow:
         tool_input = {"query": "loops"}
         generator._mock_create.side_effect = [
             make_message(
-                [make_tool_use_block("search_course_content", tool_input, block_id="tu_42")],
+                [
+                    make_tool_use_block(
+                        "search_course_content", tool_input, block_id="tu_42"
+                    )
+                ],
                 stop_reason="tool_use",
             ),
             make_message([make_text_block("Final answer.")], stop_reason="end_turn"),
@@ -86,7 +98,10 @@ class TestToolUseFlow:
     def test_tool_use_second_call_preserves_tools_param(self, generator):
         tool_input = {"query": "x"}
         generator._mock_create.side_effect = [
-            make_message([make_tool_use_block("search_course_content", tool_input)], stop_reason="tool_use"),
+            make_message(
+                [make_tool_use_block("search_course_content", tool_input)],
+                stop_reason="tool_use",
+            ),
             make_message([make_text_block("Answer.")], stop_reason="end_turn"),
         ]
         mock_tm = MagicMock()
@@ -97,33 +112,54 @@ class TestToolUseFlow:
 
     def test_tool_use_returns_synthesized_text(self, generator):
         generator._mock_create.side_effect = [
-            make_message([make_tool_use_block("search_course_content", {"query": "q"})], stop_reason="tool_use"),
-            make_message([make_text_block("Synthesized answer here.")], stop_reason="end_turn"),
+            make_message(
+                [make_tool_use_block("search_course_content", {"query": "q"})],
+                stop_reason="tool_use",
+            ),
+            make_message(
+                [make_text_block("Synthesized answer here.")], stop_reason="end_turn"
+            ),
         ]
         mock_tm = MagicMock()
         mock_tm.execute_tool.return_value = "search result"
-        result = generator.generate_response(query="q", tools=[{}], tool_manager=mock_tm)
+        result = generator.generate_response(
+            query="q", tools=[{}], tool_manager=mock_tm
+        )
         assert result == "Synthesized answer here."
 
     def test_exceeds_max_rounds_returns_fallback(self, generator):
         # Every API call returns tool_use — loop exhausts max_rounds then returns fallback
         generator._mock_create.return_value = make_message(
-            [make_tool_use_block("search_course_content", {"query": "q"})], stop_reason="tool_use"
+            [make_tool_use_block("search_course_content", {"query": "q"})],
+            stop_reason="tool_use",
         )
         mock_tm = MagicMock()
         mock_tm.execute_tool.return_value = "result"
-        result = generator.generate_response(query="q", tools=[{}], tool_manager=mock_tm, max_rounds=2)
+        result = generator.generate_response(
+            query="q", tools=[{}], tool_manager=mock_tm, max_rounds=2
+        )
         assert result != ""
         assert generator._mock_create.call_count == 3  # 1 initial + 2 loop iterations
 
     def test_two_round_tool_calling(self, generator):
         generator._mock_create.side_effect = [
-            make_message([make_tool_use_block("search_course_content", {"query": "q1"}, "tu_1")], stop_reason="tool_use"),
-            make_message([make_tool_use_block("search_course_content", {"query": "q2"}, "tu_2")], stop_reason="tool_use"),
-            make_message([make_text_block("Final answer after two searches.")], stop_reason="end_turn"),
+            make_message(
+                [make_tool_use_block("search_course_content", {"query": "q1"}, "tu_1")],
+                stop_reason="tool_use",
+            ),
+            make_message(
+                [make_tool_use_block("search_course_content", {"query": "q2"}, "tu_2")],
+                stop_reason="tool_use",
+            ),
+            make_message(
+                [make_text_block("Final answer after two searches.")],
+                stop_reason="end_turn",
+            ),
         ]
         mock_tm = MagicMock()
         mock_tm.execute_tool.return_value = "result"
-        result = generator.generate_response(query="q", tools=[{}], tool_manager=mock_tm, max_rounds=5)
+        result = generator.generate_response(
+            query="q", tools=[{}], tool_manager=mock_tm, max_rounds=5
+        )
         assert result == "Final answer after two searches."
         assert generator._mock_create.call_count == 3
