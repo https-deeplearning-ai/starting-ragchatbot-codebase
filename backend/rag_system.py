@@ -3,8 +3,9 @@ import os
 from document_processor import DocumentProcessor
 from vector_store import VectorStore
 from ai_generator import AIGenerator
+from gemini_generator import GeminiGenerator
 from session_manager import SessionManager
-from search_tools import ToolManager, CourseSearchTool
+from search_tools import ToolManager, CourseSearchTool, CoursePageTool
 from models import Course, Lesson, CourseChunk
 
 class RAGSystem:
@@ -17,12 +18,15 @@ class RAGSystem:
         self.document_processor = DocumentProcessor(config.CHUNK_SIZE, config.CHUNK_OVERLAP)
         self.vector_store = VectorStore(config.CHROMA_PATH, config.EMBEDDING_MODEL, config.MAX_RESULTS)
         self.ai_generator = AIGenerator(config.ANTHROPIC_API_KEY, config.ANTHROPIC_MODEL)
+        self.gemini_generator = GeminiGenerator(config.GEMINI_API_KEY, config.GEMINI_MODEL)
         self.session_manager = SessionManager(config.MAX_HISTORY)
         
         # Initialize search tools
         self.tool_manager = ToolManager()
         self.search_tool = CourseSearchTool(self.vector_store)
         self.tool_manager.register_tool(self.search_tool)
+        self.course_page_tool = CoursePageTool(self.vector_store)
+        self.tool_manager.register_tool(self.course_page_tool)
     
     def add_course_document(self, file_path: str) -> Tuple[Course, int]:
         """
@@ -99,7 +103,7 @@ class RAGSystem:
         
         return total_courses, total_chunks
     
-    def query(self, query: str, session_id: Optional[str] = None) -> Tuple[str, List[str]]:
+    def query(self, query: str, session_id: Optional[str] = None, model: str = "claude") -> Tuple[str, List[str]]:
         """
         Process a user query using the RAG system with tool-based search.
         
@@ -111,15 +115,34 @@ class RAGSystem:
             Tuple of (response, sources list - empty for tool-based approach)
         """
         # Create prompt for the AI with clear instructions
-        prompt = f"""Answer this question about course materials: {query}"""
+        courses_meta = self.vector_store.get_all_courses_metadata()
+        if courses_meta:
+            courses_context = "\n".join(
+                f"- {m['title']} ({m.get('lesson_count', '?')} lessons, instructor: {m.get('instructor', 'unknown')})"
+                for m in courses_meta
+            )
+        else:
+            courses_context = "- (none loaded)"
+        prompt = f"""Answer this question about course materials: {query}
+
+Available courses:
+{courses_context}"""
         
         # Get conversation history if session exists
         history = None
         if session_id:
             history = self.session_manager.get_conversation_history(session_id)
         
+        # Select generator based on model choice
+        if model == "gemini":
+            if not self.config.GEMINI_API_KEY:
+                raise ValueError("Gemini API key is not configured.")
+            generator = self.gemini_generator
+        else:
+            generator = self.ai_generator
+
         # Generate response using AI with tools
-        response = self.ai_generator.generate_response(
+        response = generator.generate_response(
             query=prompt,
             conversation_history=history,
             tools=self.tool_manager.get_tool_definitions(),

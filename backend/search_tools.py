@@ -1,3 +1,6 @@
+import re
+import html as html_module
+import requests
 from typing import Dict, Any, Optional, Protocol
 from abc import ABC, abstractmethod
 from vector_store import VectorStore, SearchResults
@@ -88,30 +91,92 @@ class CourseSearchTool(Tool):
     def _format_results(self, results: SearchResults) -> str:
         """Format search results with course and lesson context"""
         formatted = []
-        sources = []  # Track sources for the UI
-        
+        sources = []
+        seen = set()
+
         for doc, meta in zip(results.documents, results.metadata):
             course_title = meta.get('course_title', 'unknown')
             lesson_num = meta.get('lesson_number')
-            
-            # Build context header
+
             header = f"[{course_title}"
             if lesson_num is not None:
                 header += f" - Lesson {lesson_num}"
             header += "]"
-            
-            # Track source for the UI
-            source = course_title
+
+            label = course_title
             if lesson_num is not None:
-                source += f" - Lesson {lesson_num}"
-            sources.append(source)
-            
+                label += f" - Lesson {lesson_num}"
+
+            url = None
+            if lesson_num is not None:
+                url = self.store.get_lesson_link(course_title, lesson_num)
+
+            key = (label, url)
+            if key not in seen:
+                sources.append({"label": label, "url": url})
+                seen.add(key)
+
             formatted.append(f"{header}\n{doc}")
-        
-        # Store sources for retrieval
+
         self.last_sources = sources
-        
         return "\n\n".join(formatted)
+
+class CoursePageTool(Tool):
+    """Tool that fetches a course's official page to retrieve real metadata like duration"""
+
+    def __init__(self, vector_store: VectorStore):
+        self.store = vector_store
+
+    def get_tool_definition(self) -> Dict[str, Any]:
+        return {
+            "name": "get_course_page_info",
+            "description": (
+                "Fetch the official course page to get metadata not stored in lesson content, "
+                "such as total duration, difficulty level, and course description. "
+                "Use this when asked about how long a course takes or its duration in hours."
+            ),
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "course_name": {
+                        "type": "string",
+                        "description": "Course name or partial name (e.g. 'MCP', 'Computer Use')"
+                    }
+                },
+                "required": ["course_name"]
+            }
+        }
+
+    def execute(self, course_name: str) -> str:
+        # Resolve fuzzy name to exact title, then get its URL
+        course_title = self.store._resolve_course_name(course_name)
+        if not course_title:
+            return f"No course found matching '{course_name}'."
+
+        url = self.store.get_course_link(course_title)
+        if not url:
+            return f"No page URL stored for course '{course_title}'."
+
+        try:
+            response = requests.get(
+                url,
+                timeout=10,
+                headers={"User-Agent": "Mozilla/5.0 (compatible; course-info-fetcher/1.0)"}
+            )
+            response.raise_for_status()
+        except requests.RequestException as e:
+            return f"Failed to fetch '{url}': {e}"
+
+        # Strip HTML: remove script/style blocks, then all tags
+        text = response.text
+        text = re.sub(r'<(script|style)[^>]*>.*?</\1>', '', text, flags=re.DOTALL | re.IGNORECASE)
+        text = re.sub(r'<[^>]+>', ' ', text)
+        text = html_module.unescape(text)
+        text = re.sub(r'\s+', ' ', text).strip()
+
+        # Return enough text to cover the course header / metadata section
+        return f"Page content for '{course_title}' ({url}):\n\n{text[:3000]}"
+
 
 class ToolManager:
     """Manages available tools for the AI"""
