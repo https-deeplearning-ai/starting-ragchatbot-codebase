@@ -22,7 +22,84 @@
     --focus-ring: rgba(37, 99, 235, 0.2);
     --welcome-bg: #1e3a5f;
     --welcome-border: #2563eb;
+    --accent: #60a5fa;
+    --code-bg: rgba(0, 0, 0, 0.2);
 }
+
+/* Light theme overrides */
+body[data-theme="light"] {
+    --background:        #f8fafc;
+    --surface:           #ffffff;
+    --surface-hover:     #f1f5f9;
+    --text-primary:      #0f172a;
+    --text-secondary:    #475569;
+    --border-color:      #cbd5e1;
+    --assistant-message: #f1f5f9;
+    --shadow:            0 4px 6px -1px rgba(0, 0, 0, 0.08);
+    --focus-ring:        rgba(37, 99, 235, 0.25);
+    --welcome-bg:        #eff6ff;
+    --welcome-border:    #93c5fd;
+    --accent:            #1d4ed8;
+    --code-bg:           rgba(0, 0, 0, 0.05);
+}
+
+/* Smooth theme transitions — color properties only, not layout */
+body,
+.sidebar,
+.chat-main,
+.chat-container,
+.chat-header,
+.chat-messages,
+.chat-input-container,
+#chatInput,
+.new-chat-btn,
+.stat-item,
+.suggested-item,
+.message.assistant .message-content,
+.theme-toggle {
+    transition: background-color 0.3s ease,
+                border-color 0.3s ease,
+                color 0.3s ease,
+                box-shadow 0.3s ease;
+}
+
+/* Theme toggle button */
+.theme-toggle {
+    position: fixed;
+    top: 12px;
+    left: 12px;
+    z-index: 1000;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--surface);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow);
+    padding: 0;
+}
+
+.theme-toggle:hover {
+    background: var(--surface-hover);
+    border-color: var(--primary-color);
+}
+
+.theme-toggle:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+/* Dark mode: show sun icon (invites switching to light) */
+.theme-toggle .icon-moon { display: none; }
+.theme-toggle .icon-sun  { display: flex; }
+
+/* Light mode: show moon icon (invites switching to dark) */
+body[data-theme="light"] .theme-toggle .icon-moon { display: flex; }
+body[data-theme="light"] .theme-toggle .icon-sun  { display: none; }
 
 /* Base Styles */
 body {
@@ -81,6 +158,7 @@ header h1 {
     background: var(--surface);
     border-right: 1px solid var(--border-color);
     padding: 1.5rem;
+    padding-top: 3.5rem;
     overflow-y: auto;
     flex-shrink: 0;
 }
@@ -325,7 +403,7 @@ header h1 {
 }
 
 .message-content code {
-    background-color: rgba(0, 0, 0, 0.2);
+    background-color: var(--code-bg);
     padding: 0.125rem 0.25rem;
     border-radius: 3px;
     font-family: 'Fira Code', 'Consolas', monospace;
@@ -333,7 +411,7 @@ header h1 {
 }
 
 .message-content pre {
-    background-color: rgba(0, 0, 0, 0.2);
+    background-color: var(--code-bg);
     padding: 0.75rem;
     border-radius: 4px;
     overflow-x: auto;
@@ -346,7 +424,7 @@ header h1 {
 }
 
 .message-content blockquote {
-    border-left: 3px solid var(--primary);
+    border-left: 3px solid var(--primary-color);
     padding-left: 1rem;
     margin: 0.5rem 0;
     color: var(--text-secondary);
@@ -361,7 +439,7 @@ header h1 {
 }
 
 .message-content a {
-    color: #60a5fa;
+    color: var(--accent);
     text-decoration: underline;
 }
 

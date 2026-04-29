@@ -1,3 +1,10 @@
+// Apply saved theme before first paint to prevent flash of wrong theme
+(function () {
+    if (localStorage.getItem('theme') === 'light') {
+        document.body.setAttribute('data-theme', 'light');
+    }
+})();
+
 // API base URL - use relative path to work from any host
 const API_URL = '/api';
 
@@ -16,10 +23,33 @@ document.addEventListener('DOMContentLoaded', () => {
     totalCourses = document.getElementById('totalCourses');
     courseTitles = document.getElementById('courseTitles');
     
+    setupThemeToggle();
     setupEventListeners();
     createNewSession();
     loadCourseStats();
 });
+
+function setupThemeToggle() {
+    const btn = document.getElementById('themeToggle');
+    if (!btn) return;
+    const isDark = () => !document.body.hasAttribute('data-theme');
+    const syncLabel = () => {
+        const label = isDark() ? 'Switch to light mode' : 'Switch to dark mode';
+        btn.setAttribute('aria-label', label);
+        btn.setAttribute('title', label);
+    };
+    syncLabel();
+    btn.addEventListener('click', () => {
+        if (isDark()) {
+            document.body.setAttribute('data-theme', 'light');
+            localStorage.setItem('theme', 'light');
+        } else {
+            document.body.removeAttribute('data-theme');
+            localStorage.removeItem('theme');
+        }
+        syncLabel();
+    });
+}
 
 // Event Listeners
 function setupEventListeners() {
