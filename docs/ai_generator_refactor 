@@ -1,0 +1,18 @@
+REfactor the @backend/ai_gnerator.py to support seaquential tool calling where claude can make up to  3 tool call in sperate API round.
+Current behiver: Claude make tool call -> tool are being remove from API params -> final response
+Deire behiver: 
+- Each tool call should be a seperate API request where cluase can reason about the resutl 
+- Support for complex queries required multiple searches for comparison, multi part questions , or when information from differnt course / lesson is needed 
+
+Requirmentes 
+-MAX of 3 seaquential rounds per used query 
+-preserce conversion conext between round 
+-handle tool execution error gracefully 
+-Terminate when 1) 3 round completed 2) tool fail 3) less than 3 round but no need for addtinal tool call. 
+
+Notes 
+- update the system promot in @backend/ai_gnerator.py
+- update the tests in @backend/test/ai_gnerator.py
+- write test that verify the external behiver is OK and check for the max call (3 times) 
+
+use two agent to brain strom on two options to do the above 
