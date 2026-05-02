@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>RAG Chatbot — Code Flow</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0f1117;
+      color: #e2e8f0;
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 1.6rem;
+      font-weight: 600;
+      color: #a78bfa;
+      margin-bottom: 8px;
+      letter-spacing: 0.04em;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #64748b;
+      font-size: 0.85rem;
+      margin-bottom: 48px;
+    }
+
+    .flow {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+      max-width: 780px;
+      margin: 0 auto;
+    }
+
+    /* ── Layer cards ── */
+    .layer {
+      width: 100%;
+      border-radius: 12px;
+      padding: 18px 24px;
+      position: relative;
+    }
+
+    .layer-label {
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+      opacity: 0.7;
+    }
+
+    .layer-title {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .layer-file {
+      font-size: 0.72rem;
+      font-family: 'Cascadia Code', 'Fira Code', monospace;
+      opacity: 0.55;
+      margin-bottom: 10px;
+    }
+
+    .layer-body {
+      font-size: 0.82rem;
+      line-height: 1.6;
+      color: #cbd5e1;
+    }
+
+    .layer-body code {
+      font-family: 'Cascadia Code', 'Fira Code', monospace;
+      background: rgba(255,255,255,0.07);
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-size: 0.78rem;
+    }
+
+    /* ── Colour themes ── */
+    .c-frontend  { background: #1e1b4b; border: 1px solid #4338ca; }
+    .c-frontend .layer-label  { color: #818cf8; }
+    .c-frontend .layer-title  { color: #a5b4fc; }
+
+    .c-api       { background: #1a2035; border: 1px solid #2563eb; }
+    .c-api .layer-label       { color: #60a5fa; }
+    .c-api .layer-title       { color: #93c5fd; }
+
+    .c-rag       { background: #1e2a1e; border: 1px solid #16a34a; }
+    .c-rag .layer-label       { color: #4ade80; }
+    .c-rag .layer-title       { color: #86efac; }
+
+    .c-ai        { background: #2a1f2e; border: 1px solid #9333ea; }
+    .c-ai .layer-label        { color: #c084fc; }
+    .c-ai .layer-title        { color: #d8b4fe; }
+
+    .c-tool      { background: #2a2010; border: 1px solid #d97706; }
+    .c-tool .layer-label      { color: #fbbf24; }
+    .c-tool .layer-title      { color: #fde68a; }
+
+    .c-vector    { background: #1a2535; border: 1px solid #0891b2; }
+    .c-vector .layer-label    { color: #22d3ee; }
+    .c-vector .layer-title    { color: #67e8f9; }
+
+    .c-session   { background: #251a1a; border: 1px solid #dc2626; }
+    .c-session .layer-label   { color: #f87171; }
+    .c-session .layer-title   { color: #fca5a5; }
+
+    /* ── Arrows ── */
+    .arrow {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      margin: 2px 0;
+    }
+
+    .arrow-line {
+      width: 2px;
+      height: 20px;
+      background: linear-gradient(to bottom, #475569, #334155);
+    }
+
+    .arrow-head {
+      width: 0;
+      height: 0;
+      border-left: 7px solid transparent;
+      border-right: 7px solid transparent;
+      border-top: 10px solid #475569;
+    }
+
+    .arrow-label {
+      font-size: 0.68rem;
+      color: #64748b;
+      font-family: monospace;
+      background: #0f1117;
+      padding: 1px 8px;
+      border-radius: 20px;
+      border: 1px solid #1e293b;
+      margin-top: -2px;
+      margin-bottom: 2px;
+      white-space: nowrap;
+    }
+
+    /* ── Tool branch (side-by-side sub-flow) ── */
+    .branch-wrapper {
+      width: 100%;
+      display: flex;
+      gap: 16px;
+      align-items: stretch;
+    }
+
+    .branch-spine {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 2px;
+      flex-shrink: 0;
+    }
+
+    .branch-spine-line {
+      flex: 1;
+      width: 2px;
+      background: #9333ea44;
+    }
+
+    .branch-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    /* ── Inline tags ── */
+    .tag {
+      display: inline-block;
+      font-size: 0.68rem;
+      font-weight: 600;
+      padding: 1px 7px;
+      border-radius: 20px;
+      margin-right: 4px;
+      vertical-align: middle;
+    }
+    .tag-round1  { background: #312e81; color: #a5b4fc; }
+    .tag-round2  { background: #2d1b4e; color: #c084fc; }
+    .tag-opt     { background: #3f2a00; color: #fde68a; }
+    .tag-result  { background: #0c3321; color: #86efac; }
+
+    /* ── Two-col items ── */
+    .cols {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .col-item {
+      background: rgba(255,255,255,0.04);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 0.78rem;
+      line-height: 1.5;
+      color: #94a3b8;
+    }
+    .col-item strong {
+      display: block;
+      color: #e2e8f0;
+      font-size: 0.8rem;
+      margin-bottom: 3px;
+    }
+
+    /* ── Chroma badge ── */
+    .chroma-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #0c2231;
+      border: 1px solid #0e7490;
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: 0.75rem;
+      color: #67e8f9;
+      margin-top: 6px;
+      margin-right: 8px;
+    }
+    .chroma-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: #22d3ee;
+    }
+
+    /* ── Return path ── */
+    .return-arrow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin: 4px 0;
+      color: #64748b;
+      font-size: 0.72rem;
+      font-family: monospace;
+    }
+    .return-line {
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(to right, transparent, #334155, transparent);
+    }
+
+    /* ── Legend ── */
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      margin-top: 48px;
+      padding-top: 24px;
+      border-top: 1px solid #1e293b;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.73rem;
+      color: #94a3b8;
+    }
+    .legend-dot {
+      width: 10px; height: 10px;
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body>
+
+<h1>RAG Chatbot — Code Flow</h1>
+<p class="subtitle">From user input to final answer</p>
+
+<div class="flow">
+
+  <!-- 1. FRONTEND -->
+  <div class="layer c-frontend">
+    <div class="layer-label">Layer 1 · Browser</div>
+    <div class="layer-title">Frontend</div>
+    <div class="layer-file">frontend/script.js · sendMessage()</div>
+    <div class="layer-body">
+      User types a question and presses Enter or clicks Send.<br>
+      Calls <code>POST /api/query</code> with <code>{ query, session_id }</code>.
+    </div>
+  </div>
+
+  <div class="arrow">
+    <div class="arrow-line"></div>
+    <div class="arrow-label">POST /api/query · JSON</div>
+    <div class="arrow-line"></div>
+    <div class="arrow-head"></div>
+  </div>
+
+  <!-- 2. FASTAPI -->
+  <div class="layer c-api">
+    <div class="layer-label">Layer 2 · HTTP</div>
+    <div class="layer-title">FastAPI Endpoint</div>
+    <div class="layer-file">backend/app.py:57 · query_documents()</div>
+    <div class="layer-body">
+      Creates a new session via <code>SessionManager</code> if none supplied.<br>
+      Delegates to <code>rag_system.query(query, session_id)</code>.
+    </div>
+  </div>
+
+  <div class="arrow">
+    <div class="arrow-line"></div>
+    <div class="arrow-label">rag_system.query()</div>
+    <div class="arrow-line"></div>
+    <div class="arrow-head"></div>
+  </div>
+
+  <!-- 3. RAG SYSTEM -->
+  <div class="layer c-rag">
+    <div class="layer-label">Layer 3 · Orchestrator</div>
+    <div class="layer-title">RAGSystem</div>
+    <div class="layer-file">backend/rag_system.py:102 · query()</div>
+    <div class="layer-body">
+      Wraps query → <code>"Answer this question about course materials: {query}"</code><br>
+      Loads conversation history from <code>SessionManager</code>.<br>
+      Calls <code>AIGenerator.generate_response(query, history, tools)</code>.
+    </div>
+  </div>
+
+  <div class="arrow">
+    <div class="arrow-line"></div>
+    <div class="arrow-label">generate_response()</div>
+    <div class="arrow-line"></div>
+    <div class="arrow-head"></div>
+  </div>
+
+  <!-- 4. AI GENERATOR -->
+  <div class="layer c-ai">
+    <div class="layer-label">Layer 4 · LLM</div>
+    <div class="layer-title">AIGenerator — Round 1</div>
+    <div class="layer-file">backend/ai_generator.py:43 · generate_response()</div>
+    <div class="layer-body">
+      <span class="tag tag-round1">Round 1</span> Sends to Claude API:<br>
+      &nbsp;&nbsp;• System prompt + conversation history<br>
+      &nbsp;&nbsp;• User query + tool definition <code>search_course_content</code><br><br>
+      <strong style="color:#d8b4fe">Two possible outcomes:</strong>
+      <div class="cols">
+        <div class="col-item">
+          <strong>General question</strong>
+          Claude answers directly — no tool call.<br>
+          <code>stop_reason = "end_turn"</code>
+        </div>
+        <div class="col-item">
+          <strong>Course-specific question</strong>
+          Claude calls the search tool.<br>
+          <code>stop_reason = "tool_use"</code>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="arrow">
+    <div class="arrow-line"></div>
+    <div class="arrow-label">stop_reason == "tool_use"  →  _handle_tool_execution()</div>
+    <div class="arrow-line"></div>
+    <div class="arrow-head"></div>
+  </div>
+
+  <!-- 5. TOOL MANAGER -->
+  <div class="layer c-tool">
+    <div class="layer-label">Layer 5 · Tools</div>
+    <div class="layer-title">ToolManager → CourseSearchTool</div>
+    <div class="layer-file">backend/search_tools.py:116 · execute_tool() → CourseSearchTool.execute()</div>
+    <div class="layer-body">
+      <span class="tag tag-opt">optional</span> Only runs when Claude requests it.<br><br>
+      Receives <code>{ query, course_name?, lesson_number? }</code> from Claude.<br>
+      Calls <code>VectorStore.search()</code> and formats results as context string.<br>
+      Stores source labels (<em>course title + lesson number</em>) for the UI.
+    </div>
+  </div>
+
+  <div class="arrow">
+    <div class="arrow-line"></div>
+    <div class="arrow-label">vector_store.search()</div>
+    <div class="arrow-line"></div>
+    <div class="arrow-head"></div>
+  </div>
+
+  <!-- 6. VECTOR STORE -->
+  <div class="layer c-vector">
+    <div class="layer-label">Layer 6 · Retrieval</div>
+    <div class="layer-title">VectorStore (ChromaDB)</div>
+    <div class="layer-file">backend/vector_store.py:61 · search()</div>
+    <div class="layer-body">
+      <strong style="color:#67e8f9">Two-stage lookup:</strong>
+      <div class="cols">
+        <div class="col-item">
+          <strong>① Course resolution</strong>
+          Semantic search on <code>course_catalog</code> collection to match fuzzy course names.
+        </div>
+        <div class="col-item">
+          <strong>② Content retrieval</strong>
+          Embedding similarity search on <code>course_content</code> collection with optional filters.
+        </div>
+      </div>
+      <div style="margin-top:10px">
+        <span class="chroma-badge"><span class="chroma-dot"></span>course_catalog</span>
+        <span class="chroma-badge"><span class="chroma-dot"></span>course_content</span>
+      </div>
+      <div style="margin-top:8px;font-size:0.78rem;color:#94a3b8">
+        Returns ranked <code>documents[]</code> + <code>metadata[]</code> (course title, lesson number).
+      </div>
+    </div>
+  </div>
+
+  <!-- Return arrows upward -->
+  <div class="arrow">
+    <div class="arrow-line"></div>
+    <div class="arrow-label">formatted context string</div>
+    <div class="arrow-line"></div>
+    <div class="arrow-head"></div>
+  </div>
+
+  <!-- 7. AI Round 2 -->
+  <div class="layer c-ai">
+    <div class="layer-label">Layer 4 · LLM (continued)</div>
+    <div class="layer-title">AIGenerator — Round 2</div>
+    <div class="layer-file">backend/ai_generator.py:89 · _handle_tool_execution()</div>
+    <div class="layer-body">
+      <span class="tag tag-round2">Round 2</span> Sends follow-up to Claude API:<br>
+      &nbsp;&nbsp;• Full message thread: <code>[user_query → tool_use → tool_result]</code><br>
+      &nbsp;&nbsp;• No tools offered — Claude synthesises the answer.<br><br>
+      Returns final answer text.
+    </div>
+  </div>
+
+  <div class="arrow">
+    <div class="arrow-line"></div>
+    <div class="arrow-label">answer text</div>
+    <div class="arrow-line"></div>
+    <div class="arrow-head"></div>
+  </div>
+
+  <!-- 8. SESSION MANAGER -->
+  <div class="layer c-session">
+    <div class="layer-label">Layer 7 · Memory</div>
+    <div class="layer-title">SessionManager</div>
+    <div class="layer-file">backend/session_manager.py:37 · add_exchange()</div>
+    <div class="layer-body">
+      Appends <code>(user_query, assistant_answer)</code> to in-memory session history.<br>
+      Trims to last <code>MAX_HISTORY × 2</code> messages to stay within context budget.<br>
+      History injected as plain text into system prompt on the next turn.
+    </div>
+  </div>
+
+  <div class="arrow">
+    <div class="arrow-line"></div>
+    <div class="arrow-label">{ answer, sources, session_id }</div>
+    <div class="arrow-line"></div>
+    <div class="arrow-head"></div>
+  </div>
+
+  <!-- 9. RESPONSE -->
+  <div class="layer c-frontend">
+    <div class="layer-label">Layer 1 · Browser (response)</div>
+    <div class="layer-title">Frontend — Render Answer</div>
+    <div class="layer-file">frontend/script.js · addMessage()</div>
+    <div class="layer-body">
+      <span class="tag tag-result">Done</span>
+      Displays the answer in the chat bubble.<br>
+      Shows source chips (<em>Course name · Lesson N</em>) below the answer.<br>
+      Stores <code>session_id</code> locally for the next message.
+    </div>
+  </div>
+
+</div><!-- /flow -->
+
+<!-- Legend -->
+<div class="legend">
+  <div class="legend-item"><span class="legend-dot" style="background:#4338ca"></span>Frontend</div>
+  <div class="legend-item"><span class="legend-dot" style="background:#2563eb"></span>FastAPI</div>
+  <div class="legend-item"><span class="legend-dot" style="background:#16a34a"></span>RAG Orchestrator</div>
+  <div class="legend-item"><span class="legend-dot" style="background:#9333ea"></span>AI Generator (Claude)</div>
+  <div class="legend-item"><span class="legend-dot" style="background:#d97706"></span>Tool Layer</div>
+  <div class="legend-item"><span class="legend-dot" style="background:#0891b2"></span>Vector Store (ChromaDB)</div>
+  <div class="legend-item"><span class="legend-dot" style="background:#dc2626"></span>Session Memory</div>
+</div>
+
+</body>
+</html>
