@@ -54,3 +54,27 @@ The application will be available at:
 - Web Interface: `http://localhost:8000`
 - API Documentation: `http://localhost:8000/docs`
 
+### Docker
+
+Requires [Docker Desktop](https://www.docker.com/products/docker-desktop/) to be installed.
+
+1. **Set up environment variables** (if not done already)
+   ```bash
+   cp .env.example .env
+   # then add your ANTHROPIC_API_KEY to .env
+   ```
+
+2. **Build and start**
+   ```bash
+   docker compose up --build   # first run (builds image)
+   docker compose up           # subsequent runs
+   ```
+
+3. **Stop**
+   ```bash
+   docker compose down
+   ```
+
+The application will be available at `http://localhost:8000`.
+ChromaDB data is persisted in a Docker named volume across restarts.
+
