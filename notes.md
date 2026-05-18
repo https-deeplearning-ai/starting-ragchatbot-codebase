@@ -116,3 +116,20 @@ The approach to support up to 2 chained tool calls per query (Plan A) keeps the 
 | 2 tools → answer | 3 | 2 |
 | Tool error string | 2 | 1 |
 | Tool exception | 2 | 1 |
+
+## Semantic vs. Fuzzy Course Name Resolution
+
+`_resolve_course_name()` in `vector_store.py` is sometimes called "fuzzy matching" but it's actually **semantic/vector search** — more powerful than traditional fuzzy string matching (e.g. Levenshtein distance).
+
+**How it works:**
+1. Your input (e.g. `"RAG"`) is converted to an embedding vector by `sentence-transformers`
+2. ChromaDB finds the course title vector with the highest cosine similarity
+3. That title is returned — even if the input words don't appear in the title at all
+
+So `"retrieval augmented generation course"` resolves to `"Introduction to RAG"` purely on semantic similarity, not string overlap.
+
+**Important limitation:** There is no similarity threshold — it always returns the closest match even for completely unrelated queries. This is why `test_get_course_outline_returns_none_for_empty_catalog` tests the empty-catalog case (guaranteed None) rather than an "unrelated query" case (which would still return *something*).
+
+## Why .claude/settings.local.json Is Not Committed with Feature Changes
+
+`.claude/settings.local.json` holds local IDE preferences, permissions, and hook settings personal to one machine. Even though it is a tracked file, it should not be bundled into feature commits — doing so would add noise and could overwrite another developer's local configuration. It is staged and committed separately, only when its changes are intentional.
