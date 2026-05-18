@@ -92,3 +92,28 @@ def text_response_factory():
 @pytest.fixture
 def tool_use_response_factory():
     return make_tool_use_response
+
+
+# ---------------------------------------------------------------------------
+# RAGSystem mock for API endpoint tests
+# ---------------------------------------------------------------------------
+
+@pytest.fixture
+def mock_rag_system():
+    """
+    Fully configured mock RAGSystem for API endpoint tests.
+
+    Provides realistic default return values so tests can assert on
+    response shape without wiring up ChromaDB or the Anthropic API.
+    """
+    mock = MagicMock()
+    mock.session_manager.create_session.return_value = "session-abc123"
+    mock.query.return_value = (
+        "RAG stands for Retrieval-Augmented Generation.",
+        [{"label": "AI Course - Lesson 1", "url": "https://example.com/1"}],
+    )
+    mock.get_course_analytics.return_value = {
+        "total_courses": 2,
+        "course_titles": ["Python 101", "AI Fundamentals"],
+    }
+    return mock
