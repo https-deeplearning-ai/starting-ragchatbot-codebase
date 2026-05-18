@@ -22,6 +22,44 @@
     --focus-ring: rgba(37, 99, 235, 0.2);
     --welcome-bg: #1e3a5f;
     --welcome-border: #2563eb;
+    /* Semantic tokens for theme-sensitive hardcoded colors */
+    --link-color: #60a5fa;
+    --link-hover: #93c5fd;
+    --code-bg: rgba(0, 0, 0, 0.25);
+    --welcome-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+    --error-bg: rgba(239, 68, 68, 0.1);
+    --error-color: #f87171;
+    --error-border: rgba(239, 68, 68, 0.2);
+    --success-bg: rgba(34, 197, 94, 0.1);
+    --success-color: #4ade80;
+    --success-border: rgba(34, 197, 94, 0.2);
+}
+
+/* Light Theme Variables */
+[data-theme="light"] {
+    --background: #f8fafc;
+    --surface: #ffffff;
+    --surface-hover: #f1f5f9;
+    --text-primary: #0f172a;
+    --text-secondary: #64748b;
+    --border-color: #cbd5e1;
+    --user-message: #2563eb;
+    --assistant-message: #f1f5f9;
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08);
+    --focus-ring: rgba(37, 99, 235, 0.25);
+    --welcome-bg: #eff6ff;
+    --welcome-border: #3b82f6;
+    /* Semantic token overrides — WCAG AA contrast on light backgrounds */
+    --link-color: #1d4ed8;
+    --link-hover: #1e40af;
+    --code-bg: rgba(15, 23, 42, 0.06);
+    --welcome-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+    --error-bg: rgba(220, 38, 38, 0.07);
+    --error-color: #b91c1c;
+    --error-border: rgba(220, 38, 38, 0.2);
+    --success-bg: rgba(22, 163, 74, 0.07);
+    --success-color: #15803d;
+    --success-border: rgba(22, 163, 74, 0.2);
 }
 
 /* Base Styles */
@@ -34,6 +72,71 @@ body {
     overflow: hidden;
     margin: 0;
     padding: 0;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Theme Toggle Button */
+.theme-toggle {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--surface);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+    transition: background 0.3s ease, color 0.2s ease, border-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.theme-toggle:hover {
+    background: var(--surface-hover);
+    color: var(--primary-color);
+    transform: scale(1.08);
+    box-shadow: var(--shadow);
+}
+
+.theme-toggle:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+.theme-toggle:active {
+    transform: scale(0.95);
+}
+
+/* Icon transitions */
+.theme-toggle .icon-sun,
+.theme-toggle .icon-moon {
+    position: absolute;
+    transition: opacity 0.3s ease, transform 0.4s ease;
+}
+
+/* Dark mode (default): show sun icon, hide moon */
+.theme-toggle .icon-sun {
+    opacity: 1;
+    transform: rotate(0deg) scale(1);
+}
+
+.theme-toggle .icon-moon {
+    opacity: 0;
+    transform: rotate(90deg) scale(0.5);
+}
+
+/* Light mode: show moon icon, hide sun */
+[data-theme="light"] .theme-toggle .icon-sun {
+    opacity: 0;
+    transform: rotate(-90deg) scale(0.5);
+}
+
+[data-theme="light"] .theme-toggle .icon-moon {
+    opacity: 1;
+    transform: rotate(0deg) scale(1);
 }
 
 /* Container - Full Screen */
@@ -75,6 +178,22 @@ header h1 {
     background: var(--background);
 }
 
+/* Smooth transitions for theme switch on key elements */
+.sidebar,
+.chat-main,
+.chat-container,
+.chat-messages,
+.chat-input-container,
+#chatInput,
+#sendButton,
+.message-content,
+.stat-item,
+.suggested-item,
+.new-chat-btn,
+.theme-toggle {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
 /* Left Sidebar */
 .sidebar {
     width: 320px;
@@ -109,6 +228,29 @@ header h1 {
 
 .sidebar-section:last-child {
     margin-bottom: 0;
+}
+
+/* New Chat Button */
+.new-chat-btn {
+    width: auto;
+    padding: 0.5rem 1rem;
+    background: transparent;
+    border: 1px solid var(--primary-color);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--primary-color);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-align: left;
+    display: block;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.new-chat-btn:hover {
+    background: var(--primary-color);
+    color: white;
 }
 
 /* Main Chat Area */
@@ -245,6 +387,17 @@ header h1 {
     color: var(--text-secondary);
 }
 
+.sources-content a {
+    color: var(--link-color);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    transition: color 0.2s ease;
+}
+
+.sources-content a:hover {
+    color: var(--link-hover);
+}
+
 /* Markdown formatting styles */
 .message-content h1,
 .message-content h2,
@@ -277,7 +430,7 @@ header h1 {
 }
 
 .message-content code {
-    background-color: rgba(0, 0, 0, 0.2);
+    background-color: var(--code-bg);
     padding: 0.125rem 0.25rem;
     border-radius: 3px;
     font-family: 'Fira Code', 'Consolas', monospace;
@@ -285,7 +438,7 @@ header h1 {
 }
 
 .message-content pre {
-    background-color: rgba(0, 0, 0, 0.2);
+    background-color: var(--code-bg);
     padding: 0.75rem;
     border-radius: 4px;
     overflow-x: auto;
@@ -298,7 +451,7 @@ header h1 {
 }
 
 .message-content blockquote {
-    border-left: 3px solid var(--primary);
+    border-left: 3px solid var(--primary-color);
     padding-left: 1rem;
     margin: 0.5rem 0;
     color: var(--text-secondary);
@@ -308,7 +461,7 @@ header h1 {
 .message.welcome-message .message-content {
     background: var(--surface);
     border: 2px solid var(--border-color);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--welcome-shadow);
     position: relative;
 }
 
@@ -427,21 +580,21 @@ header h1 {
 
 /* Error Message */
 .error-message {
-    background: rgba(239, 68, 68, 0.1);
-    color: #f87171;
+    background: var(--error-bg);
+    color: var(--error-color);
     padding: 0.75rem 1.25rem;
     border-radius: 8px;
-    border: 1px solid rgba(239, 68, 68, 0.2);
+    border: 1px solid var(--error-border);
     margin: 0.5rem 0;
 }
 
 /* Success Message */
 .success-message {
-    background: rgba(34, 197, 94, 0.1);
-    color: #4ade80;
+    background: var(--success-bg);
+    color: var(--success-color);
     padding: 0.75rem 1.25rem;
     border-radius: 8px;
-    border: 1px solid rgba(34, 197, 94, 0.2);
+    border: 1px solid var(--success-border);
     margin: 0.5rem 0;
 }
 

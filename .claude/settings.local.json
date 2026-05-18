@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__playwright__browser_navigate",
+      "mcp__playwright__browser_take_screenshot",
+      "mcp__playwright__browser_evaluate",
+      "Bash(UV_LINK_MODE=copy uv run --with pytest pytest tests/test_vector_store.py -v)",
+      "Bash(UV_LINK_MODE=copy uv run --with pytest pytest tests/ -v)",
+      "Bash(git add *)"
+    ]
+  }
+}
