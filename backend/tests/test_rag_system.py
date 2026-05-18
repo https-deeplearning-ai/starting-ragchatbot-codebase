@@ -9,14 +9,15 @@ Covers:
 - No history is passed for new / unknown sessions
 - End-to-end content query flow: Claude calls the search tool, result is synthesized
 """
+
 import pytest
 from unittest.mock import MagicMock, patch, call
 from tests.conftest import make_text_response, make_tool_use_response
 
-
 # ---------------------------------------------------------------------------
 # RAGSystem fixture — all heavy dependencies mocked at class level
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def rag():
@@ -32,10 +33,13 @@ def rag():
         CHROMA_PATH="./test_chroma",
     )
 
-    with patch("rag_system.VectorStore"), \
-         patch("rag_system.AIGenerator"), \
-         patch("rag_system.DocumentProcessor"):
+    with (
+        patch("rag_system.VectorStore"),
+        patch("rag_system.AIGenerator"),
+        patch("rag_system.DocumentProcessor"),
+    ):
         from rag_system import RAGSystem
+
         system = RAGSystem(config)
 
     return system
@@ -44,6 +48,7 @@ def rag():
 # ---------------------------------------------------------------------------
 # Tool forwarding
 # ---------------------------------------------------------------------------
+
 
 class TestToolForwarding:
     def test_tools_passed_to_ai_generator(self, rag):
@@ -80,11 +85,14 @@ class TestToolForwarding:
 # Source management
 # ---------------------------------------------------------------------------
 
+
 class TestSourceManagement:
     def test_sources_returned_from_last_search(self, rag):
         """query() must return whatever sources the search tool recorded."""
         rag.ai_generator.generate_response.return_value = "answer"
-        expected_sources = [{"label": "AI Course - Lesson 1", "url": "https://example.com"}]
+        expected_sources = [
+            {"label": "AI Course - Lesson 1", "url": "https://example.com"}
+        ]
         rag.search_tool.last_sources = expected_sources
 
         _, sources = rag.query("What is attention?")
@@ -116,6 +124,7 @@ class TestSourceManagement:
 # ---------------------------------------------------------------------------
 # Conversation history
 # ---------------------------------------------------------------------------
+
 
 class TestConversationHistory:
     def test_history_passed_when_session_exists(self, rag):
@@ -166,6 +175,7 @@ class TestConversationHistory:
 # ---------------------------------------------------------------------------
 # End-to-end content query flow
 # ---------------------------------------------------------------------------
+
 
 class TestContentQueryFlow:
     def test_content_query_uses_search_and_synthesizes_answer(self, rag):

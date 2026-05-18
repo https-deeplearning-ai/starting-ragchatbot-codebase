@@ -64,6 +64,26 @@ Lesson 1: <lesson title>
 ...
 ```
 
+## Code Quality
+
+### Formatting — Black
+
+All Python code is formatted with [Black](https://black.readthedocs.io/). Configuration lives in `pyproject.toml` under `[tool.black]` (line length 88, target Python 3.13).
+
+```bash
+# Auto-format all backend Python files
+bash scripts/format.sh
+# or directly:
+uv run black backend/
+
+# Check formatting without changing files (CI-safe)
+bash scripts/check_quality.sh
+# or directly:
+uv run black --check backend/
+```
+
+Always run `bash scripts/format.sh` before committing Python changes. PRs with unformatted code will fail the quality check.
+
 ### Configuration (`backend/config.py`)
 
 | Setting | Default | Purpose |

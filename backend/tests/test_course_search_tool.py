@@ -8,16 +8,17 @@ Covers:
 - Source tracking and deduplication
 - Parameter passthrough to VectorStore.search()
 """
+
 import pytest
 from unittest.mock import MagicMock, call
 from search_tools import CourseSearchTool
 from vector_store import SearchResults
 from tests.conftest import make_search_results, make_error_results
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def make_store(search_return=None):
     """Return a mock VectorStore with search() pre-configured."""
@@ -32,6 +33,7 @@ def make_store(search_return=None):
 # ---------------------------------------------------------------------------
 # Error handling
 # ---------------------------------------------------------------------------
+
 
 class TestErrorHandling:
     def test_returns_error_string_from_store(self):
@@ -57,6 +59,7 @@ class TestErrorHandling:
 # ---------------------------------------------------------------------------
 # Empty results
 # ---------------------------------------------------------------------------
+
 
 class TestEmptyResults:
     def test_no_content_found_message_baseline(self):
@@ -89,7 +92,9 @@ class TestEmptyResults:
         store = make_store()
         tool = CourseSearchTool(store)
 
-        result = tool.execute(query="embeddings", course_name="MCP Course", lesson_number=2)
+        result = tool.execute(
+            query="embeddings", course_name="MCP Course", lesson_number=2
+        )
 
         assert "MCP Course" in result
         assert "2" in result
@@ -99,12 +104,15 @@ class TestEmptyResults:
 # Successful result formatting
 # ---------------------------------------------------------------------------
 
+
 class TestResultFormatting:
     def test_result_header_contains_course_title(self):
-        store = make_store(make_search_results(
-            documents=["Embeddings are dense vectors."],
-            metadata=[{"course_title": "Vector DB Deep Dive", "lesson_number": 1}],
-        ))
+        store = make_store(
+            make_search_results(
+                documents=["Embeddings are dense vectors."],
+                metadata=[{"course_title": "Vector DB Deep Dive", "lesson_number": 1}],
+            )
+        )
         tool = CourseSearchTool(store)
 
         result = tool.execute(query="what are embeddings?")
@@ -112,10 +120,12 @@ class TestResultFormatting:
         assert "[Vector DB Deep Dive - Lesson 1]" in result
 
     def test_result_body_contains_document_text(self):
-        store = make_store(make_search_results(
-            documents=["RAG retrieves relevant chunks before generation."],
-            metadata=[{"course_title": "RAG Course", "lesson_number": 2}],
-        ))
+        store = make_store(
+            make_search_results(
+                documents=["RAG retrieves relevant chunks before generation."],
+                metadata=[{"course_title": "RAG Course", "lesson_number": 2}],
+            )
+        )
         tool = CourseSearchTool(store)
 
         result = tool.execute(query="what is RAG?")
@@ -124,10 +134,12 @@ class TestResultFormatting:
 
     def test_header_omits_lesson_when_none(self):
         """If lesson_number is None in metadata, the header should not show 'Lesson'."""
-        store = make_store(make_search_results(
-            documents=["Course intro text."],
-            metadata=[{"course_title": "Intro Course", "lesson_number": None}],
-        ))
+        store = make_store(
+            make_search_results(
+                documents=["Course intro text."],
+                metadata=[{"course_title": "Intro Course", "lesson_number": None}],
+            )
+        )
         tool = CourseSearchTool(store)
 
         result = tool.execute(query="intro")
@@ -136,13 +148,15 @@ class TestResultFormatting:
         assert "Lesson" not in result
 
     def test_multiple_results_separated_by_blank_lines(self):
-        store = make_store(make_search_results(
-            documents=["Chunk A.", "Chunk B."],
-            metadata=[
-                {"course_title": "Course X", "lesson_number": 1},
-                {"course_title": "Course X", "lesson_number": 2},
-            ],
-        ))
+        store = make_store(
+            make_search_results(
+                documents=["Chunk A.", "Chunk B."],
+                metadata=[
+                    {"course_title": "Course X", "lesson_number": 1},
+                    {"course_title": "Course X", "lesson_number": 2},
+                ],
+            )
+        )
         tool = CourseSearchTool(store)
 
         result = tool.execute(query="something")
@@ -157,12 +171,15 @@ class TestResultFormatting:
 # Source tracking
 # ---------------------------------------------------------------------------
 
+
 class TestSourceTracking:
     def test_last_sources_populated_after_search(self):
-        store = make_store(make_search_results(
-            documents=["content"],
-            metadata=[{"course_title": "AI Course", "lesson_number": 1}],
-        ))
+        store = make_store(
+            make_search_results(
+                documents=["content"],
+                metadata=[{"course_title": "AI Course", "lesson_number": 1}],
+            )
+        )
         store.get_lesson_link.return_value = "https://example.com/lesson1"
         tool = CourseSearchTool(store)
 
@@ -174,13 +191,15 @@ class TestSourceTracking:
 
     def test_sources_deduplicated_for_same_lesson(self):
         """Two chunks from the same lesson should produce only one source entry."""
-        store = make_store(make_search_results(
-            documents=["chunk 1", "chunk 2"],
-            metadata=[
-                {"course_title": "AI Course", "lesson_number": 1},
-                {"course_title": "AI Course", "lesson_number": 1},
-            ],
-        ))
+        store = make_store(
+            make_search_results(
+                documents=["chunk 1", "chunk 2"],
+                metadata=[
+                    {"course_title": "AI Course", "lesson_number": 1},
+                    {"course_title": "AI Course", "lesson_number": 1},
+                ],
+            )
+        )
         tool = CourseSearchTool(store)
 
         tool.execute(query="something")
@@ -209,6 +228,7 @@ class TestSourceTracking:
 # ---------------------------------------------------------------------------
 # Parameter passthrough
 # ---------------------------------------------------------------------------
+
 
 class TestParameterPassthrough:
     def test_query_passed_to_store(self):

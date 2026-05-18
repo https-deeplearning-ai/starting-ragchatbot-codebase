@@ -9,15 +9,16 @@ which only an end-to-end test can catch.
 NOTE: First run downloads the sentence-transformer model if not already cached.
 Subsequent runs are fast.
 """
+
 import pytest
 from vector_store import VectorStore
 from models import Course, Lesson, CourseChunk
 from config import Config
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def store(tmp_path):
@@ -37,8 +38,16 @@ def sample_course():
         course_link="https://example.com/rag",
         instructor="Test Instructor",
         lessons=[
-            Lesson(lesson_number=0, title="Overview", lesson_link="https://example.com/rag/0"),
-            Lesson(lesson_number=1, title="Embeddings and Vector Search", lesson_link="https://example.com/rag/1"),
+            Lesson(
+                lesson_number=0,
+                title="Overview",
+                lesson_link="https://example.com/rag/0",
+            ),
+            Lesson(
+                lesson_number=1,
+                title="Embeddings and Vector Search",
+                lesson_link="https://example.com/rag/1",
+            ),
         ],
     )
 
@@ -60,6 +69,7 @@ def sample_chunks(sample_course):
 # ---------------------------------------------------------------------------
 # 1. Config validation — catches silent misconfigurations
 # ---------------------------------------------------------------------------
+
 
 class TestConfigValidation:
     def test_max_results_is_positive(self):
@@ -84,6 +94,7 @@ class TestConfigValidation:
 # 2. Initialization — collections are created on startup
 # ---------------------------------------------------------------------------
 
+
 class TestInitialization:
     def test_course_catalog_collection_created(self, store):
         assert store.course_catalog is not None
@@ -101,6 +112,7 @@ class TestInitialization:
 # ---------------------------------------------------------------------------
 # 3. Data ingestion and retrieval
 # ---------------------------------------------------------------------------
+
 
 class TestDataIngestion:
     def test_add_course_increments_count(self, store, sample_course):
@@ -129,7 +141,13 @@ class TestDataIngestion:
             title="Advanced Prompt Engineering",
             course_link="https://example.com/pe",
             instructor="Another Instructor",
-            lessons=[Lesson(lesson_number=0, title="Intro", lesson_link="https://example.com/pe/0")],
+            lessons=[
+                Lesson(
+                    lesson_number=0,
+                    title="Intro",
+                    lesson_link="https://example.com/pe/0",
+                )
+            ],
         )
         store.add_course_metadata(sample_course)
         store.add_course_metadata(course2)
@@ -140,8 +158,11 @@ class TestDataIngestion:
 # 4. Search — the MAX_RESULTS = 0 guard
 # ---------------------------------------------------------------------------
 
+
 class TestSearch:
-    def test_search_returns_results_for_relevant_query(self, store, sample_course, sample_chunks):
+    def test_search_returns_results_for_relevant_query(
+        self, store, sample_course, sample_chunks
+    ):
         """
         The critical integration test. With real content indexed, a relevant
         query must return results. If MAX_RESULTS = 0, this fails even though
@@ -151,21 +172,26 @@ class TestSearch:
         results = store.search(query="RAG retrieval augmented generation")
         assert not results.is_empty()
 
-    def test_search_result_count_respects_max_results(self, store, sample_course, sample_chunks):
+    def test_search_result_count_respects_max_results(
+        self, store, sample_course, sample_chunks
+    ):
         """Number of results returned must never exceed MAX_RESULTS."""
         store.add_course_content(sample_chunks)
         results = store.search(query="RAG retrieval")
         assert len(results.documents) <= Config.MAX_RESULTS
 
-    def test_search_result_metadata_contains_course_title(self, store, sample_course, sample_chunks):
+    def test_search_result_metadata_contains_course_title(
+        self, store, sample_course, sample_chunks
+    ):
         store.add_course_content(sample_chunks)
         results = store.search(query="RAG retrieval")
         assert all(
-            m.get("course_title") == sample_course.title
-            for m in results.metadata
+            m.get("course_title") == sample_course.title for m in results.metadata
         )
 
-    def test_search_with_course_filter_returns_only_matching_course(self, store, sample_course, sample_chunks):
+    def test_search_with_course_filter_returns_only_matching_course(
+        self, store, sample_course, sample_chunks
+    ):
         other_chunks = [
             CourseChunk(
                 content="Machine learning neural networks deep learning.",
@@ -177,7 +203,9 @@ class TestSearch:
         store.add_course_content(sample_chunks)
         store.add_course_content(other_chunks)
 
-        results = store.search(query="neural networks", course_name="Introduction to RAG")
+        results = store.search(
+            query="neural networks", course_name="Introduction to RAG"
+        )
         # All returned results must be from the filtered course
         assert all(m["course_title"] == sample_course.title for m in results.metadata)
 
@@ -195,6 +223,7 @@ class TestSearch:
 # ---------------------------------------------------------------------------
 # 5. Course outline (our new get_course_outline method)
 # ---------------------------------------------------------------------------
+
 
 class TestCourseOutline:
     def test_outline_contains_correct_title(self, store, sample_course):
@@ -231,7 +260,9 @@ class TestCourseOutline:
         result = store.get_course_outline("Introduction to RAG")
         assert result is None
 
-    def test_get_all_courses_metadata_returns_parsed_lessons(self, store, sample_course):
+    def test_get_all_courses_metadata_returns_parsed_lessons(
+        self, store, sample_course
+    ):
         store.add_course_metadata(sample_course)
         all_meta = store.get_all_courses_metadata()
         assert len(all_meta) == 1

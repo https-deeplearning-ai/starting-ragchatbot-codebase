@@ -3,6 +3,7 @@ Shared pytest configuration and fixtures for all test modules.
 Adds the backend directory to sys.path so modules can be imported
 without package-prefix notation (matching how the app itself imports them).
 """
+
 import sys
 import os
 from unittest.mock import MagicMock
@@ -13,10 +14,10 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import pytest
 from vector_store import SearchResults
 
-
 # ---------------------------------------------------------------------------
 # SearchResults factories
 # ---------------------------------------------------------------------------
+
 
 def make_search_results(documents=None, metadata=None, distances=None):
     """Return a successful SearchResults with the given content."""
@@ -34,6 +35,7 @@ def make_error_results(error_msg="Search error: connection failed"):
 # ---------------------------------------------------------------------------
 # Anthropic message response factories
 # ---------------------------------------------------------------------------
+
 
 def make_text_response(text="Here is the answer."):
     """Mock a Claude response that returns text directly (no tool use)."""
@@ -70,6 +72,7 @@ def make_tool_use_response(
 # ---------------------------------------------------------------------------
 # Expose factories as fixtures so tests can request them
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def search_results_factory():
