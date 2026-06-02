@@ -118,6 +118,56 @@ class CourseSearchTool(Tool):
 
         return "\n\n".join(formatted)
 
+
+class CourseOutlineTool(Tool):
+    """Tool for retrieving course structure and lesson outlines"""
+
+    def __init__(self, vector_store: VectorStore):
+        self.store = vector_store
+
+    def get_tool_definition(self) -> Dict[str, Any]:
+        """Return Anthropic tool definition for this tool"""
+        return {
+            "name": "get_course_outline",
+            "description": "Get the complete outline of a course: its title, link, and full ordered lesson list (lesson numbers and titles). Use for questions about course structure, available lessons, or what topics a course covers.",
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "course_title": {
+                        "type": "string",
+                        "description": "The full or partial title of the course"
+                    }
+                },
+                "required": ["course_title"]
+            }
+        }
+
+    def execute(self, course_title: str) -> str:
+        """
+        Execute the outline tool to get course structure.
+
+        Args:
+            course_title: Full or partial course title
+
+        Returns:
+            Formatted course outline or error message
+        """
+        outline = self.store.get_course_outline(course_title)
+        if not outline:
+            return f"No course found matching '{course_title}'."
+
+        lines = [
+            f"Course: {outline['course_title']}",
+            f"Link: {outline['course_link'] or 'N/A'}",
+            "",
+            "Lessons:",
+        ]
+        for lesson in outline["lessons"]:
+            lines.append(f"  {lesson['lesson_number']}. {lesson['lesson_title']}")
+
+        return "\n".join(lines)
+
+
 class ToolManager:
     """Manages available tools for the AI"""
     

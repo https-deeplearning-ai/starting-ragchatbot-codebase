@@ -1,4 +1,5 @@
 import chromadb
+import json
 from chromadb.config import Settings
 from typing import List, Dict, Any, Optional
 from dataclasses import dataclass
@@ -249,7 +250,6 @@ class VectorStore:
     
     def get_lesson_link(self, course_title: str, lesson_number: int) -> Optional[str]:
         """Get lesson link for a given course title and lesson number"""
-        import json
         try:
             # Get course by ID (title is the ID)
             results = self.course_catalog.get(ids=[course_title])
@@ -265,4 +265,30 @@ class VectorStore:
             return None
         except Exception as e:
             print(f"Error getting lesson link: {e}")
+
+    def get_course_outline(self, course_title: str) -> Optional[Dict[str, Any]]:
+        """Get the complete outline of a course: title, link, and all lessons"""
+        resolved_title = self._resolve_course_name(course_title)
+        if not resolved_title:
+            return None
+        try:
+            result = self.course_catalog.get(ids=[resolved_title], include=["metadatas"])
+            if not result["ids"]:
+                return None
+            meta = result["metadatas"][0]
+            lessons_raw = json.loads(meta.get("lessons_json", "[]"))
+            return {
+                "course_title": meta.get("title", resolved_title),
+                "course_link": meta.get("course_link", ""),
+                "lessons": [
+                    {
+                        "lesson_number": lesson.get("lesson_number"),
+                        "lesson_title": lesson.get("lesson_title"),
+                    }
+                    for lesson in lessons_raw
+                ],
+            }
+        except Exception as e:
+            print(f"Error getting course outline: {e}")
+            return None
     
