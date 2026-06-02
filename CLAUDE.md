@@ -84,6 +84,8 @@ User Query (Frontend)
 
 ## Common Development Commands
 
+**IMPORTANT:** Always use `uv` to run commands and manage dependencies. Do **not** use `pip` directly in this project.
+
 ### Setup & Installation
 
 ```bash
@@ -130,8 +132,11 @@ The app runs on `http://localhost:8000`
 ### Adding Dependencies
 
 ```bash
-# Add new package
+# Add new package (always use uv, never pip)
 uv add package-name
+
+# Remove package
+uv remove package-name
 
 # This updates both pyproject.toml and uv.lock
 ```
