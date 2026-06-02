@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -X POST http://localhost:8000/api/query -H 'Content-Type: application/json' -d '{\"query\":\"What lessons are in the Nonexistent Course?\",\"session_id\":null}')",
+      "Bash(python3)"
+    ]
+  }
+}
