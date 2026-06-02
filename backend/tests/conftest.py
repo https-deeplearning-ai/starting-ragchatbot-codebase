@@ -2,15 +2,25 @@
 
 import os
 import sys
-from unittest.mock import Mock
+import warnings
+from dataclasses import dataclass
+from typing import List, Optional, Union
+from unittest.mock import Mock, MagicMock, patch
 
 import pytest
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from fastapi.testclient import TestClient
+from pydantic import BaseModel
 
 # Add backend directory to path so imports work
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from models import Course, CourseChunk, Lesson
 from vector_store import SearchResults
+
+warnings.filterwarnings("ignore", message="resource_tracker: There appear to be.*")
 
 
 @pytest.fixture
@@ -238,3 +248,127 @@ def config_mock():
     config.EMBEDDING_MODEL = "all-MiniLM-L6-v2"
     config.CHROMA_PATH = "./test_chroma_db"
     return config
+
+
+# FastAPI test fixtures
+
+
+class QueryRequest(BaseModel):
+    """Request model for course queries"""
+    query: str
+    session_id: Optional[str] = None
+
+
+class SourceItem(BaseModel):
+    """Model for a source with optional URL"""
+    title: str
+    url: Optional[str] = None
+
+
+class QueryResponse(BaseModel):
+    """Response model for course queries"""
+    answer: str
+    sources: List[Union[str, SourceItem]]
+    session_id: str
+
+
+class CourseStats(BaseModel):
+    """Response model for course statistics"""
+    total_courses: int
+    course_titles: List[str]
+
+
+@pytest.fixture
+def test_app(config_mock):
+    """Create a FastAPI app for testing (without static file mounting)"""
+    app = FastAPI(title="Course Materials RAG System Test", root_path="")
+
+    # Add middleware
+    app.add_middleware(
+        TrustedHostMiddleware,
+        allowed_hosts=["*"]
+    )
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+        expose_headers=["*"],
+    )
+
+    # Create mock RAG system
+    mock_rag_system = Mock()
+    mock_rag_system.session_manager = Mock()
+    mock_rag_system.session_manager.create_session = Mock(return_value="session_1")
+    mock_rag_system.query = Mock(return_value=("Test answer", ["Source 1"]))
+    mock_rag_system.get_course_analytics = Mock(return_value={
+        "total_courses": 2,
+        "course_titles": ["Python 101", "Web Development"]
+    })
+
+    # Define API endpoints
+    @app.post("/api/query", response_model=QueryResponse)
+    async def query_documents(request: QueryRequest):
+        """Process a query and return response with sources"""
+        from fastapi import HTTPException
+        try:
+            session_id = request.session_id
+            if not session_id:
+                session_id = mock_rag_system.session_manager.create_session()
+
+            answer, sources = mock_rag_system.query(request.query, session_id)
+
+            return QueryResponse(
+                answer=answer,
+                sources=sources,
+                session_id=session_id
+            )
+        except ValueError as e:
+            raise HTTPException(status_code=502, detail=f"API Error: {str(e)}")
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get("/api/courses", response_model=CourseStats)
+    async def get_course_stats():
+        """Get course analytics and statistics"""
+        from fastapi import HTTPException
+        try:
+            analytics = mock_rag_system.get_course_analytics()
+            return CourseStats(
+                total_courses=analytics["total_courses"],
+                course_titles=analytics["course_titles"]
+            )
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get("/")
+    async def root():
+        """Root endpoint"""
+        return {"message": "RAG System API"}
+
+    app.mock_rag_system = mock_rag_system
+    return app
+
+
+@pytest.fixture
+def client(test_app):
+    """Create a TestClient for the test app"""
+    return TestClient(test_app)
+
+
+@pytest.fixture
+def mock_rag_system():
+    """Create a mock RAG system with all necessary methods"""
+    rag_system = Mock()
+    rag_system.session_manager = Mock()
+    rag_system.session_manager.create_session = Mock(return_value="session_1")
+    rag_system.session_manager.add_exchange = Mock()
+    rag_system.session_manager.get_history = Mock(return_value="")
+    rag_system.query = Mock(return_value=("Sample answer", ["Source 1"]))
+    rag_system.get_course_analytics = Mock(return_value={
+        "total_courses": 3,
+        "course_titles": ["Python 101", "JavaScript Basics", "Data Science"]
+    })
+    rag_system.add_course_folder = Mock(return_value=(2, 100))
+    return rag_system

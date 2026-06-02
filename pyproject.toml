@@ -84,3 +84,16 @@ allow_untyped_calls = true
 check_untyped_defs = false
 implicit_reexport = true
 ignore_errors = false
+
+[tool.pytest.ini_options]
+testpaths = ["backend/tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --strict-markers --tb=short"
+markers = [
+    "unit: Unit tests for individual components",
+    "integration: Integration tests combining multiple components",
+    "api: API endpoint tests",
+    "slow: Tests that take longer to run",
+]
