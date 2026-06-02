@@ -65,9 +65,13 @@ body {
     padding: 0;
 }
 
-/* Header - Hidden */
+/* Header */
 header {
-    display: none;
+    display: flex;
+    flex-direction: column;
+    padding: 1rem 1.5rem;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border-color);
 }
 
 /* Header Top - Container for title and toggles */
@@ -516,7 +520,7 @@ header h1 {
 
 /* Sidebar Toggle Button */
 .sidebar-toggle {
-    display: none;
+    display: flex;
     align-items: center;
     justify-content: center;
     width: 40px;
@@ -554,7 +558,7 @@ header h1 {
 
 /* Theme Toggle Button */
 .theme-toggle {
-    display: none;
+    display: flex;
     align-items: center;
     justify-content: center;
     width: 40px;

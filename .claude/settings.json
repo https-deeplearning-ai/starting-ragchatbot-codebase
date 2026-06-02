@@ -9,7 +9,8 @@
       "Read(//Users/jimmycu/src/sandbox/aac/ragchatbot/**)",
       "Bash(python -m pytest tests/test_integration_e2e.py -v --tb=short)",
       "Bash(git merge *)",
-      "Bash(git worktree *)"
+      "Bash(git worktree *)",
+      "Bash(grep -A 8 \"Header \\\\*/$\")"
     ]
   }
 }
