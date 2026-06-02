@@ -80,11 +80,15 @@ Provide only the direct answer to what was asked.
         
         # Get response from Claude
         response = self.client.messages.create(**api_params)
-        
+
+        # Validate response has content
+        if not response.content:
+            raise ValueError("Empty response from Claude API - no content blocks returned")
+
         # Handle tool execution if needed
         if response.stop_reason == "tool_use" and tool_manager:
             return self._handle_tool_execution(response, api_params, tool_manager)
-        
+
         # Return direct response
         return response.content[0].text
     
@@ -134,4 +138,9 @@ Provide only the direct answer to what was asked.
         
         # Get final response
         final_response = self.client.messages.create(**final_params)
+
+        # Validate response has content
+        if not final_response.content:
+            raise ValueError("Empty response from Claude API after tool execution - no content blocks returned")
+
         return final_response.content[0].text

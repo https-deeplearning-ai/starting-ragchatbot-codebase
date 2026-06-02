@@ -66,16 +66,20 @@ async def query_documents(request: QueryRequest):
         session_id = request.session_id
         if not session_id:
             session_id = rag_system.session_manager.create_session()
-        
+
         # Process query using RAG system
         answer, sources = rag_system.query(request.query, session_id)
-        
+
         return QueryResponse(
             answer=answer,
             sources=sources,
             session_id=session_id
         )
+    except ValueError as e:
+        # Handle validation errors (e.g., empty API response)
+        raise HTTPException(status_code=502, detail=f"API Error: {str(e)}")
     except Exception as e:
+        # Handle other errors
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/courses", response_model=CourseStats)

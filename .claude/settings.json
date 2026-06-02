@@ -2,7 +2,12 @@
   "permissions": {
     "allow": [
       "Bash(curl -X POST http://localhost:8000/api/query -H 'Content-Type: application/json' -d '{\"query\":\"What lessons are in the Nonexistent Course?\",\"session_id\":null}')",
-      "Bash(python3)"
+      "Bash(python3)",
+      "Bash(kill *)",
+      "Bash(uv add *)",
+      "Bash(python -m pytest *)",
+      "Read(//Users/jimmycu/src/sandbox/aac/ragchatbot/**)",
+      "Bash(python -m pytest tests/test_integration_e2e.py -v --tb=short)"
     ]
   }
 }
