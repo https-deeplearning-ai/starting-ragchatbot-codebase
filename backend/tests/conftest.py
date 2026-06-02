@@ -153,6 +153,84 @@ def mock_anthropic_client_with_tool_use():
 
 
 @pytest.fixture
+def mock_anthropic_client_two_tool_rounds():
+    """Create a mock Anthropic client that simulates two sequential tool-use rounds"""
+    mock_client = Mock()
+    mock_messages = Mock()
+
+    # First response: tool use (search_course_content)
+    tool_use_1 = Mock()
+    tool_use_1.type = "tool_use"
+    tool_use_1.name = "search_course_content"
+    tool_use_1.id = "tool_001"
+    tool_use_1.input = {"query": "python basics"}
+
+    first_response = Mock()
+    first_response.stop_reason = "tool_use"
+    first_response.content = [tool_use_1]
+
+    # Second response: tool use (get_course_outline)
+    tool_use_2 = Mock()
+    tool_use_2.type = "tool_use"
+    tool_use_2.name = "get_course_outline"
+    tool_use_2.id = "tool_002"
+    tool_use_2.input = {"course_title": "Python Course"}
+
+    second_response = Mock()
+    second_response.stop_reason = "tool_use"
+    second_response.content = [tool_use_2]
+
+    # Third response: final answer
+    third_response = Mock()
+    third_response.stop_reason = "end_turn"
+    third_response.content = [Mock(text="Final answer using both results")]
+
+    mock_messages.create = Mock(side_effect=[first_response, second_response, third_response])
+    mock_client.messages = mock_messages
+
+    return mock_client
+
+
+@pytest.fixture
+def mock_anthropic_client_round_cap():
+    """Create a mock Anthropic client that tests round cap enforcement"""
+    mock_client = Mock()
+    mock_messages = Mock()
+
+    # First response: tool use
+    tool_use_1 = Mock()
+    tool_use_1.type = "tool_use"
+    tool_use_1.name = "search_course_content"
+    tool_use_1.id = "tool_001"
+    tool_use_1.input = {"query": "python basics"}
+
+    first_response = Mock()
+    first_response.stop_reason = "tool_use"
+    first_response.content = [tool_use_1]
+
+    # Second response: still tool use (would want a third call, but cap is hit)
+    tool_use_2 = Mock()
+    tool_use_2.type = "tool_use"
+    tool_use_2.name = "search_course_content"
+    tool_use_2.id = "tool_002"
+    tool_use_2.input = {"query": "more python"}
+
+    second_response = Mock()
+    second_response.stop_reason = "tool_use"
+    second_response.content = [tool_use_2]
+
+    # Third response: forced final call without tools
+    third_response = Mock()
+    third_response.stop_reason = "end_turn"
+    third_response.content = [Mock(text="Answer after round cap enforced")]
+
+    mock_messages.create = Mock(side_effect=[first_response, second_response, third_response])
+    mock_client.messages = mock_messages
+
+    return mock_client
+
+
+@pytest.fixture
 def config_mock():
     """Create a mock config object"""
     config = Mock()

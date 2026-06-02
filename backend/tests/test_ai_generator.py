@@ -136,7 +136,7 @@ class TestAIGenerator:
         """Test that SYSTEM_PROMPT includes guidance for tool usage"""
         assert "search_course_content" in AIGenerator.SYSTEM_PROMPT
         assert "get_course_outline" in AIGenerator.SYSTEM_PROMPT
-        assert "One search per query maximum" in AIGenerator.SYSTEM_PROMPT
+        assert "Up to 2 sequential searches per query" in AIGenerator.SYSTEM_PROMPT
 
     def test_generate_response_preserves_message_order(self, mock_anthropic_client_with_tool_use):
         """Test that multi-turn conversation maintains correct message order"""
@@ -162,3 +162,143 @@ class TestAIGenerator:
             assert messages[1]["role"] == "assistant"
             assert messages[2]["role"] == "user"
             assert isinstance(messages[2]["content"], list)
+
+    def test_two_round_tool_flow(self, mock_anthropic_client_two_tool_rounds):
+        """Test that two sequential tool-use rounds execute correctly"""
+        mock_tool_manager = Mock()
+        mock_tool_manager.execute_tool = Mock(side_effect=["Result 1", "Result 2"])
+
+        with patch('ai_generator.anthropic.Anthropic', return_value=mock_anthropic_client_two_tool_rounds):
+            generator = AIGenerator("test-key", "claude-haiku-4-5")
+            tools = [
+                {"name": "search_course_content"},
+                {"name": "get_course_outline"}
+            ]
+
+            response = generator.generate_response(
+                "Find a course with same topic as lesson 4",
+                tools=tools,
+                tool_manager=mock_tool_manager
+            )
+
+            # Verify 3 API calls made (initial + 2 tool rounds)
+            assert mock_anthropic_client_two_tool_rounds.messages.create.call_count == 3
+            # Verify 2 tool executions
+            assert mock_tool_manager.execute_tool.call_count == 2
+            # Verify final response
+            assert response == "Final answer using both results"
+
+    def test_two_round_tool_names_called(self, mock_anthropic_client_two_tool_rounds):
+        """Test that correct tools are called in correct order for two rounds"""
+        mock_tool_manager = Mock()
+        mock_tool_manager.execute_tool = Mock(side_effect=["Outline data", "Search results"])
+
+        with patch('ai_generator.anthropic.Anthropic', return_value=mock_anthropic_client_two_tool_rounds):
+            generator = AIGenerator("test-key", "claude-haiku-4-5")
+            tools = [
+                {"name": "get_course_outline"},
+                {"name": "search_course_content"}
+            ]
+
+            generator.generate_response(
+                "Complex query",
+                tools=tools,
+                tool_manager=mock_tool_manager
+            )
+
+            # Get all execute_tool calls
+            calls = mock_tool_manager.execute_tool.call_args_list
+            # First call should be search_course_content
+            assert calls[0][0][0] == "search_course_content"
+            # Second call should be get_course_outline
+            assert calls[1][0][0] == "get_course_outline"
+
+    def test_round_cap_enforced(self, mock_anthropic_client_round_cap):
+        """Test that round cap (2 rounds max) is enforced with final no-tools call"""
+        mock_tool_manager = Mock()
+        mock_tool_manager.execute_tool = Mock(side_effect=["Result 1", "Result 2"])
+
+        with patch('ai_generator.anthropic.Anthropic', return_value=mock_anthropic_client_round_cap):
+            generator = AIGenerator("test-key", "claude-haiku-4-5")
+            tools = [{"name": "search_course_content"}]
+
+            response = generator.generate_response(
+                "Query that needs multiple searches",
+                tools=tools,
+                tool_manager=mock_tool_manager
+            )
+
+            # Verify 3 API calls (2 tool rounds + 1 final no-tools)
+            assert mock_anthropic_client_round_cap.messages.create.call_count == 3
+            # Verify 2 tool executions
+            assert mock_tool_manager.execute_tool.call_count == 2
+            # Final response from the enforced no-tools call
+            assert response == "Answer after round cap enforced"
+
+    def test_single_round_unchanged(self, mock_anthropic_client_with_tool_use):
+        """Test that single-round flow still works (backwards compatibility)"""
+        mock_tool_manager = Mock()
+        mock_tool_manager.execute_tool = Mock(return_value="Search result")
+
+        with patch('ai_generator.anthropic.Anthropic', return_value=mock_anthropic_client_with_tool_use):
+            generator = AIGenerator("test-key", "claude-haiku-4-5")
+            tools = [{"name": "search_course_content"}]
+
+            response = generator.generate_response(
+                "Simple query",
+                tools=tools,
+                tool_manager=mock_tool_manager
+            )
+
+            # Should only make 2 calls (initial + 1 tool execution)
+            assert mock_anthropic_client_with_tool_use.messages.create.call_count == 2
+            # Only 1 tool execution
+            assert mock_tool_manager.execute_tool.call_count == 1
+            # Response from second call
+            assert response == "Here's the answer with search results"
+
+    def test_tool_error_terminates_loop(self, mock_anthropic_client_with_tool_use):
+        """Test that tool execution errors are caught and included in results"""
+        mock_tool_manager = Mock()
+        mock_tool_manager.execute_tool = Mock(side_effect=Exception("Tool failed"))
+
+        with patch('ai_generator.anthropic.Anthropic', return_value=mock_anthropic_client_with_tool_use):
+            generator = AIGenerator("test-key", "claude-haiku-4-5")
+            tools = [{"name": "search_course_content"}]
+
+            response = generator.generate_response(
+                "Query",
+                tools=tools,
+                tool_manager=mock_tool_manager
+            )
+
+            # Should still make 2 calls (error is caught and sent as tool result)
+            assert mock_anthropic_client_with_tool_use.messages.create.call_count == 2
+            # Tool manager was called once
+            assert mock_tool_manager.execute_tool.call_count == 1
+            # Response is returned (not an exception)
+            assert isinstance(response, str)
+
+    def test_tools_passed_in_each_round(self, mock_anthropic_client_two_tool_rounds):
+        """Test that tools are included in API calls for all rounds, not just the first"""
+        mock_tool_manager = Mock()
+        mock_tool_manager.execute_tool = Mock(side_effect=["Result 1", "Result 2"])
+
+        with patch('ai_generator.anthropic.Anthropic', return_value=mock_anthropic_client_two_tool_rounds):
+            generator = AIGenerator("test-key", "claude-haiku-4-5")
+            tools = [{"name": "search_course_content"}]
+
+            generator.generate_response(
+                "Multi-round query",
+                tools=tools,
+                tool_manager=mock_tool_manager
+            )
+
+            # Check that tools are present in all tool-using calls
+            calls = mock_anthropic_client_two_tool_rounds.messages.create.call_args_list
+            # First call should have tools
+            assert "tools" in calls[0].kwargs
+            assert calls[0].kwargs["tools"] == tools
+            # Second call should also have tools (key change from old implementation)
+            assert "tools" in calls[1].kwargs
+            assert calls[1].kwargs["tools"] == tools
