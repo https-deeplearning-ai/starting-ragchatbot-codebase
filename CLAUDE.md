@@ -10,7 +10,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Backend: FastAPI (Python 3.13+)
 - Frontend: Vanilla JavaScript + HTML/CSS
 - Vector DB: ChromaDB with SentenceTransformer embeddings
-- AI: Anthropic Claude API (claude-3-5-sonnet or later)
+- AI: Anthropic Claude API (claude-haiku-4-5 by default, upgradeable to Sonnet or Opus)
 - Package Manager: `uv`
 
 ---
