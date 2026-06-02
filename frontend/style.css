@@ -220,29 +220,93 @@ header h1 {
 
 /* Collapsible Sources */
 .sources-collapsible {
-    margin-top: 0.5rem;
-    font-size: 0.75rem;
+    margin-top: 0.75rem;
+    font-size: 0.8rem;
     color: var(--text-secondary);
 }
 
 .sources-collapsible summary {
     cursor: pointer;
-    padding: 0.25rem 0.5rem;
+    padding: 0.5rem 0.75rem;
     user-select: none;
-    font-weight: 500;
+    font-weight: 600;
+    color: var(--text-secondary);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.sources-collapsible summary:before {
+    content: '📚';
+    font-size: 0.9rem;
 }
 
 .sources-collapsible summary:hover {
-    color: var(--text-primary);
+    color: var(--primary-color);
+    background: rgba(37, 99, 235, 0.1);
 }
 
 .sources-collapsible[open] summary {
-    margin-bottom: 0.25rem;
+    margin-bottom: 0.75rem;
+    color: var(--primary-color);
+    background: rgba(37, 99, 235, 0.1);
 }
 
 .sources-content {
-    padding: 0 0.5rem 0.25rem 1.5rem;
+    padding: 0.5rem 0.75rem;
     color: var(--text-secondary);
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    background: rgba(15, 23, 42, 0.5);
+    border-radius: 8px;
+    border: 1px solid rgba(37, 99, 235, 0.15);
+}
+
+.source-item {
+    display: flex;
+    align-items: center;
+    padding: 0.625rem 0.875rem;
+    line-height: 1.4;
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(37, 99, 235, 0.03));
+    border-radius: 6px;
+    border: 1px solid rgba(37, 99, 235, 0.2);
+    transition: all 0.2s ease;
+}
+
+.source-item:before {
+    content: '📖';
+    margin-right: 0.5rem;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+
+.source-item:hover {
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.15), rgba(37, 99, 235, 0.08));
+    border-color: rgba(37, 99, 235, 0.4);
+    transform: translateX(2px);
+}
+
+.source-item a {
+    color: var(--primary-color);
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: 500;
+    flex: 1;
+}
+
+.source-item a:hover {
+    color: #60a5fa;
+    text-decoration: underline;
+}
+
+.source-item a:focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+    border-radius: 3px;
 }
 
 /* Markdown formatting styles */

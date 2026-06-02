@@ -19,4 +19,5 @@ class CourseChunk(BaseModel):
     content: str                        # The actual text content
     course_title: str                   # Which course this chunk belongs to
     lesson_number: Optional[int] = None # Which lesson this chunk is from
+    lesson_link: Optional[str] = None   # URL link to the lesson (for video, etc.)
     chunk_index: int                    # Position of this chunk in the document
