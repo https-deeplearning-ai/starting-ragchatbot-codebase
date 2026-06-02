@@ -1,13 +1,11 @@
 """Tests for search tools (CourseSearchTool and CourseOutlineTool)"""
-import pytest
-from unittest.mock import Mock, patch
-import sys
+
 import os
+import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from search_tools import CourseSearchTool, CourseOutlineTool, ToolManager
-from vector_store import SearchResults
+from search_tools import CourseOutlineTool, CourseSearchTool, ToolManager
 
 
 class TestCourseSearchTool:
@@ -22,9 +20,7 @@ class TestCourseSearchTool:
 
         # Verify the search was called
         mock_vector_store.search.assert_called_once_with(
-            query="python basics",
-            course_name=None,
-            lesson_number=None
+            query="python basics", course_name=None, lesson_number=None
         )
 
         # Verify result is a string
@@ -42,9 +38,7 @@ class TestCourseSearchTool:
 
         # Verify the search was called with course_name
         mock_vector_store.search.assert_called_once_with(
-            query="functions",
-            course_name="Python",
-            lesson_number=None
+            query="functions", course_name="Python", lesson_number=None
         )
         assert isinstance(result, str)
 
@@ -57,9 +51,7 @@ class TestCourseSearchTool:
 
         # Verify the search was called with lesson_number
         mock_vector_store.search.assert_called_once_with(
-            query="variables",
-            course_name=None,
-            lesson_number=2
+            query="variables", course_name=None, lesson_number=2
         )
         assert isinstance(result, str)
 
@@ -68,17 +60,11 @@ class TestCourseSearchTool:
         mock_vector_store.search.return_value = sample_search_results
 
         tool = CourseSearchTool(mock_vector_store)
-        result = tool.execute(
-            query="variables",
-            course_name="Python",
-            lesson_number=2
-        )
+        result = tool.execute(query="variables", course_name="Python", lesson_number=2)
 
         # Verify the search was called with both filters
         mock_vector_store.search.assert_called_once_with(
-            query="variables",
-            course_name="Python",
-            lesson_number=2
+            query="variables", course_name="Python", lesson_number=2
         )
         assert isinstance(result, str)
 
@@ -102,7 +88,9 @@ class TestCourseSearchTool:
         # Should indicate no results found
         assert "No relevant content found" in result
 
-    def test_execute_returns_no_results_with_course_filter(self, mock_vector_store, empty_search_results):
+    def test_execute_returns_no_results_with_course_filter(
+        self, mock_vector_store, empty_search_results
+    ):
         """Test empty results message includes filter information"""
         mock_vector_store.search.return_value = empty_search_results
 
@@ -112,7 +100,9 @@ class TestCourseSearchTool:
         assert "No relevant content found" in result
         assert "Advanced Python" in result
 
-    def test_execute_returns_no_results_with_lesson_filter(self, mock_vector_store, empty_search_results):
+    def test_execute_returns_no_results_with_lesson_filter(
+        self, mock_vector_store, empty_search_results
+    ):
         """Test empty results message includes lesson information"""
         mock_vector_store.search.return_value = empty_search_results
 
@@ -127,7 +117,7 @@ class TestCourseSearchTool:
         mock_vector_store.search.return_value = sample_search_results
 
         tool = CourseSearchTool(mock_vector_store)
-        result = tool.execute(query="python")
+        _ = tool.execute(query="python")
 
         # Check that sources were stored
         assert len(tool.last_sources) == 2
@@ -156,8 +146,8 @@ class TestCourseOutlineTool:
             "course_link": "https://example.com/python",
             "lessons": [
                 {"lesson_number": 1, "lesson_title": "Getting Started"},
-                {"lesson_number": 2, "lesson_title": "Variables and Types"}
-            ]
+                {"lesson_number": 2, "lesson_title": "Variables and Types"},
+            ],
         }
 
         tool = CourseOutlineTool(mock_vector_store)

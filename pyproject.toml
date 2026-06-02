@@ -19,7 +19,68 @@ dev = [
     "pytest>=9.0.3",
     "pytest-mock>=3.15.1",
     "taskipy>=1.14.1",
+    "black>=24.0.0",
+    "ruff>=0.5.0",
+    "mypy>=1.11.0",
 ]
 
 [tool.taskipy.tasks]
 test = "pytest backend/tests/"
+fmt = "black backend/ main.py"
+lint = "ruff check backend/ main.py"
+type-check = "mypy backend/ main.py --ignore-missing-imports"
+quality = "task lint && task type-check && task test"
+quality-fix = "ruff check --fix backend/ main.py && black backend/ main.py"
+
+[tool.black]
+line-length = 100
+target-version = ["py313"]
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  venv
+  | \.venv
+  | chroma_db
+  | __pycache__
+)/
+'''
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+exclude = ["venv", ".venv", "chroma_db", "__pycache__"]
+
+[tool.ruff.lint]
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # Pyflakes
+    "I",      # isort
+    "C4",     # flake8-comprehensions
+    "UP",     # pyupgrade
+    "RUF",    # ruff-specific rules
+]
+ignore = [
+    "E501",   # line too long (handled by black)
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["backend"]
+
+[tool.mypy]
+python_version = "3.13"
+warn_return_any = false
+warn_unused_configs = false
+disallow_untyped_defs = false
+disallow_untyped_calls = false
+ignore_missing_imports = true
+exclude = ["venv", ".venv", "chroma_db"]
+no_implicit_optional = false
+warn_redundant_casts = false
+warn_unused_ignores = false
+warn_incomplete_stub = false
+allow_untyped_defs = true
+allow_untyped_calls = true
+check_untyped_defs = false
+implicit_reexport = true
+ignore_errors = false

@@ -1,15 +1,16 @@
 """Pytest configuration and shared fixtures"""
-import pytest
-import sys
+
 import os
-from unittest.mock import Mock, MagicMock
-from dataclasses import dataclass
+import sys
+from unittest.mock import Mock
+
+import pytest
 
 # Add backend directory to path so imports work
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+from models import Course, CourseChunk, Lesson
 from vector_store import SearchResults
-from models import Course, Lesson, CourseChunk
 
 
 @pytest.fixture
@@ -27,34 +28,30 @@ def sample_search_results():
     return SearchResults(
         documents=[
             "This is lesson content about Python basics",
-            "Python functions and scope explanation"
+            "Python functions and scope explanation",
         ],
         metadata=[
             {
                 "course_title": "Introduction to Python",
                 "lesson_number": 1,
                 "lesson_link": "https://example.com/lesson/1",
-                "chunk_index": 0
+                "chunk_index": 0,
             },
             {
                 "course_title": "Introduction to Python",
                 "lesson_number": 1,
                 "lesson_link": "https://example.com/lesson/1",
-                "chunk_index": 1
-            }
+                "chunk_index": 1,
+            },
         ],
-        distances=[0.1, 0.15]
+        distances=[0.1, 0.15],
     )
 
 
 @pytest.fixture
 def empty_search_results():
     """Create empty search results"""
-    return SearchResults(
-        documents=[],
-        metadata=[],
-        distances=[]
-    )
+    return SearchResults(documents=[], metadata=[], distances=[])
 
 
 @pytest.fixture
@@ -72,16 +69,14 @@ def sample_course():
         course_link="https://example.com/python",
         lessons=[
             Lesson(
-                lesson_number=1,
-                title="Getting Started",
-                lesson_link="https://example.com/lesson/1"
+                lesson_number=1, title="Getting Started", lesson_link="https://example.com/lesson/1"
             ),
             Lesson(
                 lesson_number=2,
                 title="Variables and Data Types",
-                lesson_link="https://example.com/lesson/2"
-            )
-        ]
+                lesson_link="https://example.com/lesson/2",
+            ),
+        ],
     )
 
 
@@ -94,15 +89,15 @@ def sample_course_chunks():
             lesson_number=1,
             lesson_link="https://example.com/lesson/1",
             content="Python is a high-level programming language...",
-            chunk_index=0
+            chunk_index=0,
         ),
         CourseChunk(
             course_title="Introduction to Python",
             lesson_number=1,
             lesson_link="https://example.com/lesson/1",
             content="Variables are used to store data values...",
-            chunk_index=1
-        )
+            chunk_index=1,
+        ),
     ]
 
 

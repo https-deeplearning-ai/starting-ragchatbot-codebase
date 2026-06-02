@@ -1,5 +1,5 @@
 import anthropic
-from typing import List, Optional, Dict, Any
+
 
 class AIGenerator:
     """Handles interactions with Anthropic's Claude API for generating responses"""
@@ -32,22 +32,21 @@ All responses must be:
 4. **Example-supported** - Include relevant examples when they aid understanding
 Provide only the direct answer to what was asked.
 """
-    
+
     def __init__(self, api_key: str, model: str):
         self.client = anthropic.Anthropic(api_key=api_key)
         self.model = model
-        
+
         # Pre-build base API parameters
-        self.base_params = {
-            "model": self.model,
-            "temperature": 0,
-            "max_tokens": 800
-        }
-    
-    def generate_response(self, query: str,
-                         conversation_history: Optional[str] = None,
-                         tools: Optional[List] = None,
-                         tool_manager=None) -> str:
+        self.base_params = {"model": self.model, "temperature": 0, "max_tokens": 800}
+
+    def generate_response(
+        self,
+        query: str,
+        conversation_history: str | None = None,
+        tools: list | None = None,
+        tool_manager=None,
+    ) -> str:
         """
         Generate AI response with optional tool usage and conversation context.
         Supports up to 2 sequential tool-call rounds.
@@ -73,11 +72,7 @@ Provide only the direct answer to what was asked.
         messages = [{"role": "user", "content": query}]
 
         # Prepare base API parameters
-        api_params = {
-            **self.base_params,
-            "messages": messages,
-            "system": system_content
-        }
+        api_params = {**self.base_params, "messages": messages, "system": system_content}
 
         # Add tools if available
         if tools:
@@ -106,17 +101,18 @@ Provide only the direct answer to what was asked.
                 if content_block.type == "tool_use":
                     try:
                         tool_result = tool_manager.execute_tool(
-                            content_block.name,
-                            **content_block.input
+                            content_block.name, **content_block.input
                         )
                     except Exception as e:
-                        tool_result = f"Tool error: {str(e)}"
+                        tool_result = f"Tool error: {e!s}"
 
-                    tool_results.append({
-                        "type": "tool_result",
-                        "tool_use_id": content_block.id,
-                        "content": tool_result
-                    })
+                    tool_results.append(
+                        {
+                            "type": "tool_result",
+                            "tool_use_id": content_block.id,
+                            "content": tool_result,
+                        }
+                    )
 
             # Add tool results as single message
             if tool_results:
@@ -128,20 +124,20 @@ Provide only the direct answer to what was asked.
 
             # Validate response has content
             if not response.content:
-                raise ValueError("Empty response from Claude API during tool execution - no content blocks returned")
+                raise ValueError(
+                    "Empty response from Claude API during tool execution - no content blocks returned"
+                )
 
         # Final call if loop ended with tool_use (round cap reached)
         if response.stop_reason == "tool_use" and tool_manager and tools:
             messages.append({"role": "assistant", "content": response.content})
-            api_params_final = {
-                **self.base_params,
-                "messages": messages,
-                "system": system_content
-            }
+            api_params_final = {**self.base_params, "messages": messages, "system": system_content}
             response = self.client.messages.create(**api_params_final)
 
             # Validate response has content
             if not response.content:
-                raise ValueError("Empty response from Claude API after round cap - no content blocks returned")
+                raise ValueError(
+                    "Empty response from Claude API after round cap - no content blocks returned"
+                )
 
         return response.content[0].text

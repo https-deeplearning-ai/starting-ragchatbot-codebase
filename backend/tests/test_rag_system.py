@@ -1,14 +1,14 @@
 """Integration tests for the RAG system"""
-import pytest
-from unittest.mock import Mock, patch, MagicMock
-import sys
+
 import os
+import sys
+from unittest.mock import Mock, patch
+
+import pytest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from rag_system import RAGSystem
-from vector_store import SearchResults
-from models import Course, Lesson, CourseChunk
 
 
 class TestRAGSystemQuery:
@@ -17,10 +17,10 @@ class TestRAGSystemQuery:
     @pytest.fixture
     def mock_rag_system(self, config_mock, sample_search_results):
         """Create a RAG system with mocked components"""
-        with patch('rag_system.DocumentProcessor'):
-            with patch('rag_system.VectorStore') as mock_vs:
-                with patch('rag_system.AIGenerator') as mock_ai:
-                    with patch('rag_system.SessionManager') as mock_sm:
+        with patch("rag_system.DocumentProcessor"):
+            with patch("rag_system.VectorStore") as mock_vs:
+                with patch("rag_system.AIGenerator") as mock_ai:
+                    with patch("rag_system.SessionManager") as mock_sm:
                         # Configure mocks
                         mock_vs_instance = Mock()
                         mock_vs_instance.search = Mock(return_value=sample_search_results)
@@ -55,7 +55,7 @@ class TestRAGSystemQuery:
 
     def test_query_calls_ai_generator_with_tools(self, mock_rag_system):
         """Test that query passes tools to AI generator"""
-        response, sources = mock_rag_system.query("Python basics")
+        _, _ = mock_rag_system.query("Python basics")
 
         # Verify AI generator was called with tools
         mock_rag_system.ai_generator.generate_response.assert_called_once()
@@ -84,17 +84,19 @@ class TestRAGSystemQuery:
 
     def test_query_uses_existing_session(self, mock_rag_system):
         """Test that query uses existing session if provided"""
-        response, sources = mock_rag_system.query("Question?", session_id="session_123")
+        _, _ = mock_rag_system.query("Question?", session_id="session_123")
 
         # Should not create a new session
         mock_rag_system.session_manager.create_session.assert_not_called()
 
         # Should retrieve history
-        mock_rag_system.session_manager.get_conversation_history.assert_called_once_with("session_123")
+        mock_rag_system.session_manager.get_conversation_history.assert_called_once_with(
+            "session_123"
+        )
 
     def test_query_adds_to_conversation_history(self, mock_rag_system):
         """Test that query adds exchange to conversation history"""
-        response, sources = mock_rag_system.query("Question?", session_id="session_1")
+        _, _ = mock_rag_system.query("Question?", session_id="session_1")
 
         mock_rag_system.session_manager.add_exchange.assert_called_once()
         call_args = mock_rag_system.session_manager.add_exchange.call_args
@@ -107,7 +109,7 @@ class TestRAGSystemQuery:
             return_value=[{"title": "Test", "url": "http://example.com"}]
         )
 
-        response, sources = mock_rag_system.query("Question?")
+        _, sources = mock_rag_system.query("Question?")
 
         # Verify sources were retrieved
         mock_rag_system.tool_manager.get_last_sources.assert_called()
@@ -115,24 +117,26 @@ class TestRAGSystemQuery:
 
     def test_query_passes_session_id_in_request(self, mock_rag_system):
         """Test that session_id is included in tool_manager"""
-        response, sources = mock_rag_system.query("Question?", session_id="session_123")
+        _, _ = mock_rag_system.query("Question?", session_id="session_123")
 
         # Verify tool_manager was passed to AI generator
         call_args = mock_rag_system.ai_generator.generate_response.call_args
         assert "tool_manager" in call_args.kwargs
         assert call_args.kwargs["tool_manager"] == mock_rag_system.tool_manager
 
-    def test_query_with_search_results_includes_sources(self, mock_rag_system, sample_search_results):
+    def test_query_with_search_results_includes_sources(
+        self, mock_rag_system, sample_search_results
+    ):
         """Test that search results are converted to sources"""
         # Mock the tool_manager to return sources
         mock_rag_system.tool_manager.get_last_sources = Mock(
             return_value=[
                 {"title": "Course 1 - Lesson 1", "url": "https://example.com/1"},
-                {"title": "Course 1 - Lesson 2", "url": "https://example.com/2"}
+                {"title": "Course 1 - Lesson 2", "url": "https://example.com/2"},
             ]
         )
 
-        response, sources = mock_rag_system.query("Python question")
+        _, sources = mock_rag_system.query("Python question")
 
         assert len(sources) == 2
         assert sources[0]["title"] == "Course 1 - Lesson 1"
@@ -142,7 +146,7 @@ class TestRAGSystemQuery:
         # Mock tool_manager to return no sources (no search was performed)
         mock_rag_system.tool_manager.get_last_sources = Mock(return_value=[])
 
-        response, sources = mock_rag_system.query("What is 2+2?")
+        _, sources = mock_rag_system.query("What is 2+2?")
 
         assert sources == []
 
@@ -164,10 +168,10 @@ class TestRAGSystemDataLoading:
     @pytest.fixture
     def mock_rag_system_for_loading(self, config_mock, sample_course, sample_course_chunks):
         """Create a RAG system for testing data loading"""
-        with patch('rag_system.DocumentProcessor') as mock_dp:
-            with patch('rag_system.VectorStore') as mock_vs:
-                with patch('rag_system.AIGenerator'):
-                    with patch('rag_system.SessionManager'):
+        with patch("rag_system.DocumentProcessor") as mock_dp:
+            with patch("rag_system.VectorStore") as mock_vs:
+                with patch("rag_system.AIGenerator"):
+                    with patch("rag_system.SessionManager"):
                         mock_dp_instance = Mock()
                         mock_dp_instance.process_course_document = Mock(
                             return_value=(sample_course, sample_course_chunks)
@@ -188,7 +192,7 @@ class TestRAGSystemDataLoading:
 
     def test_add_course_document_processes_file(self, mock_rag_system_for_loading):
         """Test that add_course_document processes a file correctly"""
-        course, chunks = mock_rag_system_for_loading.add_course_document("/path/to/course.pdf")
+        _, _ = mock_rag_system_for_loading.add_course_document("/path/to/course.pdf")
 
         # Verify document was processed
         mock_rag_system_for_loading.document_processor.process_course_document.assert_called_once_with(
@@ -199,7 +203,9 @@ class TestRAGSystemDataLoading:
         mock_rag_system_for_loading.vector_store.add_course_metadata.assert_called_once()
         mock_rag_system_for_loading.vector_store.add_course_content.assert_called_once()
 
-    def test_add_course_document_returns_course_and_chunk_count(self, mock_rag_system_for_loading, sample_course):
+    def test_add_course_document_returns_course_and_chunk_count(
+        self, mock_rag_system_for_loading, sample_course
+    ):
         """Test that add_course_document returns proper values"""
         course, chunk_count = mock_rag_system_for_loading.add_course_document("/path/to/course.pdf")
 
@@ -220,10 +226,10 @@ class TestRAGSystemGetCourseAnalytics:
     @pytest.fixture
     def mock_rag_system_analytics(self, config_mock):
         """Create a RAG system for analytics tests"""
-        with patch('rag_system.DocumentProcessor'):
-            with patch('rag_system.VectorStore') as mock_vs:
-                with patch('rag_system.AIGenerator'):
-                    with patch('rag_system.SessionManager'):
+        with patch("rag_system.DocumentProcessor"):
+            with patch("rag_system.VectorStore") as mock_vs:
+                with patch("rag_system.AIGenerator"):
+                    with patch("rag_system.SessionManager"):
                         mock_vs_instance = Mock()
                         mock_vs_instance.get_course_count = Mock(return_value=3)
                         mock_vs_instance.get_existing_course_titles = Mock(
