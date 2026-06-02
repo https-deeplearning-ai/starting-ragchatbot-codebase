@@ -3,9 +3,7 @@
 import os
 import sys
 import warnings
-from dataclasses import dataclass
-from typing import List, Optional, Union
-from unittest.mock import Mock, MagicMock, patch
+from unittest.mock import Mock
 
 import pytest
 from fastapi import FastAPI, HTTPException
@@ -255,27 +253,31 @@ def config_mock():
 
 class QueryRequest(BaseModel):
     """Request model for course queries"""
+
     query: str
-    session_id: Optional[str] = None
+    session_id: str | None = None
 
 
 class SourceItem(BaseModel):
     """Model for a source with optional URL"""
+
     title: str
-    url: Optional[str] = None
+    url: str | None = None
 
 
 class QueryResponse(BaseModel):
     """Response model for course queries"""
+
     answer: str
-    sources: List[Union[str, SourceItem]]
+    sources: list[str | SourceItem]
     session_id: str
 
 
 class CourseStats(BaseModel):
     """Response model for course statistics"""
+
     total_courses: int
-    course_titles: List[str]
+    course_titles: list[str]
 
 
 @pytest.fixture
@@ -284,10 +286,7 @@ def test_app(config_mock):
     app = FastAPI(title="Course Materials RAG System Test", root_path="")
 
     # Add middleware
-    app.add_middleware(
-        TrustedHostMiddleware,
-        allowed_hosts=["*"]
-    )
+    app.add_middleware(TrustedHostMiddleware, allowed_hosts=["*"])
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],
@@ -302,16 +301,15 @@ def test_app(config_mock):
     mock_rag_system.session_manager = Mock()
     mock_rag_system.session_manager.create_session = Mock(return_value="session_1")
     mock_rag_system.query = Mock(return_value=("Test answer", ["Source 1"]))
-    mock_rag_system.get_course_analytics = Mock(return_value={
-        "total_courses": 2,
-        "course_titles": ["Python 101", "Web Development"]
-    })
+    mock_rag_system.get_course_analytics = Mock(
+        return_value={"total_courses": 2, "course_titles": ["Python 101", "Web Development"]}
+    )
 
     # Define API endpoints
     @app.post("/api/query", response_model=QueryResponse)
     async def query_documents(request: QueryRequest):
         """Process a query and return response with sources"""
-        from fastapi import HTTPException
+
         try:
             session_id = request.session_id
             if not session_id:
@@ -319,25 +317,20 @@ def test_app(config_mock):
 
             answer, sources = mock_rag_system.query(request.query, session_id)
 
-            return QueryResponse(
-                answer=answer,
-                sources=sources,
-                session_id=session_id
-            )
+            return QueryResponse(answer=answer, sources=sources, session_id=session_id)
         except ValueError as e:
-            raise HTTPException(status_code=502, detail=f"API Error: {str(e)}")
+            raise HTTPException(status_code=502, detail=f"API Error: {e!s}")
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
 
     @app.get("/api/courses", response_model=CourseStats)
     async def get_course_stats():
         """Get course analytics and statistics"""
-        from fastapi import HTTPException
+
         try:
             analytics = mock_rag_system.get_course_analytics()
             return CourseStats(
-                total_courses=analytics["total_courses"],
-                course_titles=analytics["course_titles"]
+                total_courses=analytics["total_courses"], course_titles=analytics["course_titles"]
             )
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
@@ -366,9 +359,11 @@ def mock_rag_system():
     rag_system.session_manager.add_exchange = Mock()
     rag_system.session_manager.get_history = Mock(return_value="")
     rag_system.query = Mock(return_value=("Sample answer", ["Source 1"]))
-    rag_system.get_course_analytics = Mock(return_value={
-        "total_courses": 3,
-        "course_titles": ["Python 101", "JavaScript Basics", "Data Science"]
-    })
+    rag_system.get_course_analytics = Mock(
+        return_value={
+            "total_courses": 3,
+            "course_titles": ["Python 101", "JavaScript Basics", "Data Science"],
+        }
+    )
     rag_system.add_course_folder = Mock(return_value=(2, 100))
     return rag_system
