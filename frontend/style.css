@@ -5,7 +5,7 @@
     padding: 0;
 }
 
-/* CSS Variables */
+/* CSS Variables - Dark Mode (Default) */
 :root {
     --primary-color: #2563eb;
     --primary-hover: #1d4ed8;
@@ -22,6 +22,25 @@
     --focus-ring: rgba(37, 99, 235, 0.2);
     --welcome-bg: #1e3a5f;
     --welcome-border: #2563eb;
+}
+
+/* CSS Variables - Light Mode */
+:root.light-mode {
+    --primary-color: #1d4ed8;
+    --primary-hover: #2563eb;
+    --background: #f8fafc;
+    --surface: #e2e8f0;
+    --surface-hover: #cbd5e1;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --border-color: #cbd5e1;
+    --user-message: #1d4ed8;
+    --assistant-message: #e2e8f0;
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --radius: 12px;
+    --focus-ring: rgba(29, 78, 216, 0.2);
+    --welcome-bg: #dbeafe;
+    --welcome-border: #1d4ed8;
 }
 
 /* Base Styles */
@@ -49,6 +68,21 @@ body {
 /* Header - Hidden */
 header {
     display: none;
+}
+
+/* Header Top - Container for title and toggles */
+.header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+
+/* Header Controls - Container for toggle buttons */
+.header-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
 }
 
 header h1 {
@@ -480,6 +514,82 @@ header h1 {
     cursor: not-allowed;
 }
 
+/* Sidebar Toggle Button */
+.sidebar-toggle {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: var(--surface);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 0;
+}
+
+.sidebar-toggle:hover {
+    background: var(--surface-hover);
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    transform: translateY(-1px);
+}
+
+.sidebar-toggle:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+.sidebar-toggle:active {
+    transform: translateY(0);
+}
+
+.sidebar-toggle svg {
+    width: 20px;
+    height: 20px;
+    stroke: currentColor;
+}
+
+/* Theme Toggle Button */
+.theme-toggle {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: var(--surface);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 0;
+}
+
+.theme-toggle:hover {
+    background: var(--surface-hover);
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    transform: translateY(-1px);
+}
+
+.theme-toggle:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+.theme-toggle:active {
+    transform: translateY(0);
+}
+
+.theme-toggle svg {
+    width: 20px;
+    height: 20px;
+    stroke: currentColor;
+}
+
 /* Loading Animation */
 .loading {
     display: inline-flex;
@@ -721,12 +831,90 @@ details[open] .suggested-header::before {
     transform: translateX(2px);
 }
 
+/* Toggles visible on smaller screens */
+@media (max-width: 1024px) {
+    .sidebar-toggle,
+    .theme-toggle {
+        display: flex;
+    }
+}
+
+/* Toggles always visible */
+@media (max-width: 768px) {
+    .sidebar-toggle,
+    .theme-toggle {
+        display: flex;
+    }
+}
+
+/* Light Mode Specific Styles */
+:root.light-mode .message.assistant .message-content {
+    border: 1px solid #cbd5e1;
+}
+
+:root.light-mode .sources-content {
+    background: rgba(219, 234, 254, 0.3);
+    border: 1px solid rgba(29, 78, 216, 0.25);
+}
+
+:root.light-mode .source-item {
+    background: linear-gradient(135deg, rgba(29, 78, 216, 0.1), rgba(29, 78, 216, 0.05));
+    border: 1px solid rgba(29, 78, 216, 0.3);
+}
+
+:root.light-mode .stat-item {
+    background: #e2e8f0;
+    border: 1px solid #cbd5e1;
+}
+
+:root.light-mode .new-chat-btn {
+    background: #e2e8f0;
+    border: 1px solid #cbd5e1;
+}
+
+:root.light-mode .new-chat-btn:hover {
+    background: #cbd5e1;
+}
+
+:root.light-mode .suggested-item {
+    background: #e2e8f0;
+    border: 1px solid #cbd5e1;
+}
+
+:root.light-mode .suggested-item:hover {
+    background: #cbd5e1;
+}
+
+:root.light-mode #chatInput {
+    background: #e2e8f0;
+    border: 1px solid #cbd5e1;
+}
+
+:root.light-mode #chatInput:focus {
+    border-color: #1d4ed8;
+    box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.2);
+}
+
+:root.light-mode .message.welcome-message .message-content {
+    border: 2px solid #cbd5e1;
+}
+
+/* Sidebar hidden state */
+.sidebar.hidden {
+    display: none;
+}
+
+/* Chat main area full width when sidebar is hidden */
+.main-content.sidebar-hidden .chat-main {
+    width: 100%;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .main-content {
         flex-direction: column;
     }
-    
+
     .sidebar {
         width: 100%;
         border-right: none;

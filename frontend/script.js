@@ -5,7 +5,7 @@ const API_URL = '/api';
 let currentSessionId = null;
 
 // DOM elements
-let chatMessages, chatInput, sendButton, totalCourses, courseTitles;
+let chatMessages, chatInput, sendButton, totalCourses, courseTitles, sidebarToggle, sidebar, mainContent, themeToggle;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -15,10 +15,16 @@ document.addEventListener('DOMContentLoaded', () => {
     sendButton = document.getElementById('sendButton');
     totalCourses = document.getElementById('totalCourses');
     courseTitles = document.getElementById('courseTitles');
-    
+    sidebarToggle = document.getElementById('sidebarToggle');
+    sidebar = document.querySelector('.sidebar');
+    mainContent = document.querySelector('.main-content');
+    themeToggle = document.getElementById('themeToggle');
+
     setupEventListeners();
     createNewSession();
     loadCourseStats();
+    restoreSidebarState();
+    restoreThemeState();
 });
 
 // Event Listeners
@@ -31,6 +37,16 @@ function setupEventListeners() {
 
     // New chat button
     document.getElementById('newChatBtn').addEventListener('click', createNewSession);
+
+    // Theme toggle button
+    if (themeToggle) {
+        themeToggle.addEventListener('click', toggleTheme);
+    }
+
+    // Sidebar toggle button
+    if (sidebarToggle) {
+        sidebarToggle.addEventListener('click', toggleSidebar);
+    }
 
     // Suggested questions
     document.querySelectorAll('.suggested-item').forEach(button => {
@@ -171,15 +187,15 @@ async function loadCourseStats() {
         console.log('Loading course stats...');
         const response = await fetch(`${API_URL}/courses`);
         if (!response.ok) throw new Error('Failed to load course stats');
-        
+
         const data = await response.json();
         console.log('Course data received:', data);
-        
+
         // Update stats in UI
         if (totalCourses) {
             totalCourses.textContent = data.total_courses;
         }
-        
+
         // Update course titles
         if (courseTitles) {
             if (data.course_titles && data.course_titles.length > 0) {
@@ -190,7 +206,7 @@ async function loadCourseStats() {
                 courseTitles.innerHTML = '<span class="no-courses">No courses available</span>';
             }
         }
-        
+
     } catch (error) {
         console.error('Error loading course stats:', error);
         // Set default values on error
@@ -200,5 +216,68 @@ async function loadCourseStats() {
         if (courseTitles) {
             courseTitles.innerHTML = '<span class="error">Failed to load courses</span>';
         }
+    }
+}
+
+// Toggle Sidebar Visibility
+function toggleSidebar() {
+    const isSidebarHidden = sidebar.classList.toggle('hidden');
+    mainContent.classList.toggle('sidebar-hidden', isSidebarHidden);
+    localStorage.setItem('sidebarHidden', isSidebarHidden);
+
+    // Update button appearance
+    updateToggleButtonState(isSidebarHidden);
+}
+
+// Update toggle button visual state
+function updateToggleButtonState(isHidden) {
+    if (isHidden) {
+        sidebarToggle.setAttribute('aria-pressed', 'true');
+        sidebarToggle.setAttribute('title', 'Show sidebar');
+    } else {
+        sidebarToggle.setAttribute('aria-pressed', 'false');
+        sidebarToggle.setAttribute('title', 'Hide sidebar');
+    }
+}
+
+// Restore sidebar state from localStorage
+function restoreSidebarState() {
+    const isSidebarHidden = localStorage.getItem('sidebarHidden') === 'true';
+    if (isSidebarHidden) {
+        sidebar.classList.add('hidden');
+        mainContent.classList.add('sidebar-hidden');
+        updateToggleButtonState(true);
+    } else {
+        updateToggleButtonState(false);
+    }
+}
+
+// Toggle Theme
+function toggleTheme() {
+    const html = document.documentElement;
+    const isLightMode = html.classList.toggle('light-mode');
+    localStorage.setItem('lightMode', isLightMode);
+    updateThemeToggleState(isLightMode);
+}
+
+// Update theme toggle button state
+function updateThemeToggleState(isLightMode) {
+    if (isLightMode) {
+        themeToggle.setAttribute('aria-pressed', 'true');
+        themeToggle.setAttribute('title', 'Switch to dark theme');
+    } else {
+        themeToggle.setAttribute('aria-pressed', 'false');
+        themeToggle.setAttribute('title', 'Switch to light theme');
+    }
+}
+
+// Restore theme state from localStorage
+function restoreThemeState() {
+    const isLightMode = localStorage.getItem('lightMode') === 'true';
+    if (isLightMode) {
+        document.documentElement.classList.add('light-mode');
+        updateThemeToggleState(true);
+    } else {
+        updateThemeToggleState(false);
     }
 }
