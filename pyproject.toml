@@ -19,6 +19,7 @@ dev = [
     "black>=26.5.1",
     "pytest>=9.0.3",
     "ruff>=0.15.16",
+    "httpx>=0.28",
 ]
 
 [tool.black]
@@ -35,3 +36,8 @@ ignore = ["E501"]
 
 [tool.ruff.lint.per-file-ignores]
 "backend/app.py" = ["E402"]
+
+[tool.pytest.ini_options]
+testpaths = ["backend/tests"]
+pythonpath = ["backend"]
+addopts = "-v --tb=short"
