@@ -17,4 +17,10 @@ dependencies = [
 [dependency-groups]
 dev = [
     "pytest>=9.0.3",
+    "httpx>=0.28",
 ]
+
+[tool.pytest.ini_options]
+testpaths = ["backend/tests"]
+pythonpath = ["backend"]
+addopts = "-v --tb=short"
