@@ -5,7 +5,7 @@
     padding: 0;
 }
 
-/* CSS Variables */
+/* CSS Variables — dark theme (default) */
 :root {
     --primary-color: #2563eb;
     --primary-hover: #1d4ed8;
@@ -22,6 +22,78 @@
     --focus-ring: rgba(37, 99, 235, 0.2);
     --welcome-bg: #1e3a5f;
     --welcome-border: #2563eb;
+    --code-bg: rgba(0, 0, 0, 0.25);
+}
+
+/* Light theme overrides */
+[data-theme="light"] {
+    --primary-color: #2563eb;
+    --primary-hover: #1d4ed8;
+    --background: #f8fafc;
+    --surface: #ffffff;
+    --surface-hover: #f1f5f9;
+    --text-primary: #0f172a;
+    --text-secondary: #64748b;
+    --border-color: #e2e8f0;
+    --user-message: #2563eb;
+    --assistant-message: #f1f5f9;
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --radius: 12px;
+    --focus-ring: rgba(37, 99, 235, 0.15);
+    --welcome-bg: #dbeafe;
+    --welcome-border: #2563eb;
+    --code-bg: rgba(0, 0, 0, 0.06);
+}
+
+/* Smooth theme transitions */
+.theme-transitioning,
+.theme-transitioning * {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease !important;
+}
+
+/* Theme toggle button */
+.theme-toggle {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--surface);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    box-shadow: var(--shadow);
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    padding: 0;
+}
+
+.theme-toggle:hover {
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+    transform: scale(1.1);
+}
+
+.theme-toggle:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+/* Icon visibility: dark mode shows sun, light mode shows moon */
+.icon-moon {
+    display: none;
+}
+
+[data-theme="light"] .icon-sun {
+    display: none;
+}
+
+[data-theme="light"] .icon-moon {
+    display: block;
 }
 
 /* Base Styles */
@@ -277,7 +349,7 @@ header h1 {
 }
 
 .message-content code {
-    background-color: rgba(0, 0, 0, 0.2);
+    background-color: var(--code-bg);
     padding: 0.125rem 0.25rem;
     border-radius: 3px;
     font-family: 'Fira Code', 'Consolas', monospace;
@@ -285,7 +357,7 @@ header h1 {
 }
 
 .message-content pre {
-    background-color: rgba(0, 0, 0, 0.2);
+    background-color: var(--code-bg);
     padding: 0.75rem;
     border-radius: 4px;
     overflow-x: auto;
@@ -489,6 +561,29 @@ header h1 {
 details[open] .stats-header::before,
 details[open] .suggested-header::before {
     transform: rotate(90deg);
+}
+
+/* New Chat Button */
+.new-chat-btn {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: none;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    padding: 0.5rem 0;
+    width: 100%;
+    text-align: left;
+    font-family: inherit;
+    transition: color 0.2s ease;
+}
+
+
+.new-chat-btn:hover {
+    color: var(--primary-color);
 }
 
 /* Course Stats in Sidebar */

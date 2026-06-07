@@ -5,17 +5,35 @@ const API_URL = '/api';
 let currentSessionId = null;
 
 // DOM elements
-let chatMessages, chatInput, sendButton, totalCourses, courseTitles;
+let chatMessages, chatInput, sendButton, totalCourses, courseTitles, newChatBtn;
+
+// Theme management
+function initTheme() {
+    const saved = localStorage.getItem('theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', saved === 'light' ? 'light' : 'dark');
+}
+
+function toggleTheme() {
+    const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+    document.body.classList.add('theme-transitioning');
+    document.documentElement.setAttribute('data-theme', isLight ? 'dark' : 'light');
+    localStorage.setItem('theme', isLight ? 'dark' : 'light');
+    setTimeout(() => document.body.classList.remove('theme-transitioning'), 300);
+}
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
+    initTheme();
+
     // Get DOM elements after page loads
     chatMessages = document.getElementById('chatMessages');
     chatInput = document.getElementById('chatInput');
     sendButton = document.getElementById('sendButton');
     totalCourses = document.getElementById('totalCourses');
     courseTitles = document.getElementById('courseTitles');
-    
+
+    newChatBtn = document.getElementById('newChatBtn');
+    document.getElementById('themeToggle').addEventListener('click', toggleTheme);
     setupEventListeners();
     createNewSession();
     loadCourseStats();
@@ -24,6 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // Event Listeners
 function setupEventListeners() {
     // Chat functionality
+    newChatBtn.addEventListener('click', createNewSession);
     sendButton.addEventListener('click', sendMessage);
     chatInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') sendMessage();
@@ -147,6 +166,13 @@ function escapeHtml(text) {
 // Removed removeMessage function - no longer needed since we handle loading differently
 
 async function createNewSession() {
+    if (currentSessionId) {
+        try {
+            await fetch(`${API_URL}/session/${currentSessionId}`, { method: 'DELETE' });
+        } catch (e) {
+            // best-effort cleanup
+        }
+    }
     currentSessionId = null;
     chatMessages.innerHTML = '';
     addMessage('Welcome to the Course Materials Assistant! I can help you with questions about courses, lessons and specific content. What would you like to know?', 'assistant', null, true);

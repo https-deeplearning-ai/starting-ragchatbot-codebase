@@ -13,3 +13,31 @@ dependencies = [
     "python-multipart==0.0.20",
     "python-dotenv==1.1.1",
 ]
+
+[dependency-groups]
+dev = [
+    "black>=26.5.1",
+    "pytest>=9.0.3",
+    "ruff>=0.15.16",
+    "httpx>=0.28",
+]
+
+[tool.black]
+line-length = 88
+target-version = ["py313"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+"backend/app.py" = ["E402"]
+
+[tool.pytest.ini_options]
+testpaths = ["backend/tests"]
+pythonpath = ["backend"]
+addopts = "-v --tb=short"
