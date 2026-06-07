@@ -7,15 +7,14 @@ Covers:
 """
 
 from unittest.mock import MagicMock
-import pytest
 
 from search_tools import CourseSearchTool, ToolManager
 from vector_store import SearchResults
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_search_results(docs, metas):
     """Build a SearchResults from lists of docs and metadata dicts."""
@@ -33,6 +32,7 @@ def _make_error_results(msg):
 # ---------------------------------------------------------------------------
 # Unit tests — VectorStore is mocked
 # ---------------------------------------------------------------------------
+
 
 class TestCourseSearchToolExecute:
 
@@ -162,6 +162,7 @@ class TestCourseSearchToolExecute:
 # ToolManager unit tests
 # ---------------------------------------------------------------------------
 
+
 class TestToolManager:
 
     def test_register_and_execute_tool(self):
@@ -216,6 +217,7 @@ class TestToolManager:
 # Integration tests — real temp ChromaDB
 # ---------------------------------------------------------------------------
 
+
 class TestCourseSearchToolIntegration:
     """Uses a real populated VectorStore fixture (temp ChromaDB)."""
 
@@ -238,7 +240,9 @@ class TestCourseSearchToolIntegration:
 
         assert "Lesson 2" in result
 
-    def test_search_with_nonexistent_course_resolves_to_closest_match(self, populated_vector_store):
+    def test_search_with_nonexistent_course_resolves_to_closest_match(
+        self, populated_vector_store
+    ):
         # _resolve_course_name uses vector similarity — it always returns the
         # nearest course in the catalog, so no "No course found" error is raised
         # for a fabricated name; instead the closest real course's content is returned.

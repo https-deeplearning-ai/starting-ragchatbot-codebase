@@ -5,15 +5,14 @@ The Anthropic client is always mocked so these tests run without a real API key.
 ChromaDB uses the temporary fixture from conftest.py.
 """
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
+
 import pytest
-
-from models import Course, Lesson, CourseChunk
-
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_text_response(text="Answer"):
     resp = MagicMock()
@@ -54,6 +53,7 @@ def _build_rag_system(tmp_chroma_path, mock_anthropic_client):
         CHROMA_PATH: str = tmp_chroma_path
 
     from rag_system import RAGSystem
+
     rag = RAGSystem(TestConfig())
     rag.ai_generator.client = mock_anthropic_client
     return rag
@@ -62,6 +62,7 @@ def _build_rag_system(tmp_chroma_path, mock_anthropic_client):
 # ---------------------------------------------------------------------------
 # Tests
 # ---------------------------------------------------------------------------
+
 
 class TestRAGSystemQuery:
 
@@ -88,7 +89,9 @@ class TestRAGSystemQuery:
         assert answer == "42"
 
     def test_query_returns_empty_sources_when_no_tool_used(self):
-        self.mock_client.messages.create.return_value = _make_text_response("General answer")
+        self.mock_client.messages.create.return_value = _make_text_response(
+            "General answer"
+        )
 
         _, sources = self.rag.query("What is Python?")
 
@@ -115,7 +118,9 @@ class TestRAGSystemQuery:
 
     # --- tool use flow ---
 
-    def test_query_with_content_question_triggers_tool_search(self, sample_course, sample_chunks):
+    def test_query_with_content_question_triggers_tool_search(
+        self, sample_course, sample_chunks
+    ):
         # Load course data so the search tool has something to return
         self.rag.vector_store.add_course_metadata(sample_course)
         self.rag.vector_store.add_course_content(sample_chunks)
@@ -130,7 +135,9 @@ class TestRAGSystemQuery:
         assert self.mock_client.messages.create.call_count == 2
         assert answer == "RAG is retrieval augmented generation."
 
-    def test_query_tool_sources_returned_after_search(self, sample_course, sample_chunks):
+    def test_query_tool_sources_returned_after_search(
+        self, sample_course, sample_chunks
+    ):
         self.rag.vector_store.add_course_metadata(sample_course)
         self.rag.vector_store.add_course_content(sample_chunks)
 
@@ -166,7 +173,9 @@ class TestRAGSystemQuery:
 
     # --- final API call includes tools (mirrors ai_generator test) ---
 
-    def test_final_api_call_in_tool_flow_includes_tools(self, sample_course, sample_chunks):
+    def test_final_api_call_in_tool_flow_includes_tools(
+        self, sample_course, sample_chunks
+    ):
         """
         Verify that when RAGSystem drives the tool-use flow, the second Anthropic
         API call (the follow-up after tool execution) includes the 'tools' parameter.
@@ -181,9 +190,9 @@ class TestRAGSystemQuery:
 
         self.rag.query("What is RAG?")
 
-        assert self.mock_client.messages.create.call_count == 2, (
-            "Expected exactly two API calls (initial + follow-up after tool execution)."
-        )
+        assert (
+            self.mock_client.messages.create.call_count == 2
+        ), "Expected exactly two API calls (initial + follow-up after tool execution)."
         second_call_kwargs = self.mock_client.messages.create.call_args_list[1][1]
         assert "tools" in second_call_kwargs, (
             "The follow-up API call (after tool execution) is missing 'tools'. "

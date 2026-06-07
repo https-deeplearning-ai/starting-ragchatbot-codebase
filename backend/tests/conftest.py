@@ -1,13 +1,13 @@
-import sys
 import os
+import sys
 
 # Add the backend directory to the Python path so test files can import backend modules
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import pytest
 import tempfile
 
-from models import Course, Lesson, CourseChunk
+import pytest
+from models import Course, CourseChunk, Lesson
 from vector_store import VectorStore
 
 
@@ -50,14 +50,14 @@ def sample_chunks():
     return [
         CourseChunk(
             content="Lesson 1 content: RAG stands for Retrieval-Augmented Generation. "
-                    "It combines a retrieval system with a generative language model.",
+            "It combines a retrieval system with a generative language model.",
             course_title="Introduction to RAG",
             lesson_number=1,
             chunk_index=0,
         ),
         CourseChunk(
             content="Vector databases store embeddings and enable fast similarity search "
-                    "over large document collections.",
+            "over large document collections.",
             course_title="Introduction to RAG",
             lesson_number=2,
             chunk_index=1,
