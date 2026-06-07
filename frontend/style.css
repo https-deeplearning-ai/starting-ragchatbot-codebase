@@ -491,6 +491,29 @@ details[open] .suggested-header::before {
     transform: rotate(90deg);
 }
 
+/* New Chat Button */
+.new-chat-btn {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: none;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    padding: 0.5rem 0;
+    width: 100%;
+    text-align: left;
+    font-family: inherit;
+    transition: color 0.2s ease;
+}
+
+
+.new-chat-btn:hover {
+    color: var(--primary-color);
+}
+
 /* Course Stats in Sidebar */
 .course-stats {
     display: flex;

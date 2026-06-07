@@ -62,6 +62,9 @@ class CourseSearchTool(Tool):
             Formatted search results or error message
         """
         
+        # Reset sources before each search so stale citations never leak
+        self.last_sources = []
+
         # Use the vector store's unified search interface
         results = self.store.search(
             query=query,
