@@ -8,15 +8,14 @@ All assertions are on observable external behavior:
   - what parameters were passed to each API call
 """
 
-from unittest.mock import MagicMock, patch, call
-import pytest
+from unittest.mock import MagicMock, patch
 
 from ai_generator import AIGenerator
-
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_generator():
     """Return an AIGenerator whose Anthropic client is fully mocked."""
@@ -79,6 +78,7 @@ TOOL_DEFINITIONS = [
 # ---------------------------------------------------------------------------
 # Direct-response path (no tool use)
 # ---------------------------------------------------------------------------
+
 
 class TestGenerateResponseDirect:
 
@@ -158,6 +158,7 @@ class TestGenerateResponseDirect:
 # Single tool-use round
 # ---------------------------------------------------------------------------
 
+
 class TestSingleRoundToolUse:
     """Claude requests one tool call, then returns a text answer."""
 
@@ -181,14 +182,18 @@ class TestSingleRoundToolUse:
             _make_text_response(),
         ]
 
-        gen.generate_response("question", tools=TOOL_DEFINITIONS, tool_manager=_make_tool_manager())
+        gen.generate_response(
+            "question", tools=TOOL_DEFINITIONS, tool_manager=_make_tool_manager()
+        )
 
         assert gen.client.messages.create.call_count == 2
 
     def test_execute_tool_called_once_with_correct_args(self):
         gen = _make_generator()
         gen.client.messages.create.side_effect = [
-            _make_tool_use_response(tool_input={"query": "vector stores", "course_name": "RAG"}),
+            _make_tool_use_response(
+                tool_input={"query": "vector stores", "course_name": "RAG"}
+            ),
             _make_text_response(),
         ]
         tm = _make_tool_manager()
@@ -206,7 +211,9 @@ class TestSingleRoundToolUse:
             _make_text_response(),
         ]
 
-        gen.generate_response("question", tools=TOOL_DEFINITIONS, tool_manager=_make_tool_manager())
+        gen.generate_response(
+            "question", tools=TOOL_DEFINITIONS, tool_manager=_make_tool_manager()
+        )
 
         second_call_kwargs = gen.client.messages.create.call_args_list[1][1]
         assert "tools" in second_call_kwargs
@@ -218,7 +225,9 @@ class TestSingleRoundToolUse:
             _make_text_response(),
         ]
 
-        gen.generate_response("my question", tools=TOOL_DEFINITIONS, tool_manager=_make_tool_manager())
+        gen.generate_response(
+            "my question", tools=TOOL_DEFINITIONS, tool_manager=_make_tool_manager()
+        )
 
         second_call_kwargs = gen.client.messages.create.call_args_list[1][1]
         messages = second_call_kwargs["messages"]
@@ -234,7 +243,9 @@ class TestSingleRoundToolUse:
             _make_text_response(),
         ]
 
-        gen.generate_response("q", tools=TOOL_DEFINITIONS, tool_manager=_make_tool_manager())
+        gen.generate_response(
+            "q", tools=TOOL_DEFINITIONS, tool_manager=_make_tool_manager()
+        )
 
         second_call_kwargs = gen.client.messages.create.call_args_list[1][1]
         tool_result_block = second_call_kwargs["messages"][2]["content"][0]
@@ -248,7 +259,9 @@ class TestSingleRoundToolUse:
             _make_text_response(),
         ]
 
-        gen.generate_response("question", tools=TOOL_DEFINITIONS, tool_manager=_make_tool_manager())
+        gen.generate_response(
+            "question", tools=TOOL_DEFINITIONS, tool_manager=_make_tool_manager()
+        )
 
         second_call_kwargs = gen.client.messages.create.call_args_list[1][1]
         assert "tool_choice" not in second_call_kwargs
@@ -258,13 +271,16 @@ class TestSingleRoundToolUse:
 # Two sequential tool-use rounds
 # ---------------------------------------------------------------------------
 
+
 class TestTwoRoundToolUse:
     """Claude uses the search tool twice in separate rounds before answering."""
 
     def test_returns_final_text_after_two_rounds(self):
         gen = _make_generator()
         gen.client.messages.create.side_effect = [
-            _make_tool_use_response(tool_input={"query": "lesson 4 title"}, tool_id="t1"),
+            _make_tool_use_response(
+                tool_input={"query": "lesson 4 title"}, tool_id="t1"
+            ),
             _make_tool_use_response(tool_input={"query": "found topic"}, tool_id="t2"),
             _make_text_response("Here is the course that covers the same topic."),
         ]
@@ -285,7 +301,9 @@ class TestTwoRoundToolUse:
             _make_text_response(),
         ]
 
-        gen.generate_response("question", tools=TOOL_DEFINITIONS, tool_manager=_make_tool_manager())
+        gen.generate_response(
+            "question", tools=TOOL_DEFINITIONS, tool_manager=_make_tool_manager()
+        )
 
         assert gen.client.messages.create.call_count == 3
 
@@ -293,7 +311,9 @@ class TestTwoRoundToolUse:
         gen = _make_generator()
         gen.client.messages.create.side_effect = [
             _make_tool_use_response(tool_input={"query": "first search"}, tool_id="t1"),
-            _make_tool_use_response(tool_input={"query": "second search"}, tool_id="t2"),
+            _make_tool_use_response(
+                tool_input={"query": "second search"}, tool_id="t2"
+            ),
             _make_text_response(),
         ]
         tm = _make_tool_manager()
@@ -306,7 +326,9 @@ class TestTwoRoundToolUse:
         gen = _make_generator()
         gen.client.messages.create.side_effect = [
             _make_tool_use_response(tool_input={"query": "first search"}, tool_id="t1"),
-            _make_tool_use_response(tool_input={"query": "second search"}, tool_id="t2"),
+            _make_tool_use_response(
+                tool_input={"query": "second search"}, tool_id="t2"
+            ),
             _make_text_response(),
         ]
         tm = _make_tool_manager()
@@ -325,7 +347,9 @@ class TestTwoRoundToolUse:
             _make_text_response(),
         ]
 
-        gen.generate_response("question", tools=TOOL_DEFINITIONS, tool_manager=_make_tool_manager())
+        gen.generate_response(
+            "question", tools=TOOL_DEFINITIONS, tool_manager=_make_tool_manager()
+        )
 
         for i in (1, 2):
             kwargs = gen.client.messages.create.call_args_list[i][1]
@@ -340,7 +364,9 @@ class TestTwoRoundToolUse:
             _make_text_response(),
         ]
 
-        gen.generate_response("my query", tools=TOOL_DEFINITIONS, tool_manager=_make_tool_manager())
+        gen.generate_response(
+            "my query", tools=TOOL_DEFINITIONS, tool_manager=_make_tool_manager()
+        )
 
         third_call_kwargs = gen.client.messages.create.call_args_list[2][1]
         messages = third_call_kwargs["messages"]
@@ -354,6 +380,7 @@ class TestTwoRoundToolUse:
 # Max-rounds termination
 # ---------------------------------------------------------------------------
 
+
 class TestMaxRoundsTermination:
     """Loop stops after _MAX_TOOL_ROUNDS even if Claude still wants more tools."""
 
@@ -365,7 +392,9 @@ class TestMaxRoundsTermination:
             _make_tool_use_response(tool_id="t3"),  # loop exits after this
         ]
 
-        gen.generate_response("question", tools=TOOL_DEFINITIONS, tool_manager=_make_tool_manager())
+        gen.generate_response(
+            "question", tools=TOOL_DEFINITIONS, tool_manager=_make_tool_manager()
+        )
 
         assert gen.client.messages.create.call_count == 3
 
@@ -401,6 +430,7 @@ class TestMaxRoundsTermination:
 # Tool execution errors
 # ---------------------------------------------------------------------------
 
+
 class TestToolExecutionErrors:
 
     def test_exception_from_execute_tool_does_not_propagate(self):
@@ -409,7 +439,9 @@ class TestToolExecutionErrors:
         tm = MagicMock()
         tm.execute_tool.side_effect = Exception("DB unavailable")
 
-        result = gen.generate_response("question", tools=TOOL_DEFINITIONS, tool_manager=tm)
+        result = gen.generate_response(
+            "question", tools=TOOL_DEFINITIONS, tool_manager=tm
+        )
 
         assert isinstance(result, str)
 
@@ -434,7 +466,9 @@ class TestToolExecutionErrors:
         tm = MagicMock()
         tm.execute_tool.return_value = "No relevant content found"
 
-        result = gen.generate_response("question", tools=TOOL_DEFINITIONS, tool_manager=tm)
+        result = gen.generate_response(
+            "question", tools=TOOL_DEFINITIONS, tool_manager=tm
+        )
 
         assert gen.client.messages.create.call_count == 2
         assert result == "Based on available information..."
@@ -459,13 +493,16 @@ class TestToolExecutionErrors:
 # Miscellaneous / edge cases
 # ---------------------------------------------------------------------------
 
+
 class TestMiscBehavior:
 
     def test_no_tool_manager_with_tool_use_response_returns_fallback(self):
         gen = _make_generator()
         gen.client.messages.create.return_value = _make_tool_use_response()
 
-        result = gen.generate_response("question", tools=TOOL_DEFINITIONS, tool_manager=None)
+        result = gen.generate_response(
+            "question", tools=TOOL_DEFINITIONS, tool_manager=None
+        )
 
         assert isinstance(result, str) and len(result) > 0
         assert gen.client.messages.create.call_count == 1
@@ -486,7 +523,9 @@ class TestMiscBehavior:
 
         for i, call in enumerate(gen.client.messages.create.call_args_list):
             system = call[1]["system"]
-            assert "User: hello" in system, f"Call #{i + 1} missing conversation history"
+            assert (
+                "User: hello" in system
+            ), f"Call #{i + 1} missing conversation history"
 
     def test_system_prompt_removed_one_search_limit(self):
         assert "One search per query maximum" not in AIGenerator.SYSTEM_PROMPT

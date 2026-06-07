@@ -1,5 +1,7 @@
-import anthropic
 from typing import List, Optional
+
+import anthropic
+
 
 class AIGenerator:
     """Handles interactions with Anthropic's Claude API for generating responses"""
@@ -67,7 +69,11 @@ Provide only the direct answer to what was asked.
         )
 
         messages = [{"role": "user", "content": query}]
-        api_params = {**self.base_params, "messages": messages, "system": system_content}
+        api_params = {
+            **self.base_params,
+            "messages": messages,
+            "system": system_content,
+        }
         if tools:
             api_params["tools"] = tools
             api_params["tool_choice"] = {"type": "auto"}
@@ -90,11 +96,13 @@ Provide only the direct answer to what was asked.
                 except Exception as e:
                     result = f"Tool error: {str(e)}"
                     error_occurred = True
-                tool_results.append({
-                    "type": "tool_result",
-                    "tool_use_id": block.id,
-                    "content": result,
-                })
+                tool_results.append(
+                    {
+                        "type": "tool_result",
+                        "tool_use_id": block.id,
+                        "content": result,
+                    }
+                )
 
             messages.append({"role": "user", "content": tool_results})
 
@@ -103,7 +111,11 @@ Provide only the direct answer to what was asked.
 
             # tools must be included in follow-up calls — Anthropic returns HTTP 400
             # when messages contain tool_use blocks but no tools are defined.
-            followup_params = {**self.base_params, "messages": messages, "system": system_content}
+            followup_params = {
+                **self.base_params,
+                "messages": messages,
+                "system": system_content,
+            }
             if tools:
                 followup_params["tools"] = tools
             response = self.client.messages.create(**followup_params)
