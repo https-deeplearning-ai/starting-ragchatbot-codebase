@@ -7,16 +7,33 @@ let currentSessionId = null;
 // DOM elements
 let chatMessages, chatInput, sendButton, totalCourses, courseTitles, newChatBtn;
 
+// Theme management
+function initTheme() {
+    const saved = localStorage.getItem('theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', saved === 'light' ? 'light' : 'dark');
+}
+
+function toggleTheme() {
+    const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+    document.body.classList.add('theme-transitioning');
+    document.documentElement.setAttribute('data-theme', isLight ? 'dark' : 'light');
+    localStorage.setItem('theme', isLight ? 'dark' : 'light');
+    setTimeout(() => document.body.classList.remove('theme-transitioning'), 300);
+}
+
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
+    initTheme();
+
     // Get DOM elements after page loads
     chatMessages = document.getElementById('chatMessages');
     chatInput = document.getElementById('chatInput');
     sendButton = document.getElementById('sendButton');
     totalCourses = document.getElementById('totalCourses');
     courseTitles = document.getElementById('courseTitles');
-    
+
     newChatBtn = document.getElementById('newChatBtn');
+    document.getElementById('themeToggle').addEventListener('click', toggleTheme);
     setupEventListeners();
     createNewSession();
     loadCourseStats();
