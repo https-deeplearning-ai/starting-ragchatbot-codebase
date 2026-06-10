@@ -191,7 +191,8 @@ class DocumentProcessor:
                                 content=chunk_with_context,
                                 course_title=course.title,
                                 lesson_number=current_lesson,
-                                chunk_index=chunk_counter
+                                chunk_index=chunk_counter,
+                                lesson_link=lesson_link
                             )
                             course_chunks.append(course_chunk)
                             chunk_counter += 1
@@ -237,7 +238,8 @@ class DocumentProcessor:
                         content=chunk_with_context,
                         course_title=course.title,
                         lesson_number=current_lesson,
-                        chunk_index=chunk_counter
+                        chunk_index=chunk_counter,
+                        lesson_link=lesson_link
                     )
                     course_chunks.append(course_chunk)
                     chunk_counter += 1

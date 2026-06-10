@@ -1,4 +1,4 @@
-import anthropic
+from anthropic import AnthropicVertex
 from typing import List, Optional, Dict, Any
 
 class AIGenerator:
@@ -29,8 +29,8 @@ All responses must be:
 Provide only the direct answer to what was asked.
 """
     
-    def __init__(self, api_key: str, model: str):
-        self.client = anthropic.Anthropic(api_key=api_key)
+    def __init__(self, project_id: str, region: str, model: str):
+        self.client = AnthropicVertex(project_id=project_id, region=region)
         self.model = model
         
         # Pre-build base API parameters

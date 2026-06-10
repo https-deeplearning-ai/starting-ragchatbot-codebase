@@ -8,9 +8,10 @@ load_dotenv()
 @dataclass
 class Config:
     """Configuration settings for the RAG system"""
-    # Anthropic API settings
-    ANTHROPIC_API_KEY: str = os.getenv("ANTHROPIC_API_KEY", "")
-    ANTHROPIC_MODEL: str = "claude-sonnet-4-20250514"
+    # Vertex AI settings (replaces direct Anthropic API key)
+    VERTEX_PROJECT: str = os.getenv("VERTEX_PROJECT", "")
+    VERTEX_REGION: str = os.getenv("VERTEX_REGION", "us-east5")
+    ANTHROPIC_MODEL: str = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-5@20251001")
     
     # Embedding model settings
     EMBEDDING_MODEL: str = "all-MiniLM-L6-v2"
