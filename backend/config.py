@@ -9,8 +9,13 @@ load_dotenv()
 class Config:
     """Configuration settings for the RAG system"""
     # Anthropic API settings
+    # ANTHROPIC_API_KEY: str = os.getenv("ANTHROPIC_API_KEY", "")
+    # ANTHROPIC_MODEL: str = "claude-sonnet-4-20250514"
+        # Anthropic API settings
     ANTHROPIC_API_KEY: str = os.getenv("ANTHROPIC_API_KEY", "")
-    ANTHROPIC_MODEL: str = "claude-sonnet-4-20250514"
+    ANTHROPIC_BASE_URL: str = os.getenv("ANTHROPIC_BASE_URL", "https://api.anthropic.com")
+    # 这里填的是「触发 router 路由」的名字，不是真实后端模型
+    ANTHROPIC_MODEL: str = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-20250514")
     
     # Embedding model settings
     EMBEDDING_MODEL: str = "all-MiniLM-L6-v2"
