@@ -241,18 +241,26 @@ header h1 {
 }
 
 .sources-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
     padding: 0 0.5rem 0.25rem 1.5rem;
     color: var(--text-secondary);
 }
 
-.sources-content a {
-    color: var(--text-secondary);
-    text-decoration: underline;
-    text-underline-offset: 2px;
+.source-item {
+    line-height: 1.45;
 }
 
-.sources-content a:hover {
-    color: var(--text-primary);
+.source-item a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+.source-item a:hover {
+    color: var(--primary-hover);
+    text-decoration: underline;
+    text-underline-offset: 2px;
 }
 
 /* Markdown formatting styles */
