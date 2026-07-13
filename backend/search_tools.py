@@ -116,6 +116,57 @@ class CourseSearchTool(Tool):
         
         return "\n\n".join(formatted)
 
+
+class CourseOutlineTool(Tool):
+    """Tool for retrieving course outline (title, link, and lesson list)"""
+
+    def __init__(self, vector_store: VectorStore):
+        self.store = vector_store
+
+    def get_tool_definition(self) -> Dict[str, Any]:
+        """Return Anthropic tool definition for this tool"""
+        return {
+            "name": "get_course_outline",
+            "description": "Get the outline for a course: course title, course link, and the complete list of lessons with their numbers and titles. Use for outline, syllabus, structure, or lesson-list questions—not for searching lesson content.",
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "course_title": {
+                        "type": "string",
+                        "description": "Course title (partial matches work, e.g. 'MCP', 'Introduction')"
+                    }
+                },
+                "required": ["course_title"]
+            }
+        }
+
+    def execute(self, course_title: str) -> str:
+        """
+        Fetch and format the course outline for the given course title.
+
+        Args:
+            course_title: Course title or partial name to resolve
+
+        Returns:
+            Formatted outline string or an error message
+        """
+        outline = self.store.get_course_outline(course_title)
+        if not outline:
+            return f"No course found matching '{course_title}'."
+
+        lines = [
+            f"Course: {outline['title']}",
+            f"Course Link: {outline.get('course_link') or 'N/A'}",
+            "Lessons:",
+        ]
+        for lesson in outline.get("lessons", []):
+            num = lesson.get("lesson_number")
+            title = lesson.get("lesson_title", "")
+            lines.append(f"  Lesson {num}: {title}")
+
+        return "\n".join(lines)
+
+
 class ToolManager:
     """Manages available tools for the AI"""
     

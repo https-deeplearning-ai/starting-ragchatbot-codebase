@@ -486,6 +486,17 @@ header h1 {
     width: 100%;
     text-align: left;
     font-family: inherit;
+    appearance: none;
+    -webkit-appearance: none;
+    margin: 0;
+    padding-inline: 0;
+}
+
+.new-chat-button::before {
+    content: '▶';
+    display: inline-block;
+    margin-right: 0.5rem;
+    font-size: 0.75rem;
 }
 
 .new-chat-button:focus,
