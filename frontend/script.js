@@ -122,10 +122,11 @@ function addMessage(content, type, sources = null, isWelcome = false) {
     let html = `<div class="message-content">${displayContent}</div>`;
     
     if (sources && sources.length > 0) {
+        const sourcesHtml = sources.map(formatSource).join(', ');
         html += `
             <details class="sources-collapsible">
                 <summary class="sources-header">Sources</summary>
-                <div class="sources-content">${sources.join(', ')}</div>
+                <div class="sources-content">${sourcesHtml}</div>
             </details>
         `;
     }
@@ -142,6 +143,20 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+// Format a source string ("text" or "text|url") as plain text or a clickable link
+function formatSource(source) {
+    const separatorIndex = source.indexOf('|');
+    if (separatorIndex === -1) {
+        return escapeHtml(source);
+    }
+    const text = source.slice(0, separatorIndex);
+    const url = source.slice(separatorIndex + 1);
+    if (!url) {
+        return escapeHtml(text);
+    }
+    return `<a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(text)}</a>`;
 }
 
 // Removed removeMessage function - no longer needed since we handle loading differently

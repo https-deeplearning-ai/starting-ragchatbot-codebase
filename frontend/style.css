@@ -245,6 +245,16 @@ header h1 {
     color: var(--text-secondary);
 }
 
+.sources-content a {
+    color: var(--text-secondary);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.sources-content a:hover {
+    color: var(--text-primary);
+}
+
 /* Markdown formatting styles */
 .message-content h1,
 .message-content h2,
