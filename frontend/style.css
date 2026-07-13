@@ -464,6 +464,7 @@ header h1 {
 }
 
 /* Sidebar Headers */
+.new-chat-button,
 .stats-header,
 .suggested-header {
     font-size: 0.875rem;
@@ -480,6 +481,15 @@ header h1 {
     letter-spacing: 0.5px;
 }
 
+.new-chat-button {
+    display: block;
+    width: 100%;
+    text-align: left;
+    font-family: inherit;
+}
+
+.new-chat-button:focus,
+.new-chat-button:hover,
 .stats-header:focus,
 .suggested-header:focus {
     color: var(--primary-color);

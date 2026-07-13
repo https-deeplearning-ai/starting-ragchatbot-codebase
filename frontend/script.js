@@ -3,9 +3,10 @@ const API_URL = '/api';
 
 // Global state
 let currentSessionId = null;
+let chatGeneration = 0;
 
 // DOM elements
-let chatMessages, chatInput, sendButton, totalCourses, courseTitles;
+let chatMessages, chatInput, sendButton, totalCourses, courseTitles, newChatButton;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -15,6 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
     sendButton = document.getElementById('sendButton');
     totalCourses = document.getElementById('totalCourses');
     courseTitles = document.getElementById('courseTitles');
+    newChatButton = document.getElementById('newChatButton');
     
     setupEventListeners();
     createNewSession();
@@ -28,7 +30,10 @@ function setupEventListeners() {
     chatInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') sendMessage();
     });
-    
+
+    if (newChatButton) {
+        newChatButton.addEventListener('click', createNewSession);
+    }
     
     // Suggested questions
     document.querySelectorAll('.suggested-item').forEach(button => {
@@ -45,6 +50,8 @@ function setupEventListeners() {
 async function sendMessage() {
     const query = chatInput.value.trim();
     if (!query) return;
+
+    const requestGeneration = chatGeneration;
 
     // Disable input
     chatInput.value = '';
@@ -74,6 +81,11 @@ async function sendMessage() {
         if (!response.ok) throw new Error('Query failed');
 
         const data = await response.json();
+
+        // Ignore stale responses after starting a new chat
+        if (requestGeneration !== chatGeneration) {
+            return;
+        }
         
         // Update session ID if new
         if (!currentSessionId) {
@@ -85,13 +97,18 @@ async function sendMessage() {
         addMessage(data.answer, 'assistant', data.sources);
 
     } catch (error) {
+        if (requestGeneration !== chatGeneration) {
+            return;
+        }
         // Replace loading message with error
         loadingMessage.remove();
         addMessage(`Error: ${error.message}`, 'assistant');
     } finally {
-        chatInput.disabled = false;
-        sendButton.disabled = false;
-        chatInput.focus();
+        if (requestGeneration === chatGeneration) {
+            chatInput.disabled = false;
+            sendButton.disabled = false;
+            chatInput.focus();
+        }
     }
 }
 
@@ -159,12 +176,26 @@ function formatSource(source) {
     return `<div class="source-item"><a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(text)}</a></div>`;
 }
 
-// Removed removeMessage function - no longer needed since we handle loading differently
-
 async function createNewSession() {
+    const previousSessionId = currentSessionId;
+    chatGeneration += 1;
     currentSessionId = null;
+
+    if (previousSessionId) {
+        try {
+            await fetch(`${API_URL}/session/${previousSessionId}`, {
+                method: 'DELETE'
+            });
+        } catch (error) {
+            console.error('Failed to clear backend session:', error);
+        }
+    }
+
     chatMessages.innerHTML = '';
+    chatInput.disabled = false;
+    sendButton.disabled = false;
     addMessage('Welcome to the Course Materials Assistant! I can help you with questions about courses, lessons and specific content. What would you like to know?', 'assistant', null, true);
+    chatInput.focus();
 }
 
 // Load course statistics
