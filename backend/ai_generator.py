@@ -86,6 +86,8 @@ Provide only the direct answer to what was asked.
             "messages": [{"role": "user", "content": query}],
             "system": system_content
         }
+
+        api_params["thinking"] = {"type": "disabled"}
         
         # Add tools if available
         if tools:
@@ -144,7 +146,8 @@ Provide only the direct answer to what was asked.
         final_params = {
             **self.base_params,
             "messages": messages,
-            "system": base_params["system"]
+            "system": base_params["system"],
+            "thinking": {"type": "disabled"}
         }
         
         # Get final response
