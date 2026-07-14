@@ -6,7 +6,7 @@ let currentSessionId = null;
 let chatGeneration = 0;
 
 // DOM elements
-let chatMessages, chatInput, sendButton, totalCourses, courseTitles, newChatButton;
+let chatMessages, chatInput, sendButton, totalCourses, courseTitles, newChatButton, themeToggle;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -17,8 +17,10 @@ document.addEventListener('DOMContentLoaded', () => {
     totalCourses = document.getElementById('totalCourses');
     courseTitles = document.getElementById('courseTitles');
     newChatButton = document.getElementById('newChatButton');
+    themeToggle = document.getElementById('themeToggle');
     
     setupEventListeners();
+    initTheme();
     createNewSession();
     loadCourseStats();
 });
@@ -34,6 +36,10 @@ function setupEventListeners() {
     if (newChatButton) {
         newChatButton.addEventListener('click', createNewSession);
     }
+
+    if (themeToggle) {
+        themeToggle.addEventListener('click', toggleTheme);
+    }
     
     // Suggested questions
     document.querySelectorAll('.suggested-item').forEach(button => {
@@ -43,6 +49,38 @@ function setupEventListeners() {
             sendMessage();
         });
     });
+}
+
+// Theme Functions
+function getPreferredTheme() {
+    const saved = localStorage.getItem('theme');
+    if (saved === 'light' || saved === 'dark') {
+        return saved;
+    }
+    return 'dark';
+}
+
+function updateThemeToggleLabel(theme) {
+    if (!themeToggle) return;
+    const nextLabel = theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme';
+    themeToggle.setAttribute('aria-label', nextLabel);
+    themeToggle.setAttribute('title', nextLabel);
+}
+
+function applyTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+    updateThemeToggleLabel(theme);
+}
+
+function initTheme() {
+    applyTheme(getPreferredTheme());
+}
+
+function toggleTheme() {
+    const current = document.documentElement.getAttribute('data-theme') || 'dark';
+    const next = current === 'dark' ? 'light' : 'dark';
+    applyTheme(next);
 }
 
 

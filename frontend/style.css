@@ -5,8 +5,9 @@
     padding: 0;
 }
 
-/* CSS Variables */
-:root {
+/* CSS Variables — Dark theme (default) */
+:root,
+[data-theme="dark"] {
     --primary-color: #2563eb;
     --primary-hover: #1d4ed8;
     --background: #0f172a;
@@ -22,9 +23,60 @@
     --focus-ring: rgba(37, 99, 235, 0.2);
     --welcome-bg: #1e3a5f;
     --welcome-border: #2563eb;
+    --code-bg: rgba(0, 0, 0, 0.2);
+    --welcome-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    --send-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    --error-bg: rgba(239, 68, 68, 0.1);
+    --error-color: #f87171;
+    --error-border: rgba(239, 68, 68, 0.2);
+    --success-bg: rgba(34, 197, 94, 0.1);
+    --success-color: #4ade80;
+    --success-border: rgba(34, 197, 94, 0.2);
+    --toggle-bg: #1e293b;
+    --toggle-hover: #334155;
+    --toggle-icon: #f1f5f9;
+}
+
+/* CSS Variables — Light theme */
+[data-theme="light"] {
+    --primary-color: #2563eb;
+    --primary-hover: #1d4ed8;
+    --background: #f8fafc;
+    --surface: #ffffff;
+    --surface-hover: #f1f5f9;
+    --text-primary: #0f172a;
+    --text-secondary: #64748b;
+    --border-color: #e2e8f0;
+    --user-message: #2563eb;
+    --assistant-message: #f1f5f9;
+    --shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.08);
+    --radius: 12px;
+    --focus-ring: rgba(37, 99, 235, 0.2);
+    --welcome-bg: #eff6ff;
+    --welcome-border: #2563eb;
+    --code-bg: rgba(15, 23, 42, 0.06);
+    --welcome-shadow: 0 4px 16px rgba(15, 23, 42, 0.08);
+    --send-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+    --error-bg: rgba(239, 68, 68, 0.08);
+    --error-color: #dc2626;
+    --error-border: rgba(239, 68, 68, 0.25);
+    --success-bg: rgba(34, 197, 94, 0.08);
+    --success-color: #16a34a;
+    --success-border: rgba(34, 197, 94, 0.25);
+    --toggle-bg: #ffffff;
+    --toggle-hover: #f1f5f9;
+    --toggle-icon: #0f172a;
 }
 
 /* Base Styles */
+html {
+    color-scheme: dark;
+}
+
+html[data-theme="light"] {
+    color-scheme: light;
+}
+
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     background-color: var(--background);
@@ -34,6 +86,75 @@ body {
     overflow: hidden;
     margin: 0;
     padding: 0;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Theme Toggle — top-right */
+.theme-toggle {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 1000;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--toggle-bg);
+    color: var(--toggle-icon);
+    border: 1px solid var(--border-color);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: var(--shadow);
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.theme-toggle:hover {
+    background: var(--toggle-hover);
+    transform: scale(1.05);
+}
+
+.theme-toggle:active {
+    transform: scale(0.95);
+}
+
+.theme-toggle:focus {
+    outline: none;
+}
+
+.theme-toggle:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--focus-ring), var(--shadow);
+}
+
+.theme-toggle .icon-sun,
+.theme-toggle .icon-moon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+/* Dark theme: show sun (click to switch to light) */
+[data-theme="dark"] .theme-toggle .icon-sun {
+    opacity: 1;
+    transform: translate(-50%, -50%) rotate(0deg) scale(1);
+}
+
+[data-theme="dark"] .theme-toggle .icon-moon {
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(-90deg) scale(0.5);
+}
+
+/* Light theme: show moon (click to switch to dark) */
+[data-theme="light"] .theme-toggle .icon-sun {
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(90deg) scale(0.5);
+}
+
+[data-theme="light"] .theme-toggle .icon-moon {
+    opacity: 1;
+    transform: translate(-50%, -50%) rotate(0deg) scale(1);
 }
 
 /* Container - Full Screen */
@@ -83,6 +204,7 @@ header h1 {
     padding: 1.5rem;
     overflow-y: auto;
     flex-shrink: 0;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 /* Custom Scrollbar for Sidebar */
@@ -204,6 +326,7 @@ header h1 {
     background: var(--surface);
     color: var(--text-primary);
     border-bottom-left-radius: 4px;
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* Message metadata */
@@ -295,7 +418,7 @@ header h1 {
 }
 
 .message-content code {
-    background-color: rgba(0, 0, 0, 0.2);
+    background-color: var(--code-bg);
     padding: 0.125rem 0.25rem;
     border-radius: 3px;
     font-family: 'Fira Code', 'Consolas', monospace;
@@ -303,7 +426,7 @@ header h1 {
 }
 
 .message-content pre {
-    background-color: rgba(0, 0, 0, 0.2);
+    background-color: var(--code-bg);
     padding: 0.75rem;
     border-radius: 4px;
     overflow-x: auto;
@@ -326,7 +449,7 @@ header h1 {
 .message.welcome-message .message-content {
     background: var(--surface);
     border: 2px solid var(--border-color);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--welcome-shadow);
     position: relative;
 }
 
@@ -352,6 +475,7 @@ header h1 {
     background: var(--background);
     border-top: 1px solid var(--border-color);
     flex-shrink: 0;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 /* Chat Input */
@@ -363,7 +487,7 @@ header h1 {
     border-radius: 24px;
     color: var(--text-primary);
     font-size: 0.95rem;
-    transition: all 0.2s ease;
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.2s ease;
 }
 
 #chatInput:focus {
@@ -399,7 +523,7 @@ header h1 {
 #sendButton:hover:not(:disabled) {
     background: var(--primary-hover);
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    box-shadow: var(--send-shadow);
 }
 
 #sendButton:active:not(:disabled) {
@@ -445,21 +569,21 @@ header h1 {
 
 /* Error Message */
 .error-message {
-    background: rgba(239, 68, 68, 0.1);
-    color: #f87171;
+    background: var(--error-bg);
+    color: var(--error-color);
     padding: 0.75rem 1.25rem;
     border-radius: 8px;
-    border: 1px solid rgba(239, 68, 68, 0.2);
+    border: 1px solid var(--error-border);
     margin: 0.5rem 0;
 }
 
 /* Success Message */
 .success-message {
-    background: rgba(34, 197, 94, 0.1);
-    color: #4ade80;
+    background: var(--success-bg);
+    color: var(--success-color);
     padding: 0.75rem 1.25rem;
     border-radius: 8px;
-    border: 1px solid rgba(34, 197, 94, 0.2);
+    border: 1px solid var(--success-border);
     margin: 0.5rem 0;
 }
 
@@ -547,6 +671,7 @@ details[open] .suggested-header::before {
     border-radius: 8px;
     border: 1px solid var(--border-color);
     margin-bottom: 0.75rem;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .stat-item:last-child {
@@ -656,7 +781,7 @@ details[open] .suggested-header::before {
     color: var(--text-primary);
     font-size: 0.875rem;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, transform 0.2s ease;
     text-align: left;
     width: 100%;
 }
