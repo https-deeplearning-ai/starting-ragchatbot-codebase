@@ -44,17 +44,10 @@ Provide only the direct answer to what was asked.
 """
 
     def __init__(self, api_key: str, model: str, base_url: str):
-        self.client = anthropic.Anthropic(
-            api_key=api_key,
-            base_url=base_url
-        )
+        self.client = anthropic.Anthropic(api_key=api_key, base_url=base_url)
         self.model = model
         # Pre-build base API parameters
-        self.base_params = {
-            "model": self.model,
-            "temperature": 0,
-            "max_tokens": 800
-        }
+        self.base_params = {"model": self.model, "temperature": 0, "max_tokens": 800}
 
     def _build_api_params(
         self,
@@ -93,19 +86,23 @@ Provide only the direct answer to what was asked.
                     **content_block.input,
                 )
             except Exception as e:
-                tool_results.append({
-                    "type": "tool_result",
-                    "tool_use_id": content_block.id,
-                    "content": str(e),
-                    "is_error": True,
-                })
+                tool_results.append(
+                    {
+                        "type": "tool_result",
+                        "tool_use_id": content_block.id,
+                        "content": str(e),
+                        "is_error": True,
+                    }
+                )
                 return tool_results, True
 
-            tool_results.append({
-                "type": "tool_result",
-                "tool_use_id": content_block.id,
-                "content": result,
-            })
+            tool_results.append(
+                {
+                    "type": "tool_result",
+                    "tool_use_id": content_block.id,
+                    "content": result,
+                }
+            )
         return tool_results, False
 
     def _finalize_response(self, response) -> str:

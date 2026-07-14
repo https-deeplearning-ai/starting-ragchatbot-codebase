@@ -11,7 +11,6 @@ from tests.conftest import (
     make_tool_use_block,
 )
 
-
 OUTLINE_TOOL_DEF = {
     "name": "get_course_outline",
     "description": "Get course outline",
@@ -49,10 +48,12 @@ class TestAIGeneratorToolCalling:
         )
 
         initial = make_api_response(
-            [make_tool_use_block(
-                name="search_course_content",
-                tool_input={"query": "What is RAG?", "course_name": "Chroma"},
-            )],
+            [
+                make_tool_use_block(
+                    name="search_course_content",
+                    tool_input={"query": "What is RAG?", "course_name": "Chroma"},
+                )
+            ],
             stop_reason="tool_use",
         )
         final = make_api_response(
@@ -156,13 +157,15 @@ class TestAIGeneratorToolCalling:
         tool_manager.execute_tool.return_value = "lesson content"
 
         initial = make_api_response(
-            [make_tool_use_block(
-                tool_input={
-                    "query": "MCP servers",
-                    "course_name": "MCP",
-                    "lesson_number": 5,
-                },
-            )],
+            [
+                make_tool_use_block(
+                    tool_input={
+                        "query": "MCP servers",
+                        "course_name": "MCP",
+                        "lesson_number": 5,
+                    },
+                )
+            ],
             stop_reason="tool_use",
         )
         final = make_api_response([make_text_block("Answer about MCP")])
@@ -193,19 +196,23 @@ class TestAIGeneratorSequentialToolRounds:
         ]
 
         round1 = make_api_response(
-            [make_tool_use_block(
-                name="get_course_outline",
-                tool_id="toolu_1",
-                tool_input={"course_name": "Course X"},
-            )],
+            [
+                make_tool_use_block(
+                    name="get_course_outline",
+                    tool_id="toolu_1",
+                    tool_input={"course_name": "Course X"},
+                )
+            ],
             stop_reason="tool_use",
         )
         round2 = make_api_response(
-            [make_tool_use_block(
-                name="search_course_content",
-                tool_id="toolu_2",
-                tool_input={"query": "Embeddings"},
-            )],
+            [
+                make_tool_use_block(
+                    name="search_course_content",
+                    tool_id="toolu_2",
+                    tool_input={"query": "Embeddings"},
+                )
+            ],
             stop_reason="tool_use",
         )
         final = make_api_response(
@@ -222,10 +229,12 @@ class TestAIGeneratorSequentialToolRounds:
 
         assert ai_generator.client.messages.create.call_count == 3
         assert tool_manager.execute_tool.call_count == 2
-        tool_manager.execute_tool.assert_has_calls([
-            call("get_course_outline", course_name="Course X"),
-            call("search_course_content", query="Embeddings"),
-        ])
+        tool_manager.execute_tool.assert_has_calls(
+            [
+                call("get_course_outline", course_name="Course X"),
+                call("search_course_content", query="Embeddings"),
+            ]
+        )
 
         third_kwargs = ai_generator.client.messages.create.call_args_list[2].kwargs
         assert len(third_kwargs["messages"]) == 5
