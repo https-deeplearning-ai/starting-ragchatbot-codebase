@@ -81,16 +81,16 @@ class TestCourseSearchToolExecute:
             lesson_number=2,
         )
 
-    def test_sources_without_lesson_link(self, mock_vector_store, sample_search_results):
+    def test_sources_without_lesson_link(
+        self, mock_vector_store, sample_search_results
+    ):
         mock_vector_store.search.return_value = sample_search_results
         mock_vector_store.get_lesson_link.return_value = None
         tool = CourseSearchTool(mock_vector_store)
 
         tool.execute(query="RAG")
 
-        assert tool.last_sources == [
-            "Advanced Retrieval for AI with Chroma - Lesson 1"
-        ]
+        assert tool.last_sources == ["Advanced Retrieval for AI with Chroma - Lesson 1"]
 
 
 class TestMaxResultsConfig:

@@ -61,10 +61,12 @@ class TestRAGSystemContentQueries:
         rag, mock_ai, mock_store, _ = rag_system_with_mocks
         mock_store.search.return_value = SearchResults(
             documents=["Chunk about retrieval."],
-            metadata=[{
-                "course_title": "Advanced Retrieval for AI with Chroma",
-                "lesson_number": 1,
-            }],
+            metadata=[
+                {
+                    "course_title": "Advanced Retrieval for AI with Chroma",
+                    "lesson_number": 1,
+                }
+            ],
             distances=[0.1],
         )
         mock_store.get_lesson_link.return_value = None
@@ -109,9 +111,9 @@ class TestRAGSystemContentQueries:
         # No course_name: avoid _resolve_course_name; exercise content query only
         result = tool.execute(query="What is an MCP server?")
 
-        assert not result.startswith("Search error:"), (
-            f"Content search failed due to MAX_RESULTS={config.MAX_RESULTS}: {result}"
-        )
+        assert not result.startswith(
+            "Search error:"
+        ), f"Content search failed due to MAX_RESULTS={config.MAX_RESULTS}: {result}"
         assert "Valid chunk about MCP servers" in result
         assert "[MCP Course - Lesson 2]" in result
 

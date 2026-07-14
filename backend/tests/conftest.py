@@ -20,10 +20,12 @@ def sample_search_results():
     """Non-empty SearchResults with course/lesson metadata."""
     return SearchResults(
         documents=["RAG combines retrieval with generation for grounded answers."],
-        metadata=[{
-            "course_title": "Advanced Retrieval for AI with Chroma",
-            "lesson_number": 1,
-        }],
+        metadata=[
+            {
+                "course_title": "Advanced Retrieval for AI with Chroma",
+                "lesson_number": 1,
+            }
+        ],
         distances=[0.12],
     )
 
