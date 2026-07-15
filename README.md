@@ -54,3 +54,5 @@ The application will be available at:
 - Web Interface: `http://localhost:8000`
 - API Documentation: `http://localhost:8000/docs`
 
+
+Test Cursor PR Review workflow.
