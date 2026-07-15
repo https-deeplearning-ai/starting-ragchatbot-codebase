@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "hooks": {
+    "postToolUse": [
+      {
+        "command": ".cursor/hooks/read-grep-done.sh",
+        "matcher": "Read|Grep"
+      }
+    ]
+  }
+}
