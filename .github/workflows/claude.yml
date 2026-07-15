@@ -35,9 +35,9 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          ANTHROPIC_BASE_URL: "https://dashscope.aliyuncs.com/apps/anthropic"
-          ANTHROPIC_MODEL: "qwen3.7-plus"
-          CLAUDE_CODE_MODEL: "qwen3.7-plus"
+          anthropic_base_url: "https://dashscope.aliyuncs.com/apps/anthropic"
+          anthropic_model: "qwen3.7-plus"
+          claude_code_model: "qwen3.7-plus"
 
           # Optional: Customize the trigger phrase (default: @claude)
           # trigger_phrase: "/claude"
