@@ -119,22 +119,65 @@ function addMessage(content, type, sources = null, isWelcome = false) {
     // Convert markdown to HTML for assistant messages
     const displayContent = type === 'assistant' ? marked.parse(content) : escapeHtml(content);
     
-    let html = `<div class="message-content">${displayContent}</div>`;
-    
+    messageDiv.innerHTML = `<div class="message-content">${displayContent}</div>`;
+
     if (sources && sources.length > 0) {
-        html += `
-            <details class="sources-collapsible">
-                <summary class="sources-header">Sources</summary>
-                <div class="sources-content">${sources.join(', ')}</div>
-            </details>
-        `;
+        messageDiv.appendChild(createSourcesSection(sources));
     }
-    
-    messageDiv.innerHTML = html;
+
     chatMessages.appendChild(messageDiv);
     chatMessages.scrollTop = chatMessages.scrollHeight;
     
     return messageId;
+}
+
+function createSourcesSection(sources) {
+    const details = document.createElement('details');
+    details.className = 'sources-collapsible';
+
+    const summary = document.createElement('summary');
+    summary.className = 'sources-header';
+    summary.textContent = 'Sources';
+    details.appendChild(summary);
+
+    const content = document.createElement('div');
+    content.className = 'sources-content';
+
+    sources.forEach((source, index) => {
+        if (index > 0) {
+            content.appendChild(document.createTextNode(', '));
+        }
+
+        const label = typeof source === 'string' ? source : source.text;
+        const safeUrl = typeof source === 'object' ? getSafeHttpUrl(source.link) : null;
+
+        if (safeUrl) {
+            const link = document.createElement('a');
+            link.href = safeUrl;
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+            link.textContent = label;
+            content.appendChild(link);
+        } else {
+            const text = document.createElement('span');
+            text.textContent = label;
+            content.appendChild(text);
+        }
+    });
+
+    details.appendChild(content);
+    return details;
+}
+
+function getSafeHttpUrl(value) {
+    if (!value) return null;
+
+    try {
+        const url = new URL(value);
+        return ['http:', 'https:'].includes(url.protocol) ? url.href : null;
+    } catch {
+        return null;
+    }
 }
 
 // Helper function to escape HTML for user messages
