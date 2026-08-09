@@ -34,10 +34,13 @@ Provide only the direct answer to what was asked.
         self.model = model
         
         # Pre-build base API parameters
+        # Sonnet 5 rejects non-default sampling params, and runs adaptive
+        # thinking when `thinking` is omitted - disabled here to keep answers
+        # fast and to leave the full max_tokens budget for the response.
         self.base_params = {
             "model": self.model,
-            "temperature": 0,
-            "max_tokens": 800
+            "max_tokens": 800,
+            "thinking": {"type": "disabled"}
         }
     
     def generate_response(self, query: str,
