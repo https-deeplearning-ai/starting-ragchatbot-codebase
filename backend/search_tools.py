@@ -1,6 +1,13 @@
-from typing import Dict, Any, Optional, Protocol
+from typing import Dict, Any, Optional, TypedDict
 from abc import ABC, abstractmethod
 from vector_store import VectorStore, SearchResults
+
+
+class SourceCitation(TypedDict):
+    """Structured source metadata returned to API consumers."""
+
+    text: str
+    link: Optional[str]
 
 
 class Tool(ABC):
@@ -22,7 +29,7 @@ class CourseSearchTool(Tool):
     
     def __init__(self, vector_store: VectorStore):
         self.store = vector_store
-        self.last_sources = []  # Track sources from last search
+        self.last_sources: list[SourceCitation] = []  # Track sources from last search
     
     def get_tool_definition(self) -> Dict[str, Any]:
         """Return Anthropic tool definition for this tool"""
@@ -88,7 +95,8 @@ class CourseSearchTool(Tool):
     def _format_results(self, results: SearchResults) -> str:
         """Format search results with course and lesson context"""
         formatted = []
-        sources = []  # Track sources for the UI
+        sources: list[SourceCitation] = []  # Track sources for the UI
+        seen_sources: set[str] = set()
         
         for doc, meta in zip(results.documents, results.metadata):
             course_title = meta.get('course_title', 'unknown')
@@ -100,11 +108,18 @@ class CourseSearchTool(Tool):
                 header += f" - Lesson {lesson_num}"
             header += "]"
             
-            # Track source for the UI
-            source = course_title
+            # Track each lesson once for the UI, even when several chunks match.
+            source_text = course_title
             if lesson_num is not None:
-                source += f" - Lesson {lesson_num}"
-            sources.append(source)
+                source_text += f" - Lesson {lesson_num}"
+            if source_text not in seen_sources:
+                lesson_link = (
+                    self.store.get_lesson_link(course_title, lesson_num)
+                    if lesson_num is not None
+                    else None
+                )
+                sources.append({"text": source_text, "link": lesson_link})
+                seen_sources.add(source_text)
             
             formatted.append(f"{header}\n{doc}")
         
@@ -139,7 +154,7 @@ class ToolManager:
         
         return self.tools[tool_name].execute(**kwargs)
     
-    def get_last_sources(self) -> list:
+    def get_last_sources(self) -> list[SourceCitation]:
         """Get sources from the last search operation"""
         # Check all tools for last_sources attribute
         for tool in self.tools.values():

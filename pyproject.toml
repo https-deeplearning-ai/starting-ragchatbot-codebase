@@ -6,10 +6,10 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "chromadb==1.0.15",
-    "anthropic==0.58.2",
     "sentence-transformers==5.0.0",
     "fastapi==0.116.1",
     "uvicorn==0.35.0",
     "python-multipart==0.0.20",
     "python-dotenv==1.1.1",
+    "openai>=2.53.0",
 ]

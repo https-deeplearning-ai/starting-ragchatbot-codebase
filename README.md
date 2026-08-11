@@ -4,14 +4,14 @@ A Retrieval-Augmented Generation (RAG) system designed to answer questions about
 
 ## Overview
 
-This application is a full-stack web application that enables users to query course materials and receive intelligent, context-aware responses. It uses ChromaDB for vector storage, Anthropic's Claude for AI generation, and provides a web interface for interaction.
+This application is a full-stack web application that enables users to query course materials and receive intelligent, context-aware responses. It uses ChromaDB for vector storage, OpenAI for AI generation, and provides a web interface for interaction.
 
 
 ## Prerequisites
 
 - Python 3.13 or higher
 - uv (Python package manager)
-- An Anthropic API key (for Claude AI)
+- An OpenAI API key
 - **For Windows**: Use Git Bash to run the application commands - [Download Git for Windows](https://git-scm.com/downloads/win)
 
 ## Installation
@@ -30,7 +30,7 @@ This application is a full-stack web application that enables users to query cou
    
    Create a `.env` file in the root directory:
    ```bash
-   ANTHROPIC_API_KEY=your_anthropic_api_key_here
+   OPENAI_API_KEY=your_openai_api_key_here
    ```
 
 ## Running the Application
