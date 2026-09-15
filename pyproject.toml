@@ -13,3 +13,60 @@ dependencies = [
     "python-multipart==0.0.20",
     "python-dotenv==1.1.1",
 ]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "black>=25.1.0",
+    "isort>=6.0.1",
+    "httpx>=0.28.1",
+]
+
+[tool.uv]
+# The repo lives under OneDrive, where hardlinking into the uv cache fails with
+# "The cloud operation cannot be performed on a file with incompatible hardlinks
+# (os error 396)". Copying is slower but works. Equivalent to UV_LINK_MODE=copy.
+link-mode = "copy"
+
+[tool.pytest.ini_options]
+pythonpath = ["backend", "backend/tests"]
+testpaths = ["backend/tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "-q",
+    "--tb=short",
+    "-ra",
+    "--strict-markers",
+    "--strict-config",
+]
+markers = [
+    "api: FastAPI endpoint tests (no Chroma, no Anthropic, no network)",
+    "slow: tests that load the embedding model or the real Chroma store",
+]
+filterwarnings = [
+    "ignore:resource_tracker:UserWarning",
+    "ignore::DeprecationWarning:chromadb.*",
+    "ignore::DeprecationWarning:pydantic.*",
+]
+
+[tool.black]
+line-length = 88
+target-version = ["py313"]
+
+[tool.isort]
+# Keep isort's output byte-identical to what black would produce.
+profile = "black"
+line_length = 88
+known_first_party = [
+    "ai_generator",
+    "app",
+    "config",
+    "document_processor",
+    "models",
+    "rag_system",
+    "search_tools",
+    "session_manager",
+    "vector_store",
+]

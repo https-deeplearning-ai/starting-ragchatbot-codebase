@@ -1,0 +1,13 @@
+{
+  "name": "course-materials-rag-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Front-end tooling for the Course Materials RAG System (formatting only, no build step)",
+  "scripts": {
+    "format": "prettier --write \"frontend/**/*.{html,css,js}\"",
+    "format:check": "prettier --check \"frontend/**/*.{html,css,js}\""
+  },
+  "devDependencies": {
+    "prettier": "^3.6.2"
+  }
+}

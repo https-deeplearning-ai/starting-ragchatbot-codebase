@@ -1,0 +1,13 @@
+# Dependencies
+node_modules/
+
+# Python / tooling artifacts
+.venv/
+__pycache__/
+backend/chroma_db/
+
+# Course material fixtures — keep verbatim, the parser depends on exact formatting
+docs/
+
+# Playwright MCP output
+.playwright-mcp/

@@ -11,6 +11,7 @@ This application is a full-stack web application that enables users to query cou
 
 - Python 3.13 or higher
 - uv (Python package manager)
+- Node.js 18+ and npm (only for the front-end formatter; the app itself has no build step)
 - An Anthropic API key (for Claude AI)
 - **For Windows**: Use Git Bash to run the application commands - [Download Git for Windows](https://git-scm.com/downloads/win)
 
@@ -53,4 +54,18 @@ uv run uvicorn app:app --reload --port 8000
 The application will be available at:
 - Web Interface: `http://localhost:8000`
 - API Documentation: `http://localhost:8000/docs`
+
+## Code Quality
+
+Formatting is enforced by [black](https://black.readthedocs.io/) + [isort](https://pycqa.github.io/isort/)
+for Python and [Prettier](https://prettier.io/) for the front end (`frontend/*.html|css|js`).
+
+```bash
+./scripts/format.sh    # auto-format everything in place
+./scripts/check.sh     # verify formatting only, writes nothing (exits 1 if unformatted)
+./scripts/quality.sh   # full gate: check.sh + pytest — run this before committing
+```
+
+`format.sh` and `check.sh` install the front-end dev dependency (Prettier) on first run.
+Config lives in `pyproject.toml` (`[tool.black]`, `[tool.isort]`) and `.prettierrc.json`.
 
