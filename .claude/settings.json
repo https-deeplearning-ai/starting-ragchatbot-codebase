@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "f=$(jq -r '.tool_response.filePath // .tool_input.file_path // .tool_input.notebook_path'); case \"$f\" in *.js|*.jsx|*.mjs|*.cjs|*.ts|*.tsx) e=\"$CLAUDE_PROJECT_DIR/node_modules/.bin/eslint\"; [ -x \"$e\" ] || exit 0; \"$e\" \"$f\" >&2 || exit 2;; esac",
+            "timeout": 60,
+            "statusMessage": "Running eslint..."
+          }
+        ]
+      }
+    ]
+  }
+}
