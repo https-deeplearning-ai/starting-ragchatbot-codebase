@@ -34,11 +34,18 @@ Provide only the direct answer to what was asked.
         self.model = model
         
         # Pre-build base API parameters
+        # Sonnet 5.5 rejects non-default temperature; "between_tools" is its lowest
+        # thinking setting (no extended thinking), closest to the previous behavior
         self.base_params = {
             "model": self.model,
-            "temperature": 0,
-            "max_tokens": 800
+            "max_tokens": 800,
+            "thinking": {"type": "between_tools"}
         }
+
+    @staticmethod
+    def _extract_text(response) -> str:
+        """Join text blocks; the response may also contain thinking blocks."""
+        return "".join(block.text for block in response.content if block.type == "text")
     
     def generate_response(self, query: str,
                          conversation_history: Optional[str] = None,
@@ -84,7 +91,7 @@ Provide only the direct answer to what was asked.
             return self._handle_tool_execution(response, api_params, tool_manager)
         
         # Return direct response
-        return response.content[0].text
+        return self._extract_text(response)
     
     def _handle_tool_execution(self, initial_response, base_params: Dict[str, Any], tool_manager):
         """
@@ -101,8 +108,12 @@ Provide only the direct answer to what was asked.
         # Start with existing messages
         messages = base_params["messages"].copy()
         
-        # Add AI's tool use response
-        messages.append({"role": "assistant", "content": initial_response.content})
+        # Add AI's tool use response; thinking blocks are dropped because the final
+        # call omits tools, and replaying them after that change can be rejected
+        messages.append({
+            "role": "assistant",
+            "content": [block for block in initial_response.content if block.type != "thinking"]
+        })
         
         # Execute all tool calls and collect results
         tool_results = []
@@ -132,4 +143,4 @@ Provide only the direct answer to what was asked.
         
         # Get final response
         final_response = self.client.messages.create(**final_params)
-        return final_response.content[0].text
+        return self._extract_text(final_response)
