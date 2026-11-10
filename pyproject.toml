@@ -16,8 +16,41 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "black>=26.10.1",
     "httpx>=0.28.1",
     "pytest>=9.2.0",
+    "ruff>=0.17.4",
+]
+
+[tool.black]
+line-length = 88
+target-version = ["py313"]
+extend-exclude = '''
+/(
+    backend/chroma_db
+)/
+'''
+
+[tool.ruff]
+line-length = 88
+target-version = "py313"
+extend-exclude = ["backend/chroma_db"]
+
+[tool.ruff.lint]
+# E/W: pycodestyle, F: pyflakes, I: isort, B: bugbear
+select = ["E", "W", "F", "I", "B"]
+# Line length is black's job; E501 would flag strings/comments black can't wrap.
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+# app.py installs a warnings filter before importing chromadb-dependent modules.
+"backend/app.py" = ["E402"]
+
+[tool.ruff.lint.isort]
+# Backend modules are imported as top-level names (run from backend/).
+known-first-party = [
+    "ai_generator", "app", "config", "document_processor", "models",
+    "rag_system", "search_tools", "session_manager", "vector_store",
 ]
 
 [tool.pytest.ini_options]

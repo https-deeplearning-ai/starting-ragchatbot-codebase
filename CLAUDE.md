@@ -17,7 +17,15 @@ uv run <command>             # run any Python tool/script inside the project env
 
 - App: http://localhost:8000 · API docs: http://localhost:8000/docs
 - Requires `ANTHROPIC_API_KEY` in `.env` at the repo root (copy `.env.example`). `.env` is read only at startup, so restart the server after changing it; `--reload` only watches `backend/`.
-- Tests: `uv run pytest` (config in `pyproject.toml`, tests in `backend/tests/`, Claude and ChromaDB mocked). API tests use `create_test_app()` in `backend/tests/conftest.py`, a copy of `app.py`'s endpoints (app.py builds a real RAGSystem on import); keep it in sync when routes change. No linter or formatter.
+- Tests: `uv run pytest` (config in `pyproject.toml`, tests in `backend/tests/`, Claude and ChromaDB mocked). API tests use `create_test_app()` in `backend/tests/conftest.py`, a copy of `app.py`'s endpoints (app.py builds a real RAGSystem on import); keep it in sync when routes change.
+- Code quality (config in `pyproject.toml`; black formats, ruff lints + sorts imports, both at 88 cols):
+  ```bash
+  ./scripts/format.sh   # auto-fix: ruff --fix, then black
+  ./scripts/lint.sh     # check only: black --check + ruff check (no changes)
+  ./scripts/check.sh    # lint.sh + pytest; run before committing
+  uv run pytest backend/tests/test_search_tool.py::<name>   # single test
+  ```
+  Tests mock ChromaDB and Anthropic (no network, no API key needed).
 - Quick API check without the UI:
   `curl -s -X POST localhost:8000/api/query -H 'Content-Type: application/json' -d '{"query":"What is the MCP course about?"}'`
 

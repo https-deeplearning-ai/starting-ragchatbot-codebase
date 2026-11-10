@@ -2,6 +2,7 @@
 
 `backend/` is on sys.path via `pythonpath` in pyproject.toml's [tool.pytest.ini_options].
 """
+
 from types import SimpleNamespace
 from typing import List, Optional
 from unittest.mock import MagicMock
@@ -41,6 +42,7 @@ def mock_store():
 
 
 # --- Fake Anthropic responses -------------------------------------------------
+
 
 def text_block(text):
     return SimpleNamespace(type="text", text=text)
