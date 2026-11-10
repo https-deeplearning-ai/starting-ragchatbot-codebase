@@ -5,17 +5,25 @@ class AIGenerator:
     """Handles interactions with Anthropic's Claude API for generating responses"""
     
     # Static system prompt to avoid rebuilding on each call
-    SYSTEM_PROMPT = """ You are an AI assistant specialized in course materials and educational content with access to a comprehensive search tool for course information.
+    SYSTEM_PROMPT = """ You are an AI assistant specialized in course materials and educational content with access to tools for course information.
 
-Search Tool Usage:
-- Use the search tool **only** for questions about specific course content or detailed educational materials
-- **One search per query maximum**
-- Synthesize search results into accurate, fact-based responses
-- If search yields no results, state this clearly without offering alternatives
+Available Tools:
+- **search_course_content**: Search within course materials. Use **only** for questions about specific course content or detailed educational materials
+- **get_course_outline**: Get a course's outline. Use for questions about a course's outline, structure, syllabus, or list of lessons
+
+Tool Usage:
+- **One tool call per query maximum**
+- Synthesize tool results into accurate, fact-based responses
+- If a tool yields no results, state this clearly without offering alternatives
+
+Outline Responses:
+- For outline-related queries, always return the course title, the course link, and every lesson with its number and title
+- List the lessons in order; do not omit or summarize any
 
 Response Protocol:
-- **General knowledge questions**: Answer using existing knowledge without searching
-- **Course-specific questions**: Search first, then answer
+- **General knowledge questions**: Answer using existing knowledge without using tools
+- **Course outline questions**: Use get_course_outline, then answer
+- **Course content questions**: Use search_course_content, then answer
 - **No meta-commentary**:
  - Provide direct answers only — no reasoning process, search explanations, or question-type analysis
  - Do not mention "based on the search results"
@@ -34,11 +42,17 @@ Provide only the direct answer to what was asked.
         self.model = model
         
         # Pre-build base API parameters
+        # Current models reject `temperature`, and their thinking tokens count
+        # toward max_tokens, so leave room beyond the visible answer.
         self.base_params = {
             "model": self.model,
-            "temperature": 0,
-            "max_tokens": 800
+            "max_tokens": 16000
         }
+
+    @staticmethod
+    def _text_of(response) -> str:
+        """Join the text blocks; thinking blocks may come first in content."""
+        return "".join(b.text for b in response.content if b.type == "text")
     
     def generate_response(self, query: str,
                          conversation_history: Optional[str] = None,
@@ -84,7 +98,7 @@ Provide only the direct answer to what was asked.
             return self._handle_tool_execution(response, api_params, tool_manager)
         
         # Return direct response
-        return response.content[0].text
+        return self._text_of(response)
     
     def _handle_tool_execution(self, initial_response, base_params: Dict[str, Any], tool_manager):
         """
@@ -108,16 +122,25 @@ Provide only the direct answer to what was asked.
         tool_results = []
         for content_block in initial_response.content:
             if content_block.type == "tool_use":
-                tool_result = tool_manager.execute_tool(
-                    content_block.name, 
-                    **content_block.input
-                )
-                
-                tool_results.append({
+                # A failing tool is reported to Claude instead of failing the request
+                try:
+                    tool_result = tool_manager.execute_tool(
+                        content_block.name,
+                        **content_block.input
+                    )
+                    is_error = False
+                except Exception as e:
+                    tool_result = f"Tool error: {e}"
+                    is_error = True
+
+                result_block = {
                     "type": "tool_result",
                     "tool_use_id": content_block.id,
                     "content": tool_result
-                })
+                }
+                if is_error:
+                    result_block["is_error"] = True
+                tool_results.append(result_block)
         
         # Add tool results as single message
         if tool_results:
@@ -132,4 +155,4 @@ Provide only the direct answer to what was asked.
         
         # Get final response
         final_response = self.client.messages.create(**final_params)
-        return final_response.content[0].text
+        return self._text_of(final_response)

@@ -22,6 +22,8 @@
     --focus-ring: rgba(37, 99, 235, 0.2);
     --welcome-bg: #1e3a5f;
     --welcome-border: #2563eb;
+    --source-link: #93c5fd;
+    --source-link-hover: #bfdbfe;
 }
 
 /* Base Styles */
@@ -221,7 +223,7 @@ header h1 {
 /* Collapsible Sources */
 .sources-collapsible {
     margin-top: 0.5rem;
-    font-size: 0.75rem;
+    font-size: 0.875rem;
     color: var(--text-secondary);
 }
 
@@ -240,9 +242,47 @@ header h1 {
     margin-bottom: 0.25rem;
 }
 
-.sources-content {
-    padding: 0 0.5rem 0.25rem 1.5rem;
-    color: var(--text-secondary);
+.sources-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+    padding: 0.25rem 0.5rem 0.25rem 1.25rem;
+    line-height: 1.4;
+    color: var(--text-primary);
+}
+
+.sources-list li {
+    position: relative;
+    padding-left: 0.875rem;
+}
+
+.sources-list li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.55em;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--text-secondary);
+}
+
+/* Lighter blue than --primary-color so links stay readable on the dark surface */
+.source-link {
+    color: var(--source-link);
+    text-decoration: none;
+}
+
+.source-link:hover {
+    color: var(--source-link-hover);
+    text-decoration: underline;
+}
+
+.source-link:focus-visible {
+    outline: none;
+    border-radius: 2px;
+    box-shadow: 0 0 0 3px var(--focus-ring);
 }
 
 /* Markdown formatting styles */
@@ -489,6 +529,30 @@ header h1 {
 details[open] .stats-header::before,
 details[open] .suggested-header::before {
     transform: rotate(90deg);
+}
+
+/* New Chat button: styled like the Courses / Try Asking header links */
+.new-chat-button {
+    display: block;
+    font-family: inherit;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 0.5rem 0;
+    margin: 0;
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    transition: color 0.2s ease;
+}
+
+.new-chat-button:hover,
+.new-chat-button:focus {
+    color: var(--primary-color);
+    outline: none;
 }
 
 /* Course Stats in Sidebar */

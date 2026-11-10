@@ -3,9 +3,11 @@ const API_URL = '/api';
 
 // Global state
 let currentSessionId = null;
+// Bumped on every new chat so responses to requests from an old chat are dropped
+let chatGeneration = 0;
 
 // DOM elements
-let chatMessages, chatInput, sendButton, totalCourses, courseTitles;
+let chatMessages, chatInput, sendButton, newChatButton, totalCourses, courseTitles;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -13,6 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
     chatMessages = document.getElementById('chatMessages');
     chatInput = document.getElementById('chatInput');
     sendButton = document.getElementById('sendButton');
+    newChatButton = document.getElementById('newChatButton');
     totalCourses = document.getElementById('totalCourses');
     courseTitles = document.getElementById('courseTitles');
     
@@ -28,8 +31,10 @@ function setupEventListeners() {
     chatInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') sendMessage();
     });
-    
-    
+
+    // New chat
+    newChatButton.addEventListener('click', startNewChat);
+
     // Suggested questions
     document.querySelectorAll('.suggested-item').forEach(button => {
         button.addEventListener('click', (e) => {
@@ -45,6 +50,7 @@ function setupEventListeners() {
 async function sendMessage() {
     const query = chatInput.value.trim();
     if (!query) return;
+    const generation = chatGeneration;
 
     // Disable input
     chatInput.value = '';
@@ -74,7 +80,16 @@ async function sendMessage() {
         if (!response.ok) throw new Error('Query failed');
 
         const data = await response.json();
-        
+
+        // User started a new chat while this was in flight: discard the answer
+        // and the session the server may have created for it.
+        if (generation !== chatGeneration) {
+            if (data.session_id && data.session_id !== currentSessionId) {
+                deleteServerSession(data.session_id);
+            }
+            return;
+        }
+
         // Update session ID if new
         if (!currentSessionId) {
             currentSessionId = data.session_id;
@@ -85,10 +100,12 @@ async function sendMessage() {
         addMessage(data.answer, 'assistant', data.sources);
 
     } catch (error) {
+        if (generation !== chatGeneration) return;
         // Replace loading message with error
         loadingMessage.remove();
         addMessage(`Error: ${error.message}`, 'assistant');
     } finally {
+        if (generation !== chatGeneration) return;
         chatInput.disabled = false;
         sendButton.disabled = false;
         chatInput.focus();
@@ -125,7 +142,7 @@ function addMessage(content, type, sources = null, isWelcome = false) {
         html += `
             <details class="sources-collapsible">
                 <summary class="sources-header">Sources</summary>
-                <div class="sources-content">${sources.join(', ')}</div>
+                <ul class="sources-list">${sources.map(s => `<li>${renderSource(s)}</li>`).join('')}</ul>
             </details>
         `;
     }
@@ -137,6 +154,18 @@ function addMessage(content, type, sources = null, isWelcome = false) {
     return messageId;
 }
 
+// Render one source: a link to the lesson video when a safe http(s) URL is known,
+// otherwise plain text. Only the label is visible; the URL stays in the href.
+function renderSource(source) {
+    const label = escapeHtml(source.label);
+    const url = source.url;
+    if (url && /^https?:\/\//i.test(url)) {
+        const href = escapeHtml(url).replace(/"/g, '&quot;');
+        return `<a class="source-link" href="${href}" target="_blank" rel="noopener noreferrer">${label}</a>`;
+    }
+    return `<span>${label}</span>`;
+}
+
 // Helper function to escape HTML for user messages
 function escapeHtml(text) {
     const div = document.createElement('div');
@@ -145,6 +174,24 @@ function escapeHtml(text) {
 }
 
 // Removed removeMessage function - no longer needed since we handle loading differently
+
+// Start a fresh conversation without reloading: drop the old session on the
+// server, ignore any in-flight answer, and reset the chat UI.
+function startNewChat() {
+    if (currentSessionId) deleteServerSession(currentSessionId);
+    chatGeneration++;
+    createNewSession();
+    chatInput.value = '';
+    chatInput.disabled = false;
+    sendButton.disabled = false;
+    chatInput.focus();
+}
+
+// Best-effort cleanup; a failure only leaves an orphaned in-memory session.
+function deleteServerSession(sessionId) {
+    fetch(`${API_URL}/session/${encodeURIComponent(sessionId)}`, { method: 'DELETE' })
+        .catch(err => console.warn('Failed to delete session', sessionId, err));
+}
 
 async function createNewSession() {
     currentSessionId = null;
