@@ -28,13 +28,14 @@ target-version = ["py313"]
 extend-exclude = '''
 /(
     backend/chroma_db
+  | \.tree
 )/
 '''
 
 [tool.ruff]
 line-length = 88
 target-version = "py313"
-extend-exclude = ["backend/chroma_db"]
+extend-exclude = ["backend/chroma_db", ".tree"]
 
 [tool.ruff.lint]
 # E/W: pycodestyle, F: pyflakes, I: isort, B: bugbear
