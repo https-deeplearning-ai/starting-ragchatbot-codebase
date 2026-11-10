@@ -1,4 +1,5 @@
 """3. How RAGSystem handles content questions, end to end (Claude and ChromaDB mocked)."""
+
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
@@ -11,8 +12,14 @@ import rag_system
 @pytest.fixture
 def rag(mock_store):
     cfg = SimpleNamespace(
-        CHUNK_SIZE=800, CHUNK_OVERLAP=100, CHROMA_PATH="unused", EMBEDDING_MODEL="unused",
-        MAX_RESULTS=5, ANTHROPIC_API_KEY="test-key", ANTHROPIC_MODEL="test-model", MAX_HISTORY=2,
+        CHUNK_SIZE=800,
+        CHUNK_OVERLAP=100,
+        CHROMA_PATH="unused",
+        EMBEDDING_MODEL="unused",
+        MAX_RESULTS=5,
+        ANTHROPIC_API_KEY="test-key",
+        ANTHROPIC_MODEL="test-model",
+        MAX_HISTORY=2,
     )
     with patch.object(rag_system, "VectorStore", return_value=mock_store):
         system = rag_system.RAGSystem(cfg)
@@ -22,7 +29,9 @@ def rag(mock_store):
 
 def claude_searches(rag, tool_input, answer):
     rag.ai_generator.client.messages.create.side_effect = [
-        response(tool_use_block("search_course_content", tool_input), stop_reason="tool_use"),
+        response(
+            tool_use_block("search_course_content", tool_input), stop_reason="tool_use"
+        ),
         response(text_block(answer)),
     ]
 
@@ -34,29 +43,41 @@ def test_both_tools_are_offered(rag):
 
 def test_content_query_returns_answer_and_sources(rag, mock_store):
     mock_store.search.return_value = make_results([("MCP is a protocol.", MCP, 1, 3)])
-    claude_searches(rag, {"query": "what is MCP", "course_name": "MCP"}, "MCP is a protocol.")
+    claude_searches(
+        rag, {"query": "what is MCP", "course_name": "MCP"}, "MCP is a protocol."
+    )
 
     answer, sources = rag.query("What is MCP?")
 
     assert answer == "MCP is a protocol."
-    assert sources == [{"label": f"{MCP} - Lesson 1", "url": "https://example.com/mcp/lesson1"}]
-    mock_store.search.assert_called_once_with(query="what is MCP", course_name="MCP",
-                                              lesson_number=None)
+    assert sources == [
+        {"label": f"{MCP} - Lesson 1", "url": "https://example.com/mcp/lesson1"}
+    ]
+    mock_store.search.assert_called_once_with(
+        query="what is MCP", course_name="MCP", lesson_number=None
+    )
 
 
 def test_lesson_detail_query_succeeds(rag, mock_store):
     """The 'Details of a course's lesson' suggested question."""
-    mock_store.search.return_value = make_results([
-        ("Building the client.", MCP, 5, 51),
-        ("Intro to the client.", MCP, 5, 50),
-    ])
-    claude_searches(rag, {"query": "lesson 5 content", "course_name": "MCP", "lesson_number": 5},
-                    "Lesson 5 builds an MCP client.")
+    mock_store.search.return_value = make_results(
+        [
+            ("Building the client.", MCP, 5, 51),
+            ("Intro to the client.", MCP, 5, 50),
+        ]
+    )
+    claude_searches(
+        rag,
+        {"query": "lesson 5 content", "course_name": "MCP", "lesson_number": 5},
+        "Lesson 5 builds an MCP client.",
+    )
 
     answer, sources = rag.query("What was covered in lesson 5 of the MCP course?")
 
     assert answer == "Lesson 5 builds an MCP client."
-    assert sources == [{"label": f"{MCP} - Lesson 5", "url": "https://example.com/mcp/lesson5"}]
+    assert sources == [
+        {"label": f"{MCP} - Lesson 5", "url": "https://example.com/mcp/lesson5"}
+    ]
 
 
 def test_no_results_still_answers_with_no_sources(rag, mock_store):
@@ -84,7 +105,9 @@ def test_sources_do_not_leak_into_next_query(rag, mock_store):
     rag.query("first")
 
     rag.ai_generator.client.messages.create.side_effect = None
-    rag.ai_generator.client.messages.create.return_value = response(text_block("second"))
+    rag.ai_generator.client.messages.create.return_value = response(
+        text_block("second")
+    )
     _, sources = rag.query("second")
 
     assert sources == []

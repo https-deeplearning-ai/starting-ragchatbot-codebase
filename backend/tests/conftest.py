@@ -1,4 +1,5 @@
 """Shared fixtures. Tests mock ChromaDB and the Anthropic client: no network, no embeddings."""
+
 import sys
 from pathlib import Path
 from types import SimpleNamespace
@@ -37,6 +38,7 @@ def mock_store():
 
 
 # --- Fake Anthropic responses -------------------------------------------------
+
 
 def text_block(text):
     return SimpleNamespace(type="text", text=text)
