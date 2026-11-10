@@ -7,7 +7,7 @@ let currentSessionId = null;
 let chatGeneration = 0;
 
 // DOM elements
-let chatMessages, chatInput, sendButton, newChatButton, totalCourses, courseTitles;
+let chatMessages, chatInput, sendButton, newChatButton, totalCourses, courseTitles, themeToggle;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -18,7 +18,9 @@ document.addEventListener('DOMContentLoaded', () => {
     newChatButton = document.getElementById('newChatButton');
     totalCourses = document.getElementById('totalCourses');
     courseTitles = document.getElementById('courseTitles');
-    
+    themeToggle = document.getElementById('themeToggle');
+
+    updateThemeToggle(getCurrentTheme());
     setupEventListeners();
     createNewSession();
     loadCourseStats();
@@ -35,6 +37,9 @@ function setupEventListeners() {
     // New chat
     newChatButton.addEventListener('click', startNewChat);
 
+    // Theme toggle (a native <button>, so Enter/Space work out of the box)
+    themeToggle.addEventListener('click', toggleTheme);
+
     // Suggested questions
     document.querySelectorAll('.suggested-item').forEach(button => {
         button.addEventListener('click', (e) => {
@@ -45,6 +50,40 @@ function setupEventListeners() {
     });
 }
 
+
+// Theme Functions
+let themeTransitionTimer = null;
+
+function getCurrentTheme() {
+    return document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+}
+
+function updateThemeToggle(theme) {
+    const label = theme === 'light' ? 'Switch to dark theme' : 'Switch to light theme';
+    themeToggle.setAttribute('aria-label', label);
+    themeToggle.setAttribute('title', label);
+}
+
+function toggleTheme() {
+    const next = getCurrentTheme() === 'light' ? 'dark' : 'light';
+    const root = document.documentElement;
+
+    // Crossfade colors only while switching (skipped for reduced-motion users)
+    const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!reduceMotion) {
+        root.classList.add('theme-transition');
+        clearTimeout(themeTransitionTimer);
+        themeTransitionTimer = setTimeout(() => root.classList.remove('theme-transition'), 350);
+    }
+
+    root.setAttribute('data-theme', next);
+    updateThemeToggle(next);
+    try {
+        localStorage.setItem('theme', next);
+    } catch (e) {
+        // Storage unavailable (e.g. private mode): theme still applies for this page
+    }
+}
 
 // Chat Functions
 async function sendMessage() {
