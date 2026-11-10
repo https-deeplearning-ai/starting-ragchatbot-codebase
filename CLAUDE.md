@@ -17,7 +17,7 @@ uv run <command>             # run any Python tool/script inside the project env
 
 - App: http://localhost:8000 · API docs: http://localhost:8000/docs
 - Requires `ANTHROPIC_API_KEY` in `.env` at the repo root (copy `.env.example`). `.env` is read only at startup, so restart the server after changing it; `--reload` only watches `backend/`.
-- There are no tests, linter, or formatter configured.
+- Tests: `uv run pytest` (config in `pyproject.toml`, tests in `backend/tests/`, Claude and ChromaDB mocked). API tests use `create_test_app()` in `backend/tests/conftest.py`, a copy of `app.py`'s endpoints (app.py builds a real RAGSystem on import); keep it in sync when routes change. No linter or formatter.
 - Quick API check without the UI:
   `curl -s -X POST localhost:8000/api/query -H 'Content-Type: application/json' -d '{"query":"What is the MCP course about?"}'`
 
