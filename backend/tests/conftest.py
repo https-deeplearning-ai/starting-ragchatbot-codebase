@@ -66,6 +66,7 @@ def response(*blocks, stop_reason="end_turn"):
 # the cwd. This app copies its models and endpoints but takes the RAG system and
 # static directory as arguments. KEEP IN SYNC with backend/app.py.
 
+
 class QueryRequest(BaseModel):
     query: str
     session_id: Optional[str] = None
@@ -100,7 +101,7 @@ def create_test_app(rag, static_dir) -> FastAPI:
             answer, sources = rag.query(request.query, session_id)
             return QueryResponse(answer=answer, sources=sources, session_id=session_id)
         except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
+            raise HTTPException(status_code=500, detail=str(e)) from e
 
     @app.get("/api/courses", response_model=CourseStats)
     async def get_course_stats():
@@ -111,7 +112,7 @@ def create_test_app(rag, static_dir) -> FastAPI:
                 course_titles=analytics["course_titles"],
             )
         except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
+            raise HTTPException(status_code=500, detail=str(e)) from e
 
     @app.delete("/api/session/{session_id}")
     async def delete_session(session_id: str):

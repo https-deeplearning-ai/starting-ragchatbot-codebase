@@ -1,16 +1,21 @@
 """4. FastAPI endpoints: request validation, response shape, error handling (RAGSystem mocked)."""
-from conftest import INDEX_TITLE, MCP
 
+from conftest import INDEX_TITLE, MCP
 
 # --- POST /api/query ----------------------------------------------------------
 
+
 def test_query_with_session_returns_answer_sources_and_same_session(client, mock_rag):
-    resp = client.post("/api/query", json={"query": "What is MCP?", "session_id": "abc"})
+    resp = client.post(
+        "/api/query", json={"query": "What is MCP?", "session_id": "abc"}
+    )
 
     assert resp.status_code == 200
     assert resp.json() == {
         "answer": "MCP is a protocol.",
-        "sources": [{"label": f"{MCP} - Lesson 1", "url": "https://example.com/mcp/lesson1"}],
+        "sources": [
+            {"label": f"{MCP} - Lesson 1", "url": "https://example.com/mcp/lesson1"}
+        ],
         "session_id": "abc",
     }
     mock_rag.query.assert_called_once_with("What is MCP?", "abc")
@@ -52,8 +57,9 @@ def test_query_missing_query_field_is_rejected(client, mock_rag):
 
 
 def test_query_non_json_body_is_rejected(client, mock_rag):
-    resp = client.post("/api/query", content="not json",
-                       headers={"Content-Type": "application/json"})
+    resp = client.post(
+        "/api/query", content="not json", headers={"Content-Type": "application/json"}
+    )
 
     assert resp.status_code == 422
     mock_rag.query.assert_not_called()
@@ -76,6 +82,7 @@ def test_query_wrong_method_falls_through_to_static_404(client, mock_rag):
 
 # --- GET /api/courses ---------------------------------------------------------
 
+
 def test_courses_returns_stats(client):
     resp = client.get("/api/courses")
 
@@ -94,6 +101,7 @@ def test_courses_error_becomes_500_with_detail(client, mock_rag):
 
 # --- DELETE /api/session/{id} -------------------------------------------------
 
+
 def test_delete_existing_session(client, mock_rag):
     resp = client.delete("/api/session/abc")
 
@@ -109,6 +117,7 @@ def test_delete_unknown_session(client, mock_rag):
 
 
 # --- GET / (static frontend) --------------------------------------------------
+
 
 def test_root_serves_index_html(client):
     resp = client.get("/")
