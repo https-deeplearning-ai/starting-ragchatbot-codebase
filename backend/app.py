@@ -72,6 +72,10 @@ class CourseStats(BaseModel):
 async def query_documents(request: QueryRequest):
     """Process a query and return response with sources"""
     try:
+        # Reject empty or whitespace-only questions
+        if not request.query.strip():
+            raise HTTPException(status_code=400, detail="Query must not be empty")
+
         # Create session if not provided
         session_id = request.session_id
         if not session_id:
