@@ -16,6 +16,15 @@ uv sync                      # install dependencies into .venv
 - The server **must be started from `backend/`**: modules use flat imports (`from config import config`) and paths are relative to that directory (`../docs`, `../frontend`, `./chroma_db`).
 - Quick API check: `curl -X POST localhost:8000/api/query -H 'Content-Type: application/json' -d '{"query":"..."}'`
 
+## Git workflow
+
+Changes reach `main` only through a pull request. Never merge locally into `main` or push `main` directly.
+
+1. Create a branch from an up-to-date `main` and commit there.
+2. Push the branch to `origin`.
+3. Open a PR (`gh pr create`).
+4. Merge the PR on GitHub only after the user approves.
+
 ## Architecture
 
 A course-materials RAG chatbot. One FastAPI process (`backend/app.py`) serves both the JSON API (`POST /api/query`, `GET /api/courses`) and the static frontend (`frontend/` mounted at `/`). The frontend is plain HTML/CSS/JS with no build step and calls the API via the relative base `/api`.
