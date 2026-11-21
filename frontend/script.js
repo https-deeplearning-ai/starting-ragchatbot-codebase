@@ -3,9 +3,10 @@ const API_URL = '/api';
 
 // Global state
 let currentSessionId = null;
+let currentAbortController = null; // in-flight /api/query request, if any
 
 // DOM elements
-let chatMessages, chatInput, sendButton, totalCourses, courseTitles;
+let chatMessages, chatInput, sendButton, newChatButton, totalCourses, courseTitles;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -13,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
     chatMessages = document.getElementById('chatMessages');
     chatInput = document.getElementById('chatInput');
     sendButton = document.getElementById('sendButton');
+    newChatButton = document.getElementById('newChatButton');
     totalCourses = document.getElementById('totalCourses');
     courseTitles = document.getElementById('courseTitles');
     
@@ -28,8 +30,10 @@ function setupEventListeners() {
     chatInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') sendMessage();
     });
-    
-    
+
+    // New chat
+    newChatButton.addEventListener('click', startNewChat);
+
     // Suggested questions
     document.querySelectorAll('.suggested-item').forEach(button => {
         button.addEventListener('click', (e) => {
@@ -59,8 +63,12 @@ async function sendMessage() {
     chatMessages.appendChild(loadingMessage);
     chatMessages.scrollTop = chatMessages.scrollHeight;
 
+    const controller = new AbortController();
+    currentAbortController = controller;
+
     try {
         const response = await fetch(`${API_URL}/query`, {
+            signal: controller.signal,
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -85,14 +93,41 @@ async function sendMessage() {
         addMessage(data.answer, 'assistant', data.sources);
 
     } catch (error) {
+        // Aborted by "New Chat": the chat window was already reset
+        if (error.name === 'AbortError') return;
         // Replace loading message with error
         loadingMessage.remove();
         addMessage(`Error: ${error.message}`, 'assistant');
     } finally {
-        chatInput.disabled = false;
-        sendButton.disabled = false;
-        chatInput.focus();
+        // Only touch the input if this request wasn't superseded by a new chat
+        if (currentAbortController === controller) {
+            currentAbortController = null;
+            chatInput.disabled = false;
+            sendButton.disabled = false;
+            chatInput.focus();
+        }
     }
+}
+
+// Reset the conversation without reloading: cancel any pending query,
+// discard the old server-side session, and show a fresh welcome message.
+function startNewChat() {
+    if (currentAbortController) {
+        currentAbortController.abort();
+        currentAbortController = null;
+    }
+
+    if (currentSessionId) {
+        fetch(`${API_URL}/session/${encodeURIComponent(currentSessionId)}`, { method: 'DELETE' })
+            .catch(() => {}); // best-effort cleanup; never block the UI
+    }
+
+    createNewSession();
+
+    chatInput.value = '';
+    chatInput.disabled = false;
+    sendButton.disabled = false;
+    chatInput.focus();
 }
 
 function createLoadingMessage() {
