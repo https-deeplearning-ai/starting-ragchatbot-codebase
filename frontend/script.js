@@ -124,8 +124,8 @@ function addMessage(content, type, sources = null, isWelcome = false) {
     if (sources && sources.length > 0) {
         html += `
             <details class="sources-collapsible">
-                <summary class="sources-header">Sources</summary>
-                <div class="sources-content">${sources.map(renderSource).join(', ')}</div>
+                <summary class="sources-header">Sources (${sources.length})</summary>
+                <div class="sources-content">${renderSources(sources)}</div>
             </details>
         `;
     }
@@ -137,15 +137,39 @@ function addMessage(content, type, sources = null, isWelcome = false) {
     return messageId;
 }
 
-// Render one source as a link (URL hidden behind the label) or plain text
-function renderSource(source) {
-    const text = escapeHtml(source.text);
+// Group sources by course: course title once, then one chip per lesson
+function renderSources(sources) {
+    const groups = new Map(); // course title -> sources, in first-seen order
+    for (const source of sources) {
+        const course = source.course_title || source.text;
+        if (!groups.has(course)) groups.set(course, []);
+        groups.get(course).push(source);
+    }
+
+    let html = '';
+    for (const [course, items] of groups) {
+        items.sort((a, b) => (a.lesson_number ?? -1) - (b.lesson_number ?? -1));
+        const chips = items.map(s => renderSourceChip(
+            s, s.lesson_number != null ? `Lesson ${s.lesson_number}` : 'Course'
+        )).join('');
+        html += `
+            <div class="source-group">
+                <div class="source-course">${escapeHtml(course)}</div>
+                <div class="source-lessons">${chips}</div>
+            </div>`;
+    }
+    return html;
+}
+
+// Render one source as a chip linking to the lesson (URL hidden) or plain chip
+function renderSourceChip(source, label) {
+    const text = escapeHtml(label);
     const link = source.link;
     if (link && /^https?:\/\//i.test(link)) {
         const href = escapeHtml(link).replace(/"/g, '&quot;');
-        return `<a href="${href}" target="_blank" rel="noopener noreferrer" class="source-link">${text}</a>`;
+        return `<a href="${href}" target="_blank" rel="noopener noreferrer" class="source-chip" title="${escapeHtml(source.text).replace(/"/g, '&quot;')}">${text}<span class="source-chip-icon" aria-hidden="true">↗</span></a>`;
     }
-    return `<span>${text}</span>`;
+    return `<span class="source-chip source-chip-static">${text}</span>`;
 }
 
 // Helper function to escape HTML for user messages
