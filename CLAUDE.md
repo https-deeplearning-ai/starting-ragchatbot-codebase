@@ -71,4 +71,4 @@ Lesson bodies are sentence-chunked (`chunk_text`) with overlap, governed by `Con
 
 ### Config
 
-All tunables live in one dataclass, `backend/config.py`: chunk size/overlap, max search results, max history, embedding model (`all-MiniLM-L6-v2`), Claude model (`claude-sonnet-4-20250514`), and the Chroma persistence path (`./chroma_db`, relative to `backend/`).
+All tunables live in one dataclass, `backend/config.py`: chunk size/overlap, max search results, max history, embedding model (`all-MiniLM-L6-v2`), Claude model (`claude-sonnet-5-5`), and the Chroma persistence path (`./chroma_db`, relative to `backend/`).

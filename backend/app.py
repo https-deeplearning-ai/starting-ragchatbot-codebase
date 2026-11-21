@@ -8,6 +8,7 @@ from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
 import os
+import traceback
 
 from config import config
 from rag_system import RAGSystem
@@ -71,6 +72,7 @@ async def query_documents(request: QueryRequest):
             session_id=session_id
         )
     except Exception as e:
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/courses", response_model=CourseStats)
