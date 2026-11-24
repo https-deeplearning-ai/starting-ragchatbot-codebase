@@ -13,7 +13,7 @@ from config import config
 from rag_system import RAGSystem
 
 # Initialize FastAPI app
-app = FastAPI(title="Course Materials RAG System", root_path="")
+app = FastAPI(title="Course Materials RAG System")
 
 # Add trusted host middleware for proxy
 app.add_middleware(
@@ -66,7 +66,7 @@ async def query_documents(request: QueryRequest):
         session_id = request.session_id
         if not session_id:
             session_id = rag_system.session_manager.create_session()
-        
+
         # Process query using RAG system
         answer, sources = rag_system.query(request.query, session_id)
         
@@ -90,6 +90,12 @@ async def get_course_stats():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.delete("/api/session/{session_id}")
+async def delete_session(session_id: str):
+    """Discard a session's conversation history (used by 'New Chat')"""
+    rag_system.session_manager.clear_session(session_id)
+    return {"status": "ok"}
+
 @app.on_event("startup")
 async def startup_event():
     """Load initial documents on startup"""
@@ -102,23 +108,5 @@ async def startup_event():
         except Exception as e:
             print(f"Error loading documents: {e}")
 
-# Custom static file handler with no-cache headers for development
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
-import os
-from pathlib import Path
-
-
-class DevStaticFiles(StaticFiles):
-    async def get_response(self, path: str, scope):
-        response = await super().get_response(path, scope)
-        if isinstance(response, FileResponse):
-            # Add no-cache headers for development
-            response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
-            response.headers["Pragma"] = "no-cache"
-            response.headers["Expires"] = "0"
-        return response
-    
-    
-# Serve static files for the frontend
+# Serve static files for the frontend (must be mounted last)
 app.mount("/", StaticFiles(directory="../frontend", html=True), name="static")

@@ -5,7 +5,7 @@ from vector_store import VectorStore
 from ai_generator import AIGenerator
 from session_manager import SessionManager
 from search_tools import ToolManager, CourseSearchTool
-from models import Course, Lesson, CourseChunk
+from models import Course
 
 class RAGSystem:
     """Main orchestrator for the Retrieval-Augmented Generation system"""
@@ -116,9 +116,7 @@ class RAGSystem:
         prompt = f"""Answer this question about course materials: {query}"""
         
         # Get conversation history if session exists
-        history = None
-        if session_id:
-            history = self.session_manager.get_conversation_history(session_id)
+        history = self.session_manager.get_conversation_history(session_id)
         
         # Generate response using AI with tools
         response = self.ai_generator.generate_response(

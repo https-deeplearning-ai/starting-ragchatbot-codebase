@@ -25,21 +25,21 @@ document.addEventListener('DOMContentLoaded', () => {
 function setupEventListeners() {
     // Chat functionality
     sendButton.addEventListener('click', sendMessage);
-    chatInput.addEventListener('keypress', (e) => {
+    chatInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') sendMessage();
     });
-    
-    
+
+    // New chat
+    document.getElementById('newChatButton').addEventListener('click', startNewChat);
+
     // Suggested questions
     document.querySelectorAll('.suggested-item').forEach(button => {
         button.addEventListener('click', (e) => {
-            const question = e.target.getAttribute('data-question');
-            chatInput.value = question;
+            chatInput.value = e.currentTarget.getAttribute('data-question');
             sendMessage();
         });
     });
 }
-
 
 // Chat Functions
 async function sendMessage() {
@@ -111,10 +111,8 @@ function createLoadingMessage() {
 }
 
 function addMessage(content, type, sources = null, isWelcome = false) {
-    const messageId = Date.now();
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${type}${isWelcome ? ' welcome-message' : ''}`;
-    messageDiv.id = `message-${messageId}`;
     
     // Convert markdown to HTML for assistant messages
     const displayContent = type === 'assistant' ? marked.parse(content) : escapeHtml(content);
@@ -133,8 +131,6 @@ function addMessage(content, type, sources = null, isWelcome = false) {
     messageDiv.innerHTML = html;
     chatMessages.appendChild(messageDiv);
     chatMessages.scrollTop = chatMessages.scrollHeight;
-    
-    return messageId;
 }
 
 // Helper function to escape HTML for user messages
@@ -153,23 +149,31 @@ function renderSource(source) {
     return text;
 }
 
-// Removed removeMessage function - no longer needed since we handle loading differently
-
-async function createNewSession() {
+function createNewSession() {
     currentSessionId = null;
     chatMessages.innerHTML = '';
     addMessage('Welcome to the Course Materials Assistant! I can help you with questions about courses, lessons and specific content. What would you like to know?', 'assistant', null, true);
 }
 
+// Discard the current conversation (server-side history too) and start fresh
+function startNewChat() {
+    if (currentSessionId) {
+        // Fire-and-forget: the UI reset must not depend on this succeeding
+        fetch(`${API_URL}/session/${encodeURIComponent(currentSessionId)}`, { method: 'DELETE' })
+            .catch(() => {});
+    }
+    createNewSession();
+    chatInput.value = '';
+    chatInput.focus();
+}
+
 // Load course statistics
 async function loadCourseStats() {
     try {
-        console.log('Loading course stats...');
         const response = await fetch(`${API_URL}/courses`);
         if (!response.ok) throw new Error('Failed to load course stats');
         
         const data = await response.json();
-        console.log('Course data received:', data);
         
         // Update stats in UI
         if (totalCourses) {
@@ -180,7 +184,7 @@ async function loadCourseStats() {
         if (courseTitles) {
             if (data.course_titles && data.course_titles.length > 0) {
                 courseTitles.innerHTML = data.course_titles
-                    .map(title => `<div class="course-title-item">${title}</div>`)
+                    .map(title => `<div class="course-title-item">${escapeHtml(title)}</div>`)
                     .join('');
             } else {
                 courseTitles.innerHTML = '<span class="no-courses">No courses available</span>';

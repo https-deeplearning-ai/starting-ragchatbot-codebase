@@ -56,6 +56,5 @@ class SessionManager:
         return "\n".join(formatted_messages)
     
     def clear_session(self, session_id: str):
-        """Clear all messages from a session"""
-        if session_id in self.sessions:
-            self.sessions[session_id] = []
+        """Discard a session and its messages"""
+        self.sessions.pop(session_id, None)

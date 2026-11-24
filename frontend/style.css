@@ -206,18 +206,6 @@ header h1 {
     border-bottom-left-radius: 4px;
 }
 
-/* Message metadata */
-.message-meta {
-    font-size: 0.75rem;
-    color: var(--text-secondary);
-    margin-top: 0.25rem;
-    padding: 0 0.5rem;
-}
-
-.message.user .message-meta {
-    text-align: right;
-}
-
 /* Collapsible Sources */
 .sources-collapsible {
     margin-top: 0.5rem;
@@ -439,26 +427,6 @@ header h1 {
     }
 }
 
-/* Error Message */
-.error-message {
-    background: rgba(239, 68, 68, 0.1);
-    color: #f87171;
-    padding: 0.75rem 1.25rem;
-    border-radius: 8px;
-    border: 1px solid rgba(239, 68, 68, 0.2);
-    margin: 0.5rem 0;
-}
-
-/* Success Message */
-.success-message {
-    background: rgba(34, 197, 94, 0.1);
-    color: #4ade80;
-    padding: 0.75rem 1.25rem;
-    border-radius: 8px;
-    border: 1px solid rgba(34, 197, 94, 0.2);
-    margin: 0.5rem 0;
-}
-
 /* Sidebar Headers */
 .stats-header,
 .suggested-header {
@@ -548,43 +516,6 @@ details[open] .suggested-header::before {
     margin-bottom: 0.5rem;
 }
 
-/* Course titles collapsible */
-.course-titles-collapsible {
-    width: 100%;
-}
-
-.course-titles-header {
-    cursor: pointer;
-    font-size: 0.875rem;
-    color: var(--text-secondary);
-    font-weight: 600;
-    padding: 0.5rem 0;
-    list-style: none;
-    display: block;
-    user-select: none;
-}
-
-.course-titles-header:focus {
-    outline: none;
-    color: var(--primary-color);
-}
-
-.course-titles-header::-webkit-details-marker {
-    display: none;
-}
-
-.course-titles-header::before {
-    content: '▶';
-    display: inline-block;
-    margin-right: 0.5rem;
-    transition: transform 0.2s ease;
-    font-size: 0.75rem;
-}
-
-.course-titles-collapsible[open] .course-titles-header::before {
-    transform: rotate(90deg);
-}
-
 /* Course titles display */
 .course-titles {
     margin-top: 0.5rem;
@@ -648,6 +579,30 @@ details[open] .suggested-header::before {
     transform: translateX(2px);
 }
 
+/* New Chat button */
+.new-chat-button {
+    width: 100%;
+    margin-bottom: 1rem;
+    padding: 0.75rem 1rem;
+    background: var(--primary-color);
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.new-chat-button:hover {
+    background: var(--primary-hover);
+}
+
+.new-chat-button:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .main-content {
@@ -661,23 +616,6 @@ details[open] .suggested-header::before {
         padding: 1rem;
         order: 2;
         max-height: 40vh;
-    }
-    
-    .sidebar::-webkit-scrollbar {
-        width: 8px;
-    }
-    
-    .sidebar::-webkit-scrollbar-track {
-        background: var(--surface);
-    }
-    
-    .sidebar::-webkit-scrollbar-thumb {
-        background: var(--border-color);
-        border-radius: 4px;
-    }
-    
-    .sidebar::-webkit-scrollbar-thumb:hover {
-        background: var(--text-secondary);
     }
     
     .chat-main {
@@ -725,7 +663,7 @@ details[open] .suggested-header::before {
     }
 }
 
-@media (max-width: 1024px) {
+@media (min-width: 769px) and (max-width: 1024px) {
     .sidebar {
         width: 280px;
     }
