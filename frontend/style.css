@@ -245,6 +245,20 @@ header h1 {
     color: var(--text-secondary);
 }
 
+.sources-content .source-item {
+    margin-bottom: 0.25rem;
+}
+
+.sources-content a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+.sources-content a:hover {
+    color: var(--primary-hover);
+    text-decoration: underline;
+}
+
 /* Markdown formatting styles */
 .message-content h1,
 .message-content h2,

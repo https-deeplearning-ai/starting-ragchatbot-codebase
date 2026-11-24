@@ -101,10 +101,13 @@ class CourseSearchTool(Tool):
             header += "]"
             
             # Track source for the UI
-            source = course_title
+            text = course_title
+            url = None
             if lesson_num is not None:
-                source += f" - Lesson {lesson_num}"
-            sources.append(source)
+                text += f" - Lesson {lesson_num}"
+                url = self.store.get_lesson_link(course_title, lesson_num)
+            if not any(s["text"] == text for s in sources):
+                sources.append({"text": text, "url": url})
             
             formatted.append(f"{header}\n{doc}")
         

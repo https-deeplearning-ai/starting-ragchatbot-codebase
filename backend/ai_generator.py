@@ -36,10 +36,14 @@ Provide only the direct answer to what was asked.
         # Pre-build base API parameters
         self.base_params = {
             "model": self.model,
-            "temperature": 0,
             "max_tokens": 800
         }
     
+    @staticmethod
+    def _extract_text(response) -> str:
+        """Join the text blocks of a response, skipping thinking/tool_use blocks"""
+        return "".join(b.text for b in response.content if b.type == "text")
+
     def generate_response(self, query: str,
                          conversation_history: Optional[str] = None,
                          tools: Optional[List] = None,
@@ -84,7 +88,7 @@ Provide only the direct answer to what was asked.
             return self._handle_tool_execution(response, api_params, tool_manager)
         
         # Return direct response
-        return response.content[0].text
+        return self._extract_text(response)
     
     def _handle_tool_execution(self, initial_response, base_params: Dict[str, Any], tool_manager):
         """
@@ -123,13 +127,18 @@ Provide only the direct answer to what was asked.
         if tool_results:
             messages.append({"role": "user", "content": tool_results})
         
-        # Prepare final API call without tools
+        # Final call: keep the same tools list (thinking blocks replayed in
+        # `messages` are bound to it) but forbid further tool calls, so only
+        # one search round is possible.
         final_params = {
             **self.base_params,
             "messages": messages,
             "system": base_params["system"]
         }
+        if "tools" in base_params:
+            final_params["tools"] = base_params["tools"]
+            final_params["tool_choice"] = {"type": "none"}
         
         # Get final response
         final_response = self.client.messages.create(**final_params)
-        return final_response.content[0].text
+        return self._extract_text(final_response)

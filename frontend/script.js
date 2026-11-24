@@ -125,7 +125,7 @@ function addMessage(content, type, sources = null, isWelcome = false) {
         html += `
             <details class="sources-collapsible">
                 <summary class="sources-header">Sources</summary>
-                <div class="sources-content">${sources.join(', ')}</div>
+                <div class="sources-content">${sources.map(src => `<div class="source-item">${renderSource(src)}</div>`).join('')}</div>
             </details>
         `;
     }
@@ -142,6 +142,15 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+// Render one source as a link (http/https only) or plain escaped text
+function renderSource(source) {
+    const text = escapeHtml(source.text);
+    if (source.url && /^https?:\/\//i.test(source.url)) {
+        return `<a href="${escapeHtml(source.url).replace(/"/g, '&quot;')}" target="_blank" rel="noopener noreferrer">${text}</a>`;
+    }
+    return text;
 }
 
 // Removed removeMessage function - no longer needed since we handle loading differently
