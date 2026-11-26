@@ -579,28 +579,30 @@ details[open] .suggested-header::before {
     transform: translateX(2px);
 }
 
-/* New Chat button */
+/* New Chat link (styled like the sidebar headers) */
 .new-chat-button {
+    display: block;
     width: 100%;
-    margin-bottom: 1rem;
-    padding: 0.75rem 1rem;
-    background: var(--primary-color);
+    margin: 0;
+    padding: 0.5rem 0;
+    background: none;
     border: none;
-    border-radius: 8px;
-    color: #fff;
+    border-radius: 0;
+    color: var(--text-secondary);
+    font-family: inherit;
     font-size: 0.875rem;
     font-weight: 600;
+    text-align: left;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
     cursor: pointer;
-    transition: background 0.2s ease;
+    transition: color 0.2s ease;
 }
 
-.new-chat-button:hover {
-    background: var(--primary-hover);
-}
-
+.new-chat-button:hover,
 .new-chat-button:focus-visible {
+    color: var(--primary-color);
     outline: none;
-    box-shadow: 0 0 0 3px var(--focus-ring);
 }
 
 /* Responsive Design */
@@ -667,4 +669,13 @@ details[open] .suggested-header::before {
     .sidebar {
         width: 280px;
     }
+}
+
+/* Links inside assistant messages */
+.message.assistant .message-content a {
+    color: #60a5fa;
+}
+
+.message.assistant .message-content a:hover {
+    color: #93c5fd;
 }

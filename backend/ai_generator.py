@@ -9,7 +9,8 @@ class AIGenerator:
 
 Search Tool Usage:
 - Use the search tool **only** for questions about specific course content or detailed educational materials
-- **One search per query maximum**
+- For questions about a course's outline, structure, syllabus or list of lessons, use `get_course_outline` instead. Present the course title, instructor, and course link each on their own line (blank line between them), then EVERY lesson as a bulleted "Lesson N: Title" markdown link
+- **One tool call per query maximum**
 - Synthesize search results into accurate, fact-based responses
 - If search yields no results, state this clearly without offering alternatives
 
@@ -36,7 +37,7 @@ Provide only the direct answer to what was asked.
         # Pre-build base API parameters
         self.base_params = {
             "model": self.model,
-            "max_tokens": 800
+            "max_tokens": 1500
         }
     
     @staticmethod
@@ -141,4 +142,4 @@ Provide only the direct answer to what was asked.
         
         # Get final response
         final_response = self.client.messages.create(**final_params)
-        return self._extract_text(final_response)
+        return self._extract_text(final_response)
