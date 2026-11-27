@@ -34,14 +34,12 @@ Provide only the direct answer to what was asked.
         self.model = model
         
         # Pre-build base API parameters.
-        # Sonnet 5.5 rejects non-default sampling params (temperature etc.) and
-        # thinking tokens count toward max_tokens, so leave headroom.
-        # output_config is sent via extra_body because the pinned SDK (0.58.2)
-        # predates the named parameter.
+        # Sampling params (temperature etc.) are rejected on API version
+        # 2026-10-21, and thinking tokens count toward max_tokens, so leave headroom.
         self.base_params = {
             "model": self.model,
             "max_tokens": 4096,
-            "extra_body": {"output_config": {"effort": "low"}}
+            "output_config": {"effort": "low"}
         }
     
     def generate_response(self, query: str,
