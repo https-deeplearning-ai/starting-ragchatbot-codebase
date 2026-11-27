@@ -33,11 +33,15 @@ Provide only the direct answer to what was asked.
         self.client = anthropic.Anthropic(api_key=api_key)
         self.model = model
         
-        # Pre-build base API parameters
+        # Pre-build base API parameters.
+        # Sonnet 5.5 rejects non-default sampling params (temperature etc.) and
+        # thinking tokens count toward max_tokens, so leave headroom.
+        # output_config is sent via extra_body because the pinned SDK (0.58.2)
+        # predates the named parameter.
         self.base_params = {
             "model": self.model,
-            "temperature": 0,
-            "max_tokens": 800
+            "max_tokens": 4096,
+            "extra_body": {"output_config": {"effort": "low"}}
         }
     
     def generate_response(self, query: str,
@@ -84,7 +88,7 @@ Provide only the direct answer to what was asked.
             return self._handle_tool_execution(response, api_params, tool_manager)
         
         # Return direct response
-        return response.content[0].text
+        return self._extract_text(response)
     
     def _handle_tool_execution(self, initial_response, base_params: Dict[str, Any], tool_manager):
         """
@@ -132,4 +136,13 @@ Provide only the direct answer to what was asked.
         
         # Get final response
         final_response = self.client.messages.create(**final_params)
-        return final_response.content[0].text
+        return self._extract_text(final_response)
+
+    @staticmethod
+    def _extract_text(response) -> str:
+        """Return the text of a response, skipping thinking blocks."""
+        if response.stop_reason == "refusal":
+            return "Sorry, I can't help with that request."
+        return "".join(
+            block.text for block in response.content if block.type == "text"
+        )
