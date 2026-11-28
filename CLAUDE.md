@@ -21,9 +21,9 @@ There is no test suite, linter, or build step configured. `main.py` at the root 
 
 A course-transcript RAG chatbot: FastAPI backend serving a static vanilla-JS frontend (`frontend/`, mounted by `app.py`), ChromaDB for vectors, Claude for generation.
 
-**Retrieval is tool-based, not retrieve-then-prompt.** `RAGSystem.query` (`rag_system.py`) does not search up front. It gives Claude a `search_course_content` tool and Claude decides whether to call it. `AIGenerator.generate_response` therefore makes up to two Anthropic calls per question:
-1. Call with tools. If `stop_reason == "tool_use"`, `_handle_tool_execution` runs the tool locally through `ToolManager`, then
-2. a second call with the `tool_result` and **no tools**, so Claude cannot chain further searches. Only one search round is possible by design (the system prompt also says "one search per query").
+**Retrieval is tool-based, not retrieve-then-prompt.** `RAGSystem.query` (`rag_system.py`) does not search up front. It gives Claude a `search_course_content` tool and Claude decides whether to call it. `AIGenerator.generate_response` therefore makes up to three Anthropic calls per question (at most 2 sequential tool rounds):
+1. Call with tools. If `stop_reason == "tool_use"`, the tools run locally through `ToolManager` and the results are appended to the message list, then Claude is called again (still with tools) so it can reason on the results and make a second, dependent call (e.g. `get_course_outline` then `search_course_content`).
+2. The loop ends when a response has no `tool_use`, after 2 rounds (`AIGenerator.MAX_ROUNDS`), or when a tool raises (returned as an `is_error` tool_result). If it ended on rounds/error, one final call with `tool_choice: none` produces the answer.
 
 New tools go through the `Tool` ABC in `search_tools.py` and `ToolManager.register_tool`, then get registered in `RAGSystem.__init__`.
 
